@@ -11,11 +11,26 @@
 
   <!-- PAINEL LATERAL -->
   <aside
-    :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-    class="absolute lg:absolute left-0 top-0 h-full w-96 max-w-[90vw] bg-white border-r border-slate-200 flex flex-col z-[700] shadow-xl shrink-0 transition-transform duration-300 ease-in-out">
+    :class="isMobileViewport
+      ? (sidebarOpen ? 'translate-y-0' : 'translate-y-[calc(100%+1rem)]')
+      : (sidebarOpen ? 'translate-x-0' : '-translate-x-full')"
+    :style="isMobileViewport ? `height: ${bottomSheetHeight}` : ''"
+    class="absolute left-2 top-2 bottom-2 h-auto w-[min(24rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] overflow-hidden bg-white border border-slate-200 rounded-xl flex flex-col z-[700] shadow-xl transition-[transform,height] duration-300 ease-in-out max-lg:left-0 max-lg:right-0 max-lg:bottom-0 max-lg:top-auto max-lg:h-auto max-lg:w-full max-lg:max-w-full max-lg:rounded-b-none">
     <!-- Cabeçalho -->
 
   <div class="p-4 border-b border-slate-100 bg-slate-50/50">
+    <!-- A alça funciona como affordance visual e também como área de toque para trocar o estado do painel. -->
+    <button
+      type="button"
+      @pointerdown="startSheetDrag($event)"
+      @pointermove="moveSheetDrag($event)"
+      @pointerup="endSheetDrag($event)"
+      @pointercancel="endSheetDrag($event)"
+      @click="cycleBottomSheet()"
+      class="mx-auto mb-3 flex h-6 w-16 touch-none items-center justify-center lg:hidden"
+      aria-label="Alternar tamanho do painel de zonas">
+      <span class="h-1 w-10 rounded-full bg-slate-300" aria-hidden="true"></span>
+    </button>
     <div class="flex items-start justify-between">
       <div>
 
@@ -38,7 +53,21 @@
     </div>
   </div>
 
-    <!-- Filtro de Busca -->
+    <!-- Resumo contextual: aparece somente após uma zona ser selecionada. -->
+    <div x-show="selectedZoneDetails" x-cloak class="mx-4 mt-4 p-3 rounded-lg border border-blue-100 bg-blue-50/70">
+      <div class="flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <p class="text-[10px] font-semibold uppercase tracking-wider text-blue-600">Zona em destaque</p>
+          <p class="text-sm font-bold text-slate-800 truncate" x-text="selectedZoneDetails ? selectedZoneDetails.nome : ''"></p>
+        </div>
+        <button @click="selectZone(null)" title="Limpar seleção" class="shrink-0 p-1.5 rounded-md text-blue-600 hover:bg-blue-100">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <p class="mt-1 text-xs text-slate-600" x-text="selectedZoneDetails ? `${selectedZoneDetails.count} feições no território` : ''"></p>
+    </div>
+
+    <!-- No estado recolhido, somente título, alça e busca permanecem visíveis. -->
     <div class="p-4 border-b border-slate-100">
       <div class="relative">
         <input 
@@ -61,7 +90,7 @@
     </div>
 
     <!-- Modos de Estilo dos Polígonos -->
-    <div class="p-4 border-b border-slate-100 bg-slate-50/30">
+    <div x-show="!isMobileViewport || bottomSheetState !== 'collapsed'" x-cloak class="p-4 border-b border-slate-100 bg-slate-50/30">
       <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Estilo das Camadas</label>
       <div class="grid grid-cols-3 gap-1 bg-slate-200/60 p-1 rounded-lg">
         <button 
@@ -92,7 +121,7 @@
     </div>
 
     <!-- Lista Dinâmica de Zonas -->
-    <div class="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+    <div x-show="!isMobileViewport || bottomSheetState !== 'collapsed'" x-cloak class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 space-y-2 custom-scrollbar">
       <div class="flex items-center justify-between mb-2">
         <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Filtrar Zonas</span>
         <button 
@@ -146,19 +175,19 @@
       </template>
     </div>
 
-    <div class="p-3 border-t border-slate-200 bg-slate-50 text-xs text-slate-500 flex justify-between items-center">
+    <div x-show="!isMobileViewport || bottomSheetState === 'expanded'" x-cloak class="p-3 border-t border-slate-200 bg-slate-50 text-xs text-slate-500 flex justify-between items-center">
       <span>Total de Feições: <strong class="text-slate-700" x-text="totalFeatures">0</strong></span>
       <span>Zonas Ativas: <strong class="text-slate-700" x-text="availableZones.length">0</strong></span>
     </div>
   </aside>
 
   <!-- MAPA LEAFLET -->
-  <main class="flex-1 relative w-full h-full min-h-[500px] bg-slate-100 overflow-hidden">
+  <main class="flex-1 relative w-full h-full min-h-[calc(100vh-5rem)] bg-slate-100 overflow-hidden">
 
     <div
       x-show="!sidebarOpen"
       x-transition
-      class="absolute top-4 left-4 z-[800]">
+      class="absolute top-4 left-3 z-[800] max-w-[calc(100vw-1.5rem)]">
 
       <button
         @click="sidebarOpen = true"
@@ -172,12 +201,37 @@
        </button>
     </div>
 
+    <!-- Legenda compacta: mantém o significado das cores visível sem competir com o mapa. -->
+    <div x-show="legendOpen" x-transition class="absolute bottom-8 left-3 z-[500] w-44 max-w-[calc(100vw-1.5rem)] rounded-lg border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold text-slate-800">Legenda</span>
+        <button @click="legendOpen = false" title="Ocultar legenda" class="p-1 text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+      <div class="mb-2 flex items-center gap-2 text-[11px] text-slate-600">
+        <span class="h-0 w-4 shrink-0 border-t-2 border-dashed border-teal-700"></span>
+        <span>Limite urbano</span>
+      </div>
+      <div class="space-y-1.5 max-h-36 overflow-y-auto">
+        <template x-for="item in availableZones" :key="`legend-${item.sigla}`">
+          <button @click="selectZone(item.sigla)" class="flex w-full items-center gap-2 text-left text-[11px] text-slate-600 hover:text-slate-900">
+            <span class="h-3 w-3 shrink-0 rounded-sm border" :style="`background-color: ${item.cor_fill}; border-color: ${item.cor_stroke}`"></span>
+            <span class="truncate" x-text="`${item.sigla} - ${item.nome}`"></span>
+          </button>
+        </template>
+      </div>
+    </div>
+
+    <button x-show="!legendOpen && availableZones.length" @click="legendOpen = true" title="Mostrar legenda" class="absolute bottom-8 left-3 z-[500] rounded-lg border border-slate-200 bg-white/95 p-2 text-slate-700 shadow-lg hover:bg-white">
+      <i data-lucide="list" class="w-4 h-4"></i>
+    </button>
+
     <div id="leaflet-map" class="absolute inset-0 w-full h-full z-0"></div>
 
     <!-- Seletor de Mapa Base (OpenStreetMap vs Satélite) -->
-   <div
-  :class="sidebarOpen? 'absolute top-4 left-[420px]': 'absolute top-4 left-1/2 -translate-x-1/2'"
-  class="z-[500] bg-white/90 backdrop-blur border border-slate-200 shadow-md rounded-lg p-1 flex gap-1 transition-all duration-300">
+  <div
+  class="absolute top-4 left-1/2 z-[500] flex max-w-[calc(100vw-10rem)] -translate-x-1/2 gap-1 overflow-hidden rounded-lg border border-slate-200 bg-white/90 p-1 shadow-md backdrop-blur">
       <button 
         @click="setBaseLayer('street')" 
         :class="baseLayer === 'street' ? 'bg-blue-600 text-white font-medium' : 'text-slate-700 hover:bg-slate-100'"
@@ -197,7 +251,7 @@
     </div>
 
     <!-- Botão de Centralizar -->
-    <div class="absolute top-4 right-4 z-[500] bg-white/90 backdrop-blur border border-slate-200 shadow-md rounded-lg p-1.5 flex gap-1">
+    <div class="absolute right-3 top-16 z-[500] flex max-w-[calc(100vw-1.5rem)] gap-1 rounded-lg border border-slate-200 bg-white/90 p-1.5 shadow-md backdrop-blur sm:top-4">
           <button
         @click="resetView()"
         title="Voltar para Sapezal"
@@ -229,7 +283,12 @@ function mapaZoneamentoApp() {
     selectedZone: null,
     visMode: 'colorido',
     baseLayer: 'street', // 'street' ou 'satellite'
-    sidebarOpen: window.innerWidth >= 1024,
+    // No celular o painel começa recolhido, mas visível como uma faixa inferior para preservar a descoberta da interação.
+    sidebarOpen: true,
+    legendOpen: true,
+      isMobileViewport: window.innerWidth < 1024,
+      bottomSheetState: 'collapsed',
+      sheetDrag: { active: false, startY: 0, startHeight: 0, moved: false },
     
     geoJsonRaw: null,
     availableZones: [],
@@ -239,11 +298,13 @@ function mapaZoneamentoApp() {
     //perimetroBounds: null,
     map: null,
     geoJsonLayer: null,
+    perimetroLayer: null,
     tileLayers: {},
     
 
     // Coordenadas Centrais de Sapezal - MT
     sapezalCenter: [-13.5432, -58.8123],
+    fallbackBounds: [[-13.64, -58.94], [-13.44, -58.68]],
 
     zoneConfig: {
       'ZRI':   { order: 1, nome: 'Zona Residencial I' },
@@ -259,9 +320,11 @@ function mapaZoneamentoApp() {
 
     initApp() {
       this.$nextTick(() => {
+          // A altura do painel é recalculada somente para a experiência mobile; no desktop a sidebar usa o espaço do mapa.
+          this.isMobileViewport = window.innerWidth < 1024;
         this.initMap();
         this.fetchGeoJson();
-       // this.fetchPerimetro();
+        this.fetchPerimetro();
 
         const mapEl = document.getElementById('leaflet-map');
         if (mapEl && typeof ResizeObserver !== 'undefined') {
@@ -272,14 +335,84 @@ function mapaZoneamentoApp() {
       });
     },
 
+    get bottomSheetHeight() {
+      if (!this.isMobileViewport) return '';
+      if (this.sheetDrag.height) return `${this.sheetDrag.height}px`;
+
+      const viewportHeight = window.innerHeight || 700;
+      const heights = {
+        collapsed: Math.max(148, Math.min(190, viewportHeight * 0.22)),
+        half: Math.min(430, viewportHeight * 0.52),
+        expanded: Math.max(0, viewportHeight - 16)
+      };
+      return `${Math.round(heights[this.bottomSheetState])}px`;
+    },
+
+    cycleBottomSheet() {
+      // O toque na alça alterna entre os três níveis sem exigir gesto preciso em telas pequenas.
+      if (!this.isMobileViewport || this.sheetDrag.suppressClick) return;
+      const states = ['collapsed', 'half', 'expanded'];
+      const nextIndex = (states.indexOf(this.bottomSheetState) + 1) % states.length;
+      this.bottomSheetState = states[nextIndex];
+      this.sheetDrag.height = null;
+    },
+
+    startSheetDrag(event) {
+      if (!this.isMobileViewport) return;
+      this.sheetDrag = {
+        active: true,
+        startY: event.clientY,
+        startHeight: parseFloat(this.bottomSheetHeight),
+        height: null,
+        moved: false,
+        suppressClick: false
+      };
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+    },
+
+    moveSheetDrag(event) {
+      if (!this.sheetDrag.active) return;
+      const viewportHeight = window.innerHeight || 700;
+      const delta = this.sheetDrag.startY - event.clientY;
+      if (Math.abs(delta) < 4) return;
+
+      // Arrastar para cima aumenta a área de leitura; arrastar para baixo devolve espaço ao mapa.
+      this.sheetDrag.moved = true;
+      this.sheetDrag.height = Math.round(Math.max(148, Math.min(viewportHeight - 16, this.sheetDrag.startHeight + delta)));
+    },
+
+    endSheetDrag(event) {
+      if (!this.sheetDrag.active) return;
+      event.currentTarget.releasePointerCapture?.(event.pointerId);
+
+      if (this.sheetDrag.moved) {
+        const viewportHeight = window.innerHeight || 700;
+        const height = this.sheetDrag.height;
+        this.bottomSheetState = height > viewportHeight * 0.72 ? 'expanded' : height > viewportHeight * 0.35 ? 'half' : 'collapsed';
+        this.sheetDrag.suppressClick = true;
+        this.sheetDrag.height = null;
+        window.setTimeout(() => { this.sheetDrag.suppressClick = false; }, 0);
+      }
+      this.sheetDrag.active = false;
+    },
+
     initMap() {
       if (this.map) return;
 
       this.map = L.map('leaflet-map', {
-            zoomControl: true,
-            minZoom: 13,
-            maxZoom: 19
-        }).setView(this.sapezalCenter, 14);
+        zoomControl: false,
+        minZoom: 13,
+        maxZoom: 19,
+        closePopupOnClick: true,
+        // Evita que popups removidos durante a troca de camadas recebam eventos de zoom atrasados.
+        zoomAnimation: false,
+        fadeAnimation: false,
+        markerZoomAnimation: false,
+        maxBounds: this.fallbackBounds,
+        maxBoundsViscosity: 1
+      }).setView(this.sapezalCenter, 14);
+
+      L.control.zoom({ position: 'bottomright' }).addTo(this.map);
 
       // Camada 1: OpenStreetMap (Vetor)
       this.tileLayers.street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -334,42 +467,32 @@ function mapaZoneamentoApp() {
         .getGeoJsonData(this.driveFileId);
     },
       
-      /*fetchPerimetro() {
-
+    fetchPerimetro() {
+      // O perímetro é uma referência visual; se o arquivo falhar, o zoneamento continua disponível.
       google.script.run
         .withSuccessHandler((response) => {
+          if (!response || !response.success || !response.data) return;
 
-          if (!response || !response.success) return;
+          this.perimetroLayer = L.geoJSON(response.data, {
+            style: {
+              color: '#0f766e',
+              weight: 2.5,
+              dashArray: '7 5',
+              fillColor: '#14b8a6',
+              fillOpacity: 0.06,
+              interactive: false
+            }
+          }).addTo(this.map);
 
-          this.perimetroLayer = L.geoJSON(response.data);
-
-          this.perimetroBounds =
-            this.perimetroLayer.getBounds();
-
-          this.map.setMaxBounds(
-            this.perimetroBounds.pad(0.15)
-          );
-
-          this.map.fitBounds(
-            this.perimetroBounds
-          );
-
-          this.map.options.maxBoundsViscosity = 1.0;
-
-          const zoomCidade =
-            this.map.getBoundsZoom(
-              this.perimetroBounds
-            );
-
-          this.map.setMinZoom(
-            Math.max(zoomCidade, 13)
-          );
-
+          // O limite fica atrás das zonas e funciona como contexto, não como máscara visual.
+          this.perimetroLayer.bringToBack();
         })
-        .getPerimetroUrbano();
-
-}
-*/
+        .withFailureHandler(() => {
+          // A camada complementar não deve bloquear o carregamento do mapa principal.
+        })
+        // O sufixo garante que o backend procure o arquivo pelo nome, não como ID.
+        .getGeoJsonData('Perimetro_urbano_vigente_v2.geojson');
+    },
     processGeoJson() {
       if (!this.geoJsonRaw || !this.geoJsonRaw.features) return;
 
@@ -396,7 +519,25 @@ function mapaZoneamentoApp() {
       });
 
       this.availableZones = Object.values(zoneMap).sort((a, b) => a.order - b.order);
+      this.configureMapBounds();
       this.renderMapLayer();
+    },
+
+    configureMapBounds() {
+      const dataLayer = L.geoJSON(this.geoJsonRaw);
+      const bounds = dataLayer.getBounds();
+      const center = bounds.isValid() ? bounds.getCenter() : null;
+      const nearSapezal = center && Math.abs(center.lat - this.sapezalCenter[0]) < 2 &&
+        Math.abs(center.lng - this.sapezalCenter[1]) < 2;
+      const compactEnough = bounds.isValid() &&
+        bounds.getNorth() - bounds.getSouth() < 1.5 &&
+        bounds.getEast() - bounds.getWest() < 1.5;
+      const safeBounds = nearSapezal && compactEnough ? bounds : L.latLngBounds(this.fallbackBounds);
+
+      this.map.setMaxBounds(safeBounds.pad(0.25));
+      const zoom = this.map.getBoundsZoom(safeBounds, false);
+      this.map.setMinZoom(Math.min(Math.max(zoom, 13), 16));
+      this.map.fitBounds(safeBounds, { padding: [24, 24], maxZoom: 16 });
     },
 
     get filteredZones() {
@@ -408,17 +549,28 @@ function mapaZoneamentoApp() {
       );
     },
 
+    get selectedZoneDetails() {
+      return this.availableZones.find((zone) => zone.sigla === this.selectedZone) || null;
+    },
+
     getStyle(feature) {
       const props = feature.properties || {};
       const fill = props.cor_fill || '#3b82f6';
       const stroke = props.cor_stroke || '#1d4ed8';
+      const isSelected = this.selectedZone &&
+        (props.zona || '').toUpperCase() === this.selectedZone;
+
+      // Mantém o contexto territorial: a zona escolhida ganha contraste e as demais recuam visualmente.
+      if (this.selectedZone && !isSelected) {
+        return { fillColor: '#cbd5e1', fillOpacity: 0.04, color: '#94a3b8', weight: 1 };
+      }
 
       if (this.visMode === 'colorido') {
-        return { fillColor: fill, fillOpacity: 0.35, color: stroke, weight: 2 };
+        return { fillColor: fill, fillOpacity: isSelected ? 0.58 : 0.35, color: stroke, weight: isSelected ? 3 : 2 };
       } else if (this.visMode === 'transparente') {
-        return { fillColor: fill, fillOpacity: 0.12, color: stroke, weight: 2 };
+        return { fillColor: fill, fillOpacity: isSelected ? 0.35 : 0.12, color: stroke, weight: isSelected ? 3 : 2 };
       } else { 
-        return { fillColor: 'transparent', fillOpacity: 0, color: stroke, weight: 2.5 };
+        return { fillColor: 'transparent', fillOpacity: 0, color: stroke, weight: isSelected ? 4 : 2.5 };
       }
     },
 
@@ -426,14 +578,19 @@ function mapaZoneamentoApp() {
       if (!this.geoJsonRaw || !this.map) return;
 
       if (this.geoJsonLayer) {
-        this.map.removeLayer(this.geoJsonLayer);
+        // Interrompe qualquer transição antes de remover a camada que pode ser a origem de um popup aberto.
+        this.map.stop();
+        this.map.closePopup();
+        this.geoJsonLayer.eachLayer((layer) => {
+          if (layer.isPopupOpen && layer.isPopupOpen()) layer.closePopup();
+        });
+        this.geoJsonLayer.remove();
+        this.geoJsonLayer = null;
       }
 
       this.geoJsonLayer = L.geoJSON(this.geoJsonRaw, {
-        filter: (feature) => {
-          if (!this.selectedZone) return true;
-          return (feature.properties.zona || '').toUpperCase() === this.selectedZone;
-        },
+        // Todas as zonas permanecem visíveis; a seleção é comunicada por contraste e enquadramento.
+        filter: () => true,
         style: (feature) => this.getStyle(feature),
         onEachFeature: (feature, layer) => {
           const props = feature.properties || {};
@@ -454,23 +611,24 @@ function mapaZoneamentoApp() {
         }
       }).addTo(this.map);
 
-      // Validação do Zoom: Se os limites calculados forem válidos para Sapezal, ajusta o enquadramento
-      if (this.geoJsonLayer.getBounds().isValid()) {
-        const bounds = this.geoJsonLayer.getBounds();
-        // Evita afastar a visão para o mundo caso o GeoJSON contenha erro de coordenada
-        if (Math.abs(bounds.getSouth()) < 80) {
-          this.map.fitBounds(bounds, { padding: [30, 30] });
-        } else {
-          this.map.setView(this.sapezalCenter, 14);
-        }
-      } else {
-        this.map.setView(this.sapezalCenter, 14);
+      const selectedLayer = this.selectedZone ? L.geoJSON(this.geoJsonRaw, {
+        filter: (feature) => (feature.properties.zona || '').toUpperCase() === this.selectedZone
+      }) : null;
+      const selectedBounds = selectedLayer ? selectedLayer.getBounds() : null;
+
+      if (selectedBounds && selectedBounds.isValid()) {
+        this.map.fitBounds(selectedBounds, {
+          padding: [48, 48],
+          maxZoom: 17,
+          animate: false
+        });
       }
     },
 
     setVisMode(mode) {
       this.visMode = mode;
-      this.renderMapLayer();
+      if (!this.geoJsonLayer) return;
+      this.geoJsonLayer.setStyle((feature) => this.getStyle(feature));
     },
 
     selectZone(sigla) {

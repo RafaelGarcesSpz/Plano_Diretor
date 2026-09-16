@@ -20,75 +20,21 @@
               'green-dark': 'var(--brand-green-dark)',
               'green': 'var(--brand-green)',
               'green-light': 'var(--brand-green-light)',
+              // Aliases mantidos para compatibilidade com componentes legados.
+              'lightgreen': 'var(--brand-green-light)',
               'yellow': 'var(--brand-yellow)',
               'yellow-dark': 'var(--brand-yellow-dark)',
               'gold': 'var(--brand-gold)',
               'blue-light': 'var(--brand-blue-light)',
               'blue': 'var(--brand-blue)',
               'blue-dark': 'var(--brand-blue-dark)',
+              'darkblue': 'var(--brand-blue-dark)',
             }
           }
         }
       }
     }
   </script>
-
-  <!-- CSS Variables Centralizadas -->
-  <style>
-    :root {
-      --brand-green-dark: #0f560f;
-      --brand-green: #409240;
-      --brand-green-light: #839f21;
-      --brand-yellow: #ffd200;
-      --brand-yellow-dark: #e2bd1e;
-      --brand-gold: #cea20a;
-      --brand-blue-light: #0385d0;
-      --brand-blue: #015797;
-      --brand-blue-dark: #072b4c;
-    }
-
-    [x-cloak] { 
-      display: none !important; 
-    }
-
-    /* Estilização para botões e componentes institucionais */
-    .btn-brand-primary {
-      background-color: var(--brand-blue);
-      color: #ffffff;
-      transition: background-color 0.2s ease;
-    }
-    .btn-brand-primary:hover {
-      background-color: var(--brand-blue-dark);
-    }
-
-    .btn-brand-secondary {
-      background-color: var(--brand-green);
-      color: #ffffff;
-      transition: background-color 0.2s ease;
-    }
-    .btn-brand-secondary:hover {
-      background-color: var(--brand-green-dark);
-    }
-
-    .btn-brand-highlight {
-      background-color: var(--brand-yellow);
-      color: var(--brand-blue-dark);
-      font-weight: 600;
-      transition: background-color 0.2s ease;
-    }
-    .btn-brand-highlight:hover {
-      background-color: var(--brand-gold);
-      color: #ffffff;
-    }
-
-    .bg-brand-gradient {
-      background: linear-gradient(135deg, var(--brand-blue-dark) 0%, var(--brand-blue) 100%);
-    }
-
-    .bg-brand-gradient-green {
-      background: linear-gradient(135deg, var(--brand-green-dark) 0%, var(--brand-green) 100%);
-    }
-  </style>
 
   <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -146,11 +92,11 @@
         <?!= include('PageCalendario'); ?>
       </div>
       
-      <!-- Contêiner do Mapa Expandido -->
+      <!-- O mapa compensa o padding lateral do main para ocupar toda a viewport sem faixa branca no mobile. -->
       <div 
         x-show="currentTab === 'mapas'" 
         x-transition.opacity.duration.300ms
-        class="w-full -mx-4 sm:-mx-6 lg:-mx-8 -my-6"
+        class="w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] lg:w-[calc(100%+4rem)] -mx-4 sm:-mx-6 lg:-mx-8 -my-6"
       >
         <?!= include('PageMapas'); ?>
       </div>

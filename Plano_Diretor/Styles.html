@@ -1,19 +1,51 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
+/* Tokens e componentes institucionais: esta e a camada global de identidade visual. */
 :root {
-    /* Paleta Institucional do Plano Diretor de Sapezal */
-    --pdm-green-dark: #0f560f;
-    --pdm-green-mid: #409240;
-    --pdm-green-olive: #839f21;
+  --brand-green-dark: #0f560f;
+  --brand-green: #409240;
+  --brand-green-light: #839f21;
+  --brand-yellow: #ffd200;
+  --brand-yellow-dark: #e2bd1e;
+  --brand-gold: #cea20a;
+  --brand-blue-light: #0385d0;
+  --brand-blue: #015797;
+  --brand-blue-dark: #072b4c;
 
-    --pdm-yellow-bright: #ffd200;
-    --pdm-yellow-mid: #e2bd1e;
-    --pdm-yellow-dark: #cea20a;
+  /* Aliases legados apontam para os tokens oficiais para evitar divergência de cores. */
+  --pdm-green-dark: var(--brand-green-dark);
+  --pdm-green-mid: var(--brand-green);
+  --pdm-green-olive: var(--brand-green-light);
+  --pdm-yellow-bright: var(--brand-yellow);
+  --pdm-yellow-mid: var(--brand-yellow-dark);
+  --pdm-yellow-dark: var(--brand-gold);
+  --pdm-blue-light: var(--brand-blue-light);
+  --pdm-blue-mid: var(--brand-blue);
+  --pdm-blue-dark: var(--brand-blue-dark);
+}
 
-    --pdm-blue-light: #0385d0;
-    --pdm-blue-mid: #015797;
-    --pdm-blue-dark: #072b4c;
+[x-cloak] { display: none !important; }
+
+.btn-brand-primary,
+.btn-brand-secondary,
+.btn-brand-highlight {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-brand-primary { background-color: var(--brand-blue); color: #ffffff; }
+.btn-brand-primary:hover { background-color: var(--brand-blue-dark); }
+.btn-brand-secondary { background-color: var(--brand-green); color: #ffffff; }
+.btn-brand-secondary:hover { background-color: var(--brand-green-dark); }
+.btn-brand-highlight { background-color: var(--brand-yellow); color: var(--brand-blue-dark); font-weight: 600; }
+.btn-brand-highlight:hover { background-color: var(--brand-gold); color: #ffffff; }
+
+.bg-brand-gradient {
+  background: linear-gradient(135deg, var(--brand-blue-dark) 0%, var(--brand-blue) 100%);
+}
+
+.bg-brand-gradient-green {
+  background: linear-gradient(135deg, var(--brand-green-dark) 0%, var(--brand-green) 100%);
 }
 
 body {
@@ -22,9 +54,12 @@ body {
     color: #0f172a;
 }
 
-[x-cloak] { display: none !important; }
+  /* Custom Scrollbar suave; a classe permite limitar a regra aos painéis da aplicação. */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #CBD5E1 #ffffff;
+  }
 
-  /* Custom Scrollbar suave */
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-track { background: #ffffff; }
   ::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 4px; }
@@ -158,10 +193,11 @@ body {
   }
 
   /* Estilos customizados para identidades visuais dinâmicas por Etapa */
-  .glow-etapa-1 { shadow-color: rgba(234, 107, 45, 0.35); }
-  .glow-etapa-2 { shadow-color: rgba(46, 125, 50, 0.35); }
-  .glow-etapa-3 { shadow-color: rgba(22, 150, 210, 0.35); }
-  .glow-etapa-4 { shadow-color: rgba(156, 39, 176, 0.35); }
+  /* Classes antigas continuam disponíveis, agora com uma propriedade de sombra válida. */
+  .glow-etapa-1 { box-shadow: 0 0 18px rgba(234, 107, 45, 0.35); }
+  .glow-etapa-2 { box-shadow: 0 0 18px rgba(46, 125, 50, 0.35); }
+  .glow-etapa-3 { box-shadow: 0 0 18px rgba(22, 150, 210, 0.35); }
+  .glow-etapa-4 { box-shadow: 0 0 18px rgba(156, 39, 176, 0.35); }
 
   /* Ajuste e Customização Tailwind no Leaflet */
   .leaflet-container {
