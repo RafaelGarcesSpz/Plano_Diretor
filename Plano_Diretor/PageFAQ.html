@@ -1,0 +1,27 @@
+<section x-data="{ buscaFaq: '', aberto: null }" class="space-y-6">
+  <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900">Perguntas Frequentes (FAQ)</h2>
+      <p class="text-sm text-slate-600">Tire suas dúvidas sobre o funcionamento e a revisão do Plano Diretor.</p>
+    </div>
+
+    <!-- Campo de Pesquisa -->
+    <div class="relative">
+      <input type="text" x-model="buscaFaq" placeholder="Digite uma palavra-chave para filtrar as perguntas..." class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-blue focus:outline-none">
+      <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3.5"></i>
+    </div>
+  </div>
+
+  <!-- Lista de Accordions -->
+  <div class="space-y-3">
+    <template x-for="(item, index) in db.faq.filter(f => f.pergunta.toLowerCase().includes(buscaFaq.toLowerCase()) || f.resposta.toLowerCase().includes(buscaFaq.toLowerCase()))" :key="index">
+      <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+        <button @click="aberto = (aberto === index ? null : index)" class="w-full p-5 text-left font-bold text-slate-800 flex justify-between items-center hover:bg-slate-50 transition-colors">
+          <span class="text-sm sm:text-base" x-text="item.pergunta"></span>
+          <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform" :class="{ 'rotate-180': aberto === index }"></i>
+        </button>
+        <div x-show="aberto === index" x-transition class="p-5 pt-0 text-sm text-slate-600 leading-relaxed border-t border-slate-100 bg-slate-50/50" x-text="item.resposta"></div>
+      </div>
+    </template>
+  </div>
+</section>

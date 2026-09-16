@@ -1,0 +1,169 @@
+<script>
+  function appState() {
+    return {
+      currentTab: 'inicio',
+      mobileMenuOpen: false,
+      
+      // Alias reativo para manter compatibilidade com verificações externas
+      get currentRoute() {
+        return this.currentTab;
+      },
+      set currentRoute(val) {
+        this.currentTab = val;
+      },
+
+      loading: true,
+      error: false,
+      errorMessage: '',
+      
+      // Banco de Dados reativo em memória
+      db: {
+        etapas: [],
+        eventos: [],
+        faq: [],
+        mapas: [],
+        participacao: { totalContribuissoes: 0, ultimas: [] },
+        videos: [],
+        planoAnterior: { documentos: [] }
+      },
+
+      // Modais
+      alertModal: { show: false, title: '', message: '', type: 'info' },
+      eventModal: { show: false, event: null },
+      
+      // Instância do FullCalendar
+      calendarInstance: null,
+
+      initApp() {
+        this.setupRouting();
+        this.setupResizeListener();
+        this.loadData();
+      },
+
+      // Monitora o redimensionamento da tela para fechar o menu mobile ao migrar para desktop (md = 768px)
+      setupResizeListener() {
+        window.addEventListener('resize', () => {
+          if (window.innerWidth >= 768 && this.mobileMenuOpen) {
+            this.mobileMenuOpen = false;
+          }
+        });
+      },
+
+      // Gerenciador de Roteamento SPA via Hash (#)
+      setupRouting() {
+        const handleHash = () => {
+          const hash = window.location.hash.replace('#', '');
+          const validTabs = ['inicio', 'calendario', 'mapas', 'participacao', 'videos', 'plano-anterior', 'faq'];
+          
+          if (validTabs.includes(hash)) {
+            this.currentTab = hash;
+          } else {
+            this.currentTab = 'inicio';
+            window.location.hash = 'inicio';
+          }
+
+          // Trata inicializações dinâmicas ao trocar de aba
+          this.$nextTick(() => {
+            if (this.currentTab === 'calendario') {
+              this.initFullCalendar();
+            }
+
+            if (this.currentTab === 'mapas') {
+              window.dispatchEvent(new Event('resize'));
+            }
+
+            if (typeof lucide !== 'undefined') {
+              lucide.createIcons();
+            }
+          });
+        };
+
+        window.addEventListener('hashchange', handleHash);
+        handleHash();
+      },
+
+      navigate(tab) {
+        this.currentTab = tab;
+        window.location.hash = tab;
+        this.mobileMenuOpen = false; // Fecha o menu mobile automaticamente após a navegação
+      },
+
+      loadData() {
+        this.loading = true;
+        this.error = false;
+
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+          google.script.run
+            .withSuccessHandler((response) => {
+              if (response.status === 'success') {
+                this.db = response.data;
+              } else {
+                this.error = true;
+                this.errorMessage = response.message;
+              }
+              this.loading = false;
+              this.$nextTick(() => {
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+                if (this.currentTab === 'calendario') this.initFullCalendar();
+                if (this.currentTab === 'mapas') window.dispatchEvent(new Event('resize'));
+              });
+            })
+            .withFailureHandler((err) => {
+              this.error = true;
+              this.errorMessage = 'Falha ao comunicar com o Google Apps Script.';
+              this.loading = false;
+            })
+            .getDatabaseData();
+        } else {
+          // Fallback para desenvolvimento fora do GAS
+          setTimeout(() => {
+            this.loading = false;
+            this.$nextTick(() => {
+              if (typeof lucide !== 'undefined') lucide.createIcons();
+              if (this.currentTab === 'calendario') this.initFullCalendar();
+              if (this.currentTab === 'mapas') window.dispatchEvent(new Event('resize'));
+            });
+          }, 400);
+        }
+      },
+
+      // Inicialização do FullCalendar no elemento DOM
+      initFullCalendar() {
+        const calendarEl = document.getElementById('fullcalendar-container');
+        if (!calendarEl) return;
+
+        if (this.calendarInstance) {
+          this.calendarInstance.destroy();
+        }
+
+        this.calendarInstance = new FullCalendar.Calendar(calendarEl, {
+          initialView: 'dayGridMonth',
+          locale: 'pt-br',
+          headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,listMonth'
+          },
+          buttonText: {
+            today: 'Hoje',
+            month: 'Mês',
+            list: 'Lista'
+          },
+          events: this.db.eventos,
+          eventClick: (info) => {
+            const ev = this.db.eventos.find(e => e.id == info.event.id || e.title === info.event.title);
+            if (ev) {
+              this.eventModal = { show: true, event: ev };
+            }
+          }
+        });
+
+        this.calendarInstance.render();
+      },
+
+      showAlert(title, message, type = 'info') {
+        this.alertModal = { show: true, title, message, type };
+      }
+    };
+  }
+</script>

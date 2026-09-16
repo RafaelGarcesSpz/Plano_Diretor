@@ -1,0 +1,86 @@
+<section x-data="{ form: { nome: '', bairro: '', email: '', mensagem: '' }, enviando: false }" class="space-y-6">
+  <!-- Placar de Participação Popular -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm flex items-center space-x-4">
+      <div class="p-3 bg-brand-lightgreen rounded-full text-brand-green">
+        <i data-lucide="message-square" class="w-8 h-8"></i>
+      </div>
+      <div>
+        <div class="text-2xl font-bold text-slate-900" x-text="db.participacao.totalContribuissoes"></div>
+        <div class="text-xs text-slate-500 uppercase font-medium">Contribuições Recebidas</div>
+      </div>
+    </div>
+
+    <div class="md:col-span-2 bg-brand-blue text-white p-6 rounded-lg shadow-sm flex flex-col justify-between">
+      <span class="text-xs font-bold text-brand-green uppercase tracking-wider">Próxima Oportunidade Presencial</span>
+      <div class="text-lg font-bold mt-1" x-text="db.participacao.audienciaProxima"></div>
+      <p class="text-xs text-slate-200 mt-2">Sua presença é fundamental para a construção da nossa cidade.</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Formulário de Envio de Sugestões -->
+    <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+      <h3 class="text-lg font-bold text-slate-800 border-b pb-3 mb-4">Envie sua Sugestão ou Diagnóstico</h3>
+      <form @submit.prevent="
+        enviando = true;
+        if(typeof google !== 'undefined' && google.script) {
+          google.script.run.withSuccessHandler((res) => {
+            enviando = false;
+            showAlert('Obrigado!', res.message, 'success');
+            form = { nome: '', bairro: '', email: '', mensagem: '' };
+          }).enviarContribuicao(form);
+        } else {
+          setTimeout(() => { enviando = false; showAlert('Modo Demo', 'Formulário submetido com sucesso no ambiente de testes.', 'success'); form = { nome: '', bairro: '', email: '', mensagem: '' }; }, 500);
+        }
+      " class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Nome Completo *</label>
+          <input type="text" x-model="form.nome" required class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-brand-blue focus:outline-none">
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Bairro / Localidade *</label>
+            <input type="text" x-model="form.bairro" required class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-brand-blue focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">E-mail</label>
+            <input type="email" x-model="form.email" class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-brand-blue focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Sua Contribuição *</label>
+          <textarea x-model="form.mensagem" rows="4" required placeholder="Relate problemas de infraestrutura, propostas de melhoria..." class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-brand-blue focus:outline-none"></textarea>
+        </div>
+
+        <button type="submit" :disabled="enviando" class="w-full py-2.5 bg-brand-green text-white font-bold text-sm rounded-md hover:bg-emerald-700 transition-colors flex items-center justify-center space-x-2">
+          <span x-show="!enviando">Registrar Contribuição</span>
+          <span x-show="enviando">Processando...</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Feed de Últimas Participações -->
+    <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between">
+      <div>
+        <h3 class="text-lg font-bold text-slate-800 border-b pb-3 mb-4">Últimas Participações Cidadãs</h3>
+        <div class="space-y-4">
+          <template x-for="p in db.participacao.ultimas" :key="p.id">
+            <div class="p-3 bg-slate-50 rounded-md border border-slate-100">
+              <div class="flex justify-between items-center text-xs text-slate-500 mb-1">
+                <span class="font-bold text-brand-blue" x-text="p.bairro"></span>
+                <span x-text="p.data"></span>
+              </div>
+              <p class="text-sm text-slate-700 italic" x-text="'“' + p.mensagem + '”'"></p>
+            </div>
+          </template>
+        </div>
+      </div>
+      <div class="mt-6 p-4 bg-amber-50 rounded-md border border-amber-200 text-xs text-amber-800">
+        <strong>Transparência:</strong> Todas as contribuições enviadas passam por triagem da equipe técnica e são consolidadas no relatório do Plano Diretor.
+      </div>
+    </div>
+  </div>
+</section>

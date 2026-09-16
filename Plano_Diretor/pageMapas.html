@@ -1,0 +1,488 @@
+<!-- Dependências Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+<!-- MÓDULO DE MAPA INTERATIVO - ZONEAMENTO -->
+<div
+  x-data="mapaZoneamentoApp()"
+  x-init="initApp()"
+  class="flex flex-col lg:flex-row h-full w-full min-h-[calc(100vh-5rem)] overflow-hidden bg-slate-50 font-sans relative"
+>
+
+  <!-- PAINEL LATERAL -->
+  <aside
+    :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+    class="absolute lg:absolute left-0 top-0 h-full w-96 max-w-[90vw] bg-white border-r border-slate-200 flex flex-col z-[700] shadow-xl shrink-0 transition-transform duration-300 ease-in-out">
+    <!-- Cabeçalho -->
+
+  <div class="p-4 border-b border-slate-100 bg-slate-50/50">
+    <div class="flex items-start justify-between">
+      <div>
+
+        <div class="flex items-center space-x-2 text-blue-600 mb-1">
+          <i data-lucide="map" class="w-5 h-5"></i>
+          <h2 class="font-bold text-slate-800 text-lg">
+            Zoneamento Urbano
+          </h2>
+        </div>
+        <p class="text-xs text-slate-500">
+          Consulte as diretrizes e regras urbanísticas por zona.
+        </p>
+      </div>
+
+        <button
+          @click="sidebarOpen = false"
+          class="text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+    </div>
+  </div>
+
+    <!-- Filtro de Busca -->
+    <div class="p-4 border-b border-slate-100">
+      <div class="relative">
+        <input 
+          type="text" 
+          x-model="searchQuery" 
+          placeholder="Buscar por sigla ou nome (ex: ZRI, Comércio)..."
+          class="w-full pl-9 pr-4 py-2 bg-slate-100 border border-transparent rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:bg-white focus:border-blue-500 focus:outline-none transition-all"
+        />
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+          <i data-lucide="search" class="w-4 h-4"></i>
+        </div>
+        <button 
+          x-show="searchQuery" 
+          @click="searchQuery = ''" 
+          class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+        >
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Modos de Estilo dos Polígonos -->
+    <div class="p-4 border-b border-slate-100 bg-slate-50/30">
+      <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Estilo das Camadas</label>
+      <div class="grid grid-cols-3 gap-1 bg-slate-200/60 p-1 rounded-lg">
+        <button 
+          @click="setVisMode('contorno')"
+          :class="visMode === 'contorno' ? 'bg-white text-slate-900 shadow-sm font-medium' : 'text-slate-600 hover:text-slate-900'"
+          class="py-1.5 px-2 text-xs rounded-md transition-all text-center flex flex-col items-center justify-center gap-1"
+        >
+          <i data-lucide="square" class="w-3.5 h-3.5"></i>
+          <span>Contornos</span>
+        </button>
+        <button 
+          @click="setVisMode('transparente')"
+          :class="visMode === 'transparente' ? 'bg-white text-slate-900 shadow-sm font-medium' : 'text-slate-600 hover:text-slate-900'"
+          class="py-1.5 px-2 text-xs rounded-md transition-all text-center flex flex-col items-center justify-center gap-1"
+        >
+          <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+          <span>Suave</span>
+        </button>
+        <button 
+          @click="setVisMode('colorido')"
+          :class="visMode === 'colorido' ? 'bg-white text-slate-900 shadow-sm font-medium' : 'text-slate-600 hover:text-slate-900'"
+          class="py-1.5 px-2 text-xs rounded-md transition-all text-center flex flex-col items-center justify-center gap-1"
+        >
+          <i data-lucide="palette" class="w-3.5 h-3.5"></i>
+          <span>Colorido</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Lista Dinâmica de Zonas -->
+    <div class="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Filtrar Zonas</span>
+        <button 
+          x-show="selectedZone !== null" 
+          @click="selectZone(null)" 
+          class="text-xs text-blue-600 hover:text-blue-800 font-medium"
+        >
+          Mostrar Todas
+        </button>
+      </div>
+
+      <template x-if="loading">
+        <div class="py-8 text-center text-slate-400 space-y-2">
+          <i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto text-blue-500"></i>
+          <p class="text-xs">Carregando dados do zoneamento...</p>
+        </div>
+      </template>
+
+      <template x-if="error">
+        <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs flex items-start gap-2">
+          <i data-lucide="alert-circle" class="w-4 h-4 shrink-0 mt-0.5"></i>
+          <span x-text="errorMessage"></span>
+        </div>
+      </template>
+
+      <template x-for="item in filteredZones" :key="item.sigla">
+        <button 
+          @click="selectZone(item.sigla)"
+          :class="selectedZone === item.sigla ? 'border-blue-500 bg-blue-50/50 shadow-sm ring-1 ring-blue-500' : 'border-slate-200 hover:border-slate-300 bg-white'"
+          class="w-full text-left p-3 rounded-lg border transition-all flex items-start justify-between group"
+        >
+          <div class="flex items-start space-x-3">
+            <span 
+              class="w-3.5 h-3.5 rounded-full shrink-0 mt-0.5 border"
+              :style="`background-color: ${item.cor_fill}; border-color: ${item.cor_stroke}`"
+            ></span>
+            <div>
+              <div class="flex items-center space-x-1.5">
+                <span class="font-bold text-slate-800 text-xs" x-text="item.sigla"></span>
+                <span class="text-slate-400 text-xs">•</span>
+                <span class="text-slate-600 text-xs font-medium" x-text="item.nome"></span>
+              </div>
+              <p class="text-xs text-slate-500 line-clamp-1 mt-0.5" x-text="item.descricao"></p>
+            </div>
+          </div>
+          <span 
+            class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 group-hover:bg-slate-200 shrink-0"
+            x-text="item.count"
+          ></span>
+        </button>
+      </template>
+    </div>
+
+    <div class="p-3 border-t border-slate-200 bg-slate-50 text-xs text-slate-500 flex justify-between items-center">
+      <span>Total de Feições: <strong class="text-slate-700" x-text="totalFeatures">0</strong></span>
+      <span>Zonas Ativas: <strong class="text-slate-700" x-text="availableZones.length">0</strong></span>
+    </div>
+  </aside>
+
+  <!-- MAPA LEAFLET -->
+  <main class="flex-1 relative w-full h-full min-h-[500px] bg-slate-100 overflow-hidden">
+
+    <div
+      x-show="!sidebarOpen"
+      x-transition
+      class="absolute top-4 left-4 z-[800]">
+
+      <button
+        @click="sidebarOpen = true"
+        class="bg-white shadow-lg border border-slate-200 rounded-lg px-3 py-2 flex items-center gap-2 hover:bg-slate-50">
+
+        <i data-lucide="panel-left" class="w-4 h-4"></i>
+
+        <span class="text-sm font-medium">
+          Zoneamento
+        </span>
+       </button>
+    </div>
+
+    <div id="leaflet-map" class="absolute inset-0 w-full h-full z-0"></div>
+
+    <!-- Seletor de Mapa Base (OpenStreetMap vs Satélite) -->
+   <div
+  :class="sidebarOpen? 'absolute top-4 left-[420px]': 'absolute top-4 left-1/2 -translate-x-1/2'"
+  class="z-[500] bg-white/90 backdrop-blur border border-slate-200 shadow-md rounded-lg p-1 flex gap-1 transition-all duration-300">
+      <button 
+        @click="setBaseLayer('street')" 
+        :class="baseLayer === 'street' ? 'bg-blue-600 text-white font-medium' : 'text-slate-700 hover:bg-slate-100'"
+        class="px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1"
+      >
+        <i data-lucide="map" class="w-3.5 h-3.5"></i>
+        <span>Mapa</span>
+      </button>
+      <button 
+        @click="setBaseLayer('satellite')" 
+        :class="baseLayer === 'satellite' ? 'bg-blue-600 text-white font-medium' : 'text-slate-700 hover:bg-slate-100'"
+        class="px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1"
+      >
+        <i data-lucide="globe" class="w-3.5 h-3.5"></i>
+        <span>Satélite</span>
+      </button>
+    </div>
+
+    <!-- Botão de Centralizar -->
+    <div class="absolute top-4 right-4 z-[500] bg-white/90 backdrop-blur border border-slate-200 shadow-md rounded-lg p-1.5 flex gap-1">
+          <button
+        @click="resetView()"
+        title="Voltar para Sapezal"
+        class="px-3 py-2 text-slate-700 hover:bg-slate-100 rounded-md transition-all flex items-center gap-2">
+
+        <i data-lucide="locate-fixed" class="w-4 h-4"></i>
+
+        <span class="text-xs font-medium">
+          Centralizar
+        </span>
+      </button>
+    </div>
+  </main>
+</div>
+
+<script>
+function mapaZoneamentoApp() {
+  return {
+
+    teste: 'OK',
+    driveFileId: '1oud92GigcCUYgD09eFMes2i6NeL_tWHy',
+
+    //driveFileIdPerimetro:'16WVP93hwyCYZJfnvJyipLd8pFrbEqJT0',
+    
+    loading: true,
+    error: false,
+    errorMessage: '',
+    searchQuery: '',
+    selectedZone: null,
+    visMode: 'colorido',
+    baseLayer: 'street', // 'street' ou 'satellite'
+    sidebarOpen: window.innerWidth >= 1024,
+    
+    geoJsonRaw: null,
+    availableZones: [],
+    totalFeatures: 0,
+
+    //perimetroLayer: null,
+    //perimetroBounds: null,
+    map: null,
+    geoJsonLayer: null,
+    tileLayers: {},
+    
+
+    // Coordenadas Centrais de Sapezal - MT
+    sapezalCenter: [-13.5432, -58.8123],
+
+    zoneConfig: {
+      'ZRI':   { order: 1, nome: 'Zona Residencial I' },
+      'ZRII':  { order: 2, nome: 'Zona Residencial II' },
+      'ZRIII': { order: 3, nome: 'Zona Residencial III' },
+      'ZM':    { order: 4, nome: 'Zona Mista' },
+      'ZCS':   { order: 5, nome: 'Zona de Comércio e Serviços' },
+      'ZEIS':  { order: 6, nome: 'Zona de Interesse Social' },
+      'ZEPP':  { order: 7, nome: 'Zona Especial de Preservação Permanente' },
+      'ZI':    { order: 8, nome: 'Zona Industrial' },
+      'ZE':    { order: 9, nome: 'Zona Empresarial' }
+    },
+
+    initApp() {
+      this.$nextTick(() => {
+        this.initMap();
+        this.fetchGeoJson();
+       // this.fetchPerimetro();
+
+        const mapEl = document.getElementById('leaflet-map');
+        if (mapEl && typeof ResizeObserver !== 'undefined') {
+          new ResizeObserver(() => {
+            if (this.map) this.map.invalidateSize();
+          }).observe(mapEl);
+        }
+      });
+    },
+
+    initMap() {
+      if (this.map) return;
+
+      this.map = L.map('leaflet-map', {
+            zoomControl: true,
+            minZoom: 13,
+            maxZoom: 19
+        }).setView(this.sapezalCenter, 14);
+
+      // Camada 1: OpenStreetMap (Vetor)
+      this.tileLayers.street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap | Prefeitura Municipal de Sapezal'
+      });
+
+      // Camada 2: Esri World Imagery (Satélite)
+      this.tileLayers.satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 18,
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+      });
+
+      this.tileLayers.street.addTo(this.map);
+
+      setTimeout(() => { if (this.map) this.map.invalidateSize(); }, 300);
+    },
+
+    setBaseLayer(layerType) {
+      if (this.baseLayer === layerType) return;
+      
+      this.map.removeLayer(this.tileLayers[this.baseLayer]);
+      this.tileLayers[layerType].addTo(this.map);
+      this.baseLayer = layerType;
+    },
+
+  fetchGeoJson() {
+      this.loading = true;
+      this.error = false;
+      
+      google.script.run
+        .withSuccessHandler((response) => {
+          if (response && response.success) {
+            this.geoJsonRaw = response.data;
+            this.processGeoJson();
+          } else {
+            this.error = true;
+            this.errorMessage = response ? response.error : 'Erro ao ler dados do backend.';
+          }
+          this.loading = false;
+          
+          this.$nextTick(() => {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            if (this.map) this.map.invalidateSize();
+          });
+        })
+        .withFailureHandler((err) => {
+          this.loading = false;
+          this.error = true;
+          this.errorMessage = err.message || 'Falha de comunicação com o servidor.';
+        })
+        .getGeoJsonData(this.driveFileId);
+    },
+      
+      /*fetchPerimetro() {
+
+      google.script.run
+        .withSuccessHandler((response) => {
+
+          if (!response || !response.success) return;
+
+          this.perimetroLayer = L.geoJSON(response.data);
+
+          this.perimetroBounds =
+            this.perimetroLayer.getBounds();
+
+          this.map.setMaxBounds(
+            this.perimetroBounds.pad(0.15)
+          );
+
+          this.map.fitBounds(
+            this.perimetroBounds
+          );
+
+          this.map.options.maxBoundsViscosity = 1.0;
+
+          const zoomCidade =
+            this.map.getBoundsZoom(
+              this.perimetroBounds
+            );
+
+          this.map.setMinZoom(
+            Math.max(zoomCidade, 13)
+          );
+
+        })
+        .getPerimetroUrbano();
+
+}
+*/
+    processGeoJson() {
+      if (!this.geoJsonRaw || !this.geoJsonRaw.features) return;
+
+      this.totalFeatures = this.geoJsonRaw.features.length;
+      const zoneMap = {};
+
+      this.geoJsonRaw.features.forEach(f => {
+        const props = f.properties || {};
+        const sigla = (props.zona || 'OUTROS').toUpperCase();
+        
+        if (!zoneMap[sigla]) {
+          const config = this.zoneConfig[sigla] || { order: 99, nome: sigla };
+          zoneMap[sigla] = {
+            sigla: sigla,
+            nome: config.nome,
+            order: config.order,
+            descricao: props.descricao || 'Sem descrição cadastrada.',
+            cor_fill: props.cor_fill || '#3b82f6',
+            cor_stroke: props.cor_stroke || '#1d4ed8',
+            count: 0
+          };
+        }
+        zoneMap[sigla].count++;
+      });
+
+      this.availableZones = Object.values(zoneMap).sort((a, b) => a.order - b.order);
+      this.renderMapLayer();
+    },
+
+    get filteredZones() {
+      if (!this.searchQuery) return this.availableZones;
+      const q = this.searchQuery.toLowerCase();
+      return this.availableZones.filter(z => 
+        z.sigla.toLowerCase().includes(q) || 
+        z.nome.toLowerCase().includes(q)
+      );
+    },
+
+    getStyle(feature) {
+      const props = feature.properties || {};
+      const fill = props.cor_fill || '#3b82f6';
+      const stroke = props.cor_stroke || '#1d4ed8';
+
+      if (this.visMode === 'colorido') {
+        return { fillColor: fill, fillOpacity: 0.35, color: stroke, weight: 2 };
+      } else if (this.visMode === 'transparente') {
+        return { fillColor: fill, fillOpacity: 0.12, color: stroke, weight: 2 };
+      } else { 
+        return { fillColor: 'transparent', fillOpacity: 0, color: stroke, weight: 2.5 };
+      }
+    },
+
+    renderMapLayer() {
+      if (!this.geoJsonRaw || !this.map) return;
+
+      if (this.geoJsonLayer) {
+        this.map.removeLayer(this.geoJsonLayer);
+      }
+
+      this.geoJsonLayer = L.geoJSON(this.geoJsonRaw, {
+        filter: (feature) => {
+          if (!this.selectedZone) return true;
+          return (feature.properties.zona || '').toUpperCase() === this.selectedZone;
+        },
+        style: (feature) => this.getStyle(feature),
+        onEachFeature: (feature, layer) => {
+          const props = feature.properties || {};
+          const sigla = (props.zona || '').toUpperCase();
+          const config = this.zoneConfig[sigla] || {};
+          const nome = config.nome || sigla;
+
+          layer.bindPopup(`
+            <div class="font-sans p-1 max-w-xs">
+              <div class="flex items-center space-x-1.5 mb-1">
+                <span class="font-bold text-slate-800 text-sm">${sigla}</span>
+                <span class="text-slate-400">•</span>
+                <span class="text-xs text-slate-600 font-medium">${nome}</span>
+              </div>
+              <p class="text-xs text-slate-600 mb-2 leading-relaxed">${props.descricao || 'Sem descrição cadastrada.'}</p>
+            </div>
+          `);
+        }
+      }).addTo(this.map);
+
+      // Validação do Zoom: Se os limites calculados forem válidos para Sapezal, ajusta o enquadramento
+      if (this.geoJsonLayer.getBounds().isValid()) {
+        const bounds = this.geoJsonLayer.getBounds();
+        // Evita afastar a visão para o mundo caso o GeoJSON contenha erro de coordenada
+        if (Math.abs(bounds.getSouth()) < 80) {
+          this.map.fitBounds(bounds, { padding: [30, 30] });
+        } else {
+          this.map.setView(this.sapezalCenter, 14);
+        }
+      } else {
+        this.map.setView(this.sapezalCenter, 14);
+      }
+    },
+
+    setVisMode(mode) {
+      this.visMode = mode;
+      this.renderMapLayer();
+    },
+
+    selectZone(sigla) {
+      this.selectedZone = sigla;
+      this.renderMapLayer();
+    },
+
+    resetView() {
+      this.selectedZone = null;
+      this.renderMapLayer();
+      this.map.setView(this.sapezalCenter, 14);
+    }
+  };
+}
+</script>

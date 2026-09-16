@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full bg-white overflow-hidden">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Revisão do Plano Diretor - Sapezal/MT</title>
+  
+  <!-- Inclusão do Componente de Logo -->
+  <?!= include('Logo'); ?>
+
+  <!-- Tailwind CSS via CDN com tokens da Marca Oficial -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              'green-dark': 'var(--brand-green-dark)',
+              'green': 'var(--brand-green)',
+              'green-light': 'var(--brand-green-light)',
+              'yellow': 'var(--brand-yellow)',
+              'yellow-dark': 'var(--brand-yellow-dark)',
+              'gold': 'var(--brand-gold)',
+              'blue-light': 'var(--brand-blue-light)',
+              'blue': 'var(--brand-blue)',
+              'blue-dark': 'var(--brand-blue-dark)',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- CSS Variables Centralizadas -->
+  <style>
+    :root {
+      --brand-green-dark: #0f560f;
+      --brand-green: #409240;
+      --brand-green-light: #839f21;
+      --brand-yellow: #ffd200;
+      --brand-yellow-dark: #e2bd1e;
+      --brand-gold: #cea20a;
+      --brand-blue-light: #0385d0;
+      --brand-blue: #015797;
+      --brand-blue-dark: #072b4c;
+    }
+
+    [x-cloak] { 
+      display: none !important; 
+    }
+
+    /* Estilização para botões e componentes institucionais */
+    .btn-brand-primary {
+      background-color: var(--brand-blue);
+      color: #ffffff;
+      transition: background-color 0.2s ease;
+    }
+    .btn-brand-primary:hover {
+      background-color: var(--brand-blue-dark);
+    }
+
+    .btn-brand-secondary {
+      background-color: var(--brand-green);
+      color: #ffffff;
+      transition: background-color 0.2s ease;
+    }
+    .btn-brand-secondary:hover {
+      background-color: var(--brand-green-dark);
+    }
+
+    .btn-brand-highlight {
+      background-color: var(--brand-yellow);
+      color: var(--brand-blue-dark);
+      font-weight: 600;
+      transition: background-color 0.2s ease;
+    }
+    .btn-brand-highlight:hover {
+      background-color: var(--brand-gold);
+      color: #ffffff;
+    }
+
+    .bg-brand-gradient {
+      background: linear-gradient(135deg, var(--brand-blue-dark) 0%, var(--brand-blue) 100%);
+    }
+
+    .bg-brand-gradient-green {
+      background: linear-gradient(135deg, var(--brand-green-dark) 0%, var(--brand-green) 100%);
+    }
+  </style>
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- FullCalendar CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+  <!-- Alpine.js CDN -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <?!= include('Styles'); ?>
+</head>
+<body class="h-full w-full overflow-y-auto flex flex-col font-sans text-slate-800 bg-white antialiased selection:bg-brand-blue selection:text-white" x-data="appState()" x-init="initApp()">
+
+  <!-- Skip Link Acessibilidade -->
+  <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-brand-yellow focus:text-brand-blue-dark font-bold">
+    Ir para o conteúdo principal
+  </a>
+
+  <!-- Header Institucional & Navbar -->
+  <?!= include('Header'); ?>
+
+  <!-- Conteúdo Principal -->
+  <main id="main-content" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 focus:outline-none" tabindex="-1">
+    
+    <!-- State: Skeleton Loading Institucional -->
+    <div x-show="loading" class="space-y-6 animate-pulse" aria-hidden="true">
+      <div class="h-32 bg-slate-100 rounded-lg"></div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="h-40 bg-slate-100 rounded-lg"></div>
+        <div class="h-40 bg-slate-100 rounded-lg"></div>
+        <div class="h-40 bg-slate-100 rounded-lg"></div>
+      </div>
+    </div>
+
+    <!-- State: Error Institucional -->
+    <div x-show="error" x-cloak class="p-6 bg-red-50 border border-red-200 border-l-4 border-l-red-500 text-red-700 rounded-r-md shadow-xs">
+      <div class="flex items-center space-x-3">
+        <i data-lucide="alert-triangle" class="w-6 h-6 text-red-500"></i>
+        <h2 class="text-lg font-bold">Erro ao carregar os dados</h2>
+      </div>
+      <p class="mt-2 text-sm" x-text="errorMessage"></p>
+      <button @click="loadData()" class="mt-4 px-4 py-2 bg-red-600 text-white font-medium text-sm rounded-md hover:bg-red-700 transition-colors">
+        Tentar Novamente
+      </button>
+    </div>
+
+    <!-- Rotas Dinâmicas SPA -->
+    <div x-show="!loading && !error" x-cloak class="w-full h-full">
+      <div x-show="currentTab === 'inicio'" x-transition.opacity.duration.300ms>
+        <?!= include('PageHome'); ?>
+      </div>
+      
+      <div x-show="currentTab === 'calendario'" x-transition.opacity.duration.300ms>
+        <?!= include('PageCalendario'); ?>
+      </div>
+      
+      <!-- Contêiner do Mapa Expandido -->
+      <div 
+        x-show="currentTab === 'mapas'" 
+        x-transition.opacity.duration.300ms
+        class="w-full -mx-4 sm:-mx-6 lg:-mx-8 -my-6"
+      >
+        <?!= include('PageMapas'); ?>
+      </div>
+
+      <div x-show="currentTab === 'participacao'" x-transition.opacity.duration.300ms>
+        <?!= include('PageParticipacao'); ?>
+      </div>
+      
+      <div x-show="currentTab === 'videos'" x-transition.opacity.duration.300ms>
+        <?!= include('PageVideos'); ?>
+      </div>
+      
+      <div x-show="currentTab === 'plano-anterior'" x-transition.opacity.duration.300ms>
+        <?!= include('PageAnterior'); ?>
+      </div>
+      
+      <div x-show="currentTab === 'faq'" x-transition.opacity.duration.300ms>
+        <?!= include('PageFAQ'); ?>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Rodapé Institucional -->
+  <?!= include('Footer'); ?>
+
+  <!-- Componentes de Modais e Alertas Globais -->
+  <?!= include('Modal'); ?>
+
+  <!-- Scripts e Estado da SPA -->
+  <?!= include('Scripts'); ?>
+</body>
+</html>

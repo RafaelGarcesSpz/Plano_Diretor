@@ -1,0 +1,223 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+    /* Paleta Institucional do Plano Diretor de Sapezal */
+    --pdm-green-dark: #0f560f;
+    --pdm-green-mid: #409240;
+    --pdm-green-olive: #839f21;
+
+    --pdm-yellow-bright: #ffd200;
+    --pdm-yellow-mid: #e2bd1e;
+    --pdm-yellow-dark: #cea20a;
+
+    --pdm-blue-light: #0385d0;
+    --pdm-blue-mid: #015797;
+    --pdm-blue-dark: #072b4c;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #ffffff;
+    color: #0f172a;
+}
+
+[x-cloak] { display: none !important; }
+
+  /* Custom Scrollbar suave */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: #ffffff; }
+  ::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
+
+  html { scroll-behavior: smooth; }
+
+  /* Ajustes de Cards para Fundo Branco Institucional */
+  .pdm-card {
+    background-color: #ffffff;
+    border: 1px solid #E2E8F0;
+    box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.02);
+    border-radius: 0.75rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .pdm-card:hover {
+    border-color: #CBD5E1;
+    box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+  }
+
+  /* Extensão de classes utilitárias para a Paleta Oficial */
+  .bg-pdm-blue-dark { background-color: var(--pdm-blue-dark); }
+  .bg-pdm-blue-mid { background-color: var(--pdm-blue-mid); }
+  .bg-pdm-blue-light { background-color: var(--pdm-blue-light); }
+  
+  .bg-pdm-green-dark { background-color: var(--pdm-green-dark); }
+  .bg-pdm-green-mid { background-color: var(--pdm-green-mid); }
+  .bg-pdm-green-olive { background-color: var(--pdm-green-olive); }
+
+  .bg-pdm-yellow-bright { background-color: var(--pdm-yellow-bright); }
+  .bg-pdm-yellow-mid { background-color: var(--pdm-yellow-mid); }
+  .bg-pdm-yellow-dark { background-color: var(--pdm-yellow-dark); }
+
+  .text-pdm-blue-dark { color: var(--pdm-blue-dark); }
+  .text-pdm-blue-mid { color: var(--pdm-blue-mid); }
+  .text-pdm-blue-light { color: var(--pdm-blue-light); }
+
+  .text-pdm-green-dark { color: var(--pdm-green-dark); }
+  .text-pdm-green-mid { color: var(--pdm-green-mid); }
+  .text-pdm-green-olive { color: var(--pdm-green-olive); }
+
+  .text-pdm-yellow-bright { color: var(--pdm-yellow-bright); }
+  .text-pdm-yellow-mid { color: var(--pdm-yellow-mid); }
+  .text-pdm-yellow-dark { color: var(--pdm-yellow-dark); }
+
+  .border-pdm-green-mid { border-color: var(--pdm-green-mid); }
+  .border-pdm-yellow-bright { border-color: var(--pdm-yellow-bright); }
+  .border-pdm-blue-mid { border-color: var(--pdm-blue-mid); }
+
+  /* Gradiente Institucional Oficial (Transição Vibrante Azul -> Verde) */
+  .bg-gradient-pdm-hero {
+    background: linear-gradient(135deg, #072b4c 0%, #015797 45%, #0385d0 70%, #409240 100%);
+  }
+
+  .bg-gradient-pdm-card {
+    background: linear-gradient(135deg, #015797 0%, #072b4c 100%);
+  }
+
+  .transition-all-200 {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Ajustes e Tema Tailwind para o FullCalendar */
+  .fc {
+    font-family: inherit;
+    --fc-border-color: #E2E8F0;
+    --fc-button-bg-color: #015797;
+    --fc-button-border-color: #015797;
+    --fc-button-hover-bg-color: #072b4c;
+    --fc-button-hover-border-color: #072b4c;
+    --fc-button-active-bg-color: #072b4c;
+    --fc-button-active-border-color: #072b4c;
+    --fc-event-bg-color: #015797;
+    --fc-event-border-color: #015797;
+  }
+  
+  .fc-theme-standard td, .fc-theme-standard th {
+    border-color: #E2E8F0 !important;
+  }
+
+  .fc-toolbar-title {
+    font-size: 1.125rem !important;
+    font-weight: 700 !important;
+    color: #072b4c !important;
+  }
+
+  .fc-event {
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+  }
+
+  /* Alto Contraste para Acessibilidade */
+  body.contrast {
+    background-color: #000000 !important;
+    color: #FFFFFF !important;
+  }
+  body.contrast .bg-white, 
+  body.contrast .bg-slate-50,
+  body.contrast .bg-slate-100 {
+    background-color: #121212 !important;
+    color: #FFFFFF !important;
+    border-color: #333333 !important;
+  }
+  body.contrast a, body.contrast button {
+    color: #ffd200 !important;
+  }
+
+  /* Animação do fluxo das setas conectoras (Timeline Flow) */
+  @keyframes flowArrow {
+    0% { transform: translateX(-4px); opacity: 0.4; }
+    50% { transform: translateX(4px); opacity: 1; }
+    100% { transform: translateX(-4px); opacity: 0.4; }
+  }
+
+  .animate-flow-arrow {
+    animation: flowArrow 1.8s ease-in-out infinite;
+  }
+
+  /* Animação do fluxo vertical para Mobile */
+  @keyframes flowArrowVertical {
+    0% { transform: translateY(-3px); opacity: 0.4; }
+    50% { transform: translateY(3px); opacity: 1; }
+    100% { transform: translateY(-3px); opacity: 0.4; }
+  }
+
+  .animate-flow-arrow-vertical {
+    animation: flowArrowVertical 1.8s ease-in-out infinite;
+  }
+
+  /* Estilos customizados para identidades visuais dinâmicas por Etapa */
+  .glow-etapa-1 { shadow-color: rgba(234, 107, 45, 0.35); }
+  .glow-etapa-2 { shadow-color: rgba(46, 125, 50, 0.35); }
+  .glow-etapa-3 { shadow-color: rgba(22, 150, 210, 0.35); }
+  .glow-etapa-4 { shadow-color: rgba(156, 39, 176, 0.35); }
+
+  /* Ajuste e Customização Tailwind no Leaflet */
+  .leaflet-container {
+    font-family: inherit !important;
+    background-color: #ffffff !important;
+    border-radius: 0.75rem;
+    z-index: 1;
+  }
+
+  /* Customização de Popups do Leaflet */
+  .leaflet-popup-content-wrapper {
+    padding: 0 !important;
+    border-radius: 0.75rem !important;
+    overflow: hidden !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+
+  .leaflet-popup-content {
+    margin: 0 !important;
+    width: 280px !important;
+  }
+
+  .leaflet-container a.leaflet-popup-close-button {
+    padding: 8px !important;
+    color: #64748b !important;
+    font-size: 18px !important;
+  }
+
+  .leaflet-container a.leaflet-popup-close-button:hover {
+    color: #072b4c !important;
+  }
+
+  /* Ocultar barra de atribuição feia ou compactar */
+  .leaflet-control-attribution {
+    font-size: 10px !important;
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(4px);
+    border-radius: 0.375rem 0 0 0 !important;
+    padding: 2px 6px !important;
+  }
+
+  /* Estilização dos Controles Integrados */
+  .leaflet-touch .leaflet-bar {
+    border: none !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  }
+
+  .leaflet-touch .leaflet-bar a {
+    background-color: #ffffff !important;
+    color: #334155 !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+  }
+
+  .leaflet-touch .leaflet-bar a:hover {
+    background-color: #f8fafc !important;
+    color: #015797 !important;
+  }
+</style>

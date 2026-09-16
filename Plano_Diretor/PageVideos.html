@@ -1,0 +1,22 @@
+<section class="space-y-6">
+  <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+    <h2 class="text-xl font-bold text-slate-900">Acervo Audiovisual</h2>
+    <p class="text-sm text-slate-600">Assista às gravações das audiências e aos vídeos informativos.</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <template x-for="video in db.videos" :key="video.id">
+      <div class="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+        <!-- Lazy Loading Iframe YouTube -->
+        <div class="relative aspect-video bg-black">
+          <iframe class="w-full h-full" :src="'https://www.youtube-nocookie.com/embed/' + video.youtubeId" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+        </div>
+        <div class="p-4">
+          <span class="text-xs text-slate-400" x-text="video.data"></span>
+          <h3 class="text-base font-bold text-slate-800 mt-1" x-text="video.titulo"></h3>
+          <p class="text-sm text-slate-600 mt-2" x-text="video.descricao"></p>
+        </div>
+      </div>
+    </template>
+  </div>
+</section>

@@ -1,0 +1,138 @@
+<header class="bg-white text-slate-800 shadow-xs sticky top-0 z-50 border-b-2 border-[#015797]">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-20">
+      
+      <!-- Logo Dinâmica -->
+      <div class="flex items-center space-x-4 cursor-pointer shrink-0" @click="navigate('inicio')">
+        <div class="flex items-center bg-white p-1 rounded-lg border border-slate-100 shadow-2xs">
+          <img :src="APP_LOGO" alt="Revisão do Plano Diretor - Sapezal" class="h-10 sm:h-12 w-auto object-contain" />
+        </div>
+      </div>
+
+      <!-- Navegação Principal Desktop (Visível a partir de md:) -->
+      <nav class="hidden md:flex items-center space-x-1 overflow-x-auto py-1">
+        <button @click="navigate('inicio')" 
+                :class="currentTab === 'inicio' ? 'bg-[#015797] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-slate-100 hover:text-[#072b4c]'"
+                class="px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 shrink-0">
+          <i data-lucide="home" class="w-4 h-4"></i>
+          <span>Início</span>
+        </button>
+
+        <button @click="navigate('participacao')" 
+                :class="currentTab === 'participacao' ? 'bg-[#015797] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-slate-100 hover:text-[#072b4c]'"
+                class="px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 shrink-0">
+          <i data-lucide="message-square" class="w-4 h-4 text-[#e2bd1e]"></i>
+          <span>Participação Social</span>
+        </button>
+
+        <button @click="navigate('mapas')" 
+                :class="currentTab === 'mapas' ? 'bg-[#015797] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-slate-100 hover:text-[#072b4c]'"
+                class="px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 shrink-0">
+          <i data-lucide="map" class="w-4 h-4 text-[#409240]"></i>
+          <span>Mapas Urbanos</span>
+        </button>
+
+        <button @click="navigate('calendario')" 
+                :class="currentTab === 'calendario' ? 'bg-[#015797] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-slate-100 hover:text-[#072b4c]'"
+                class="px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 shrink-0">
+          <i data-lucide="calendar" class="w-4 h-4 text-[#0385d0]"></i>
+          <span>Agenda</span>
+        </button>
+
+        <button @click="navigate('videos')" 
+                :class="currentTab === 'videos' ? 'bg-[#015797] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-slate-100 hover:text-[#072b4c]'"
+                class="px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 shrink-0">
+          <i data-lucide="video" class="w-4 h-4 text-[#e11d48]"></i>
+          <span>Vídeos</span>
+        </button>
+
+        <button @click="navigate('plano-anterior')" 
+                :class="currentTab === 'plano-anterior' ? 'bg-[#015797] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-slate-100 hover:text-[#072b4c]'"
+                class="px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 shrink-0">
+          <i data-lucide="archive" class="w-4 h-4 text-[#839f21]"></i>
+          <span>Plano Anterior</span>
+        </button>
+
+        <button @click="navigate('faq')" 
+                :class="currentTab === 'faq' ? 'bg-[#015797] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-slate-100 hover:text-[#072b4c]'"
+                class="px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 shrink-0">
+          <i data-lucide="help-circle" class="w-4 h-4 text-[#015797]"></i>
+          <span>FAQ</span>
+        </button>
+      </nav>
+
+      <!-- Botão Hamburger Mobile -->
+      <div class="md:hidden flex items-center">
+        <button @click="mobileMenuOpen = !mobileMenuOpen" 
+                type="button" 
+                aria-label="Abrir Menu de Navegação" 
+                class="p-2.5 rounded-lg text-slate-700 hover:text-[#015797] hover:bg-slate-100 focus:outline-hidden transition-colors flex items-center space-x-2 border border-slate-200">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-600" x-text="mobileMenuOpen ? 'Fechar' : 'Menu'"></span>
+          <i data-lucide="menu" class="w-5 h-5" x-show="!mobileMenuOpen"></i>
+          <i data-lucide="x" class="w-5 h-5 text-red-600" x-show="mobileMenuOpen" x-cloak></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menu Mobile Desdobrável Dropdown -->
+  <div x-show="mobileMenuOpen" 
+       x-cloak 
+       x-transition:enter="transition ease-out duration-200"
+       x-transition:enter-start="opacity-0 -translate-y-2"
+       x-transition:enter-end="opacity-100 translate-y-0"
+       x-transition:leave="transition ease-in duration-150"
+       x-transition:leave-start="opacity-100 translate-y-0"
+       x-transition:leave-end="opacity-0 -translate-y-2"
+       class="md:hidden bg-white border-b border-slate-200 px-4 pt-3 pb-5 space-y-1 shadow-md">
+    
+    <button @click="navigate('inicio')" 
+            :class="currentTab === 'inicio' ? 'bg-slate-100 text-[#015797] font-bold border-l-4 border-[#015797]' : 'text-slate-700 hover:bg-slate-50'"
+            class="w-full text-left px-3 py-2.5 rounded-md text-sm font-semibold flex items-center space-x-3 transition-colors">
+      <i data-lucide="home" class="w-4 h-4"></i>
+      <span>Início</span>
+    </button>
+
+    <button @click="navigate('calendario')" 
+            :class="currentTab === 'calendario' ? 'bg-slate-100 text-[#015797] font-bold border-l-4 border-[#015797]' : 'text-slate-700 hover:bg-slate-50'"
+            class="w-full text-left px-3 py-2.5 rounded-md text-sm font-semibold flex items-center space-x-3 transition-colors">
+      <i data-lucide="calendar" class="w-4 h-4 text-[#0385d0]"></i>
+      <span>Calendário</span>
+    </button>
+
+    <button @click="navigate('mapas')" 
+            :class="currentTab === 'mapas' ? 'bg-slate-100 text-[#015797] font-bold border-l-4 border-[#015797]' : 'text-slate-700 hover:bg-slate-50'"
+            class="w-full text-left px-3 py-2.5 rounded-md text-sm font-semibold flex items-center space-x-3 transition-colors">
+      <i data-lucide="map" class="w-4 h-4 text-[#409240]"></i>
+      <span>Mapas</span>
+    </button>
+
+    <button @click="navigate('participacao')" 
+            :class="currentTab === 'participacao' ? 'bg-slate-100 text-[#015797] font-bold border-l-4 border-[#015797]' : 'text-slate-700 hover:bg-slate-50'"
+            class="w-full text-left px-3 py-2.5 rounded-md text-sm font-semibold flex items-center space-x-3 transition-colors">
+      <i data-lucide="message-square" class="w-4 h-4 text-[#e2bd1e]"></i>
+      <span>Participação</span>
+    </button>
+
+    <button @click="navigate('videos')" 
+            :class="currentTab === 'videos' ? 'bg-slate-100 text-[#015797] font-bold border-l-4 border-[#015797]' : 'text-slate-700 hover:bg-slate-50'"
+            class="w-full text-left px-3 py-2.5 rounded-md text-sm font-semibold flex items-center space-x-3 transition-colors">
+      <i data-lucide="video" class="w-4 h-4 text-[#e11d48]"></i>
+      <span>Vídeos</span>
+    </button>
+
+    <button @click="navigate('plano-anterior')" 
+            :class="currentTab === 'plano-anterior' ? 'bg-slate-100 text-[#015797] font-bold border-l-4 border-[#015797]' : 'text-slate-700 hover:bg-slate-50'"
+            class="w-full text-left px-3 py-2.5 rounded-md text-sm font-semibold flex items-center space-x-3 transition-colors">
+      <i data-lucide="archive" class="w-4 h-4 text-[#839f21]"></i>
+      <span>Plano Anterior</span>
+    </button>
+
+    <button @click="navigate('faq')" 
+            :class="currentTab === 'faq' ? 'bg-slate-100 text-[#015797] font-bold border-l-4 border-[#015797]' : 'text-slate-700 hover:bg-slate-50'"
+            class="w-full text-left px-3 py-2.5 rounded-md text-sm font-semibold flex items-center space-x-3 transition-colors">
+      <i data-lucide="help-circle" class="w-4 h-4 text-[#015797]"></i>
+      <span>FAQ</span>
+    </button>
+  </div>
+</header>
