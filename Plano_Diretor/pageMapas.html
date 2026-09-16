@@ -53,6 +53,23 @@
     </div>
   </div>
 
+    <!-- Seletor interno de modo: mantém um único mapa e altera apenas o contexto da sidebar. -->
+    <div x-show="!isMobileViewport || bottomSheetState !== 'collapsed'" x-cloak class="p-4 border-b border-slate-100">
+      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Modo Atual</label>
+      <div class="space-y-1 rounded-lg bg-slate-100 p-1">
+        <template x-for="mode in modeConfig" :key="mode.id">
+          <button
+            type="button"
+            @click="setMode(mode.id)"
+            :class="currentMode === mode.id ? 'bg-white text-brand-blue shadow-sm font-bold' : 'text-slate-600 hover:bg-white/70'"
+            class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-xs transition-all">
+            <span class="h-2 w-2 rounded-full border" :class="currentMode === mode.id ? 'border-brand-blue bg-brand-blue' : 'border-slate-400 bg-transparent'"></span>
+            <span x-text="mode.nome"></span>
+          </button>
+        </template>
+      </div>
+    </div>
+
     <!-- Resumo contextual: aparece somente após uma zona ser selecionada. -->
     <div x-show="selectedZoneDetails" x-cloak class="mx-4 mt-4 p-3 rounded-lg border border-blue-100 bg-blue-50/70">
       <div class="flex items-center justify-between gap-3">
@@ -89,6 +106,58 @@
       </div>
     </div>
 
+    <!-- Painel de contexto: a estrutura muda por modo antes da implementação das regras completas. -->
+    <div x-show="!isMobileViewport || bottomSheetState !== 'collapsed'" x-cloak class="mx-4 mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+      <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500" x-text="activeModeConfig.pergunta"></p>
+      <p class="mt-1 text-xs leading-relaxed text-slate-600" x-text="activeModeConfig.descricao"></p>
+      <p class="mt-2 text-[10px] text-slate-400" x-text="`${availableModeLayers.length} camada(s) prevista(s) neste modo`"></p>
+    </div>
+
+    <!-- Painel cidadão mockado: será alimentado pelas abas da planilha na próxima etapa. -->
+    <section
+      x-show="currentMode === 'consulta-urbanistica' && selectedUrbanData"
+      x-cloak
+      class="mx-4 mt-4 rounded-lg border border-emerald-100 bg-white shadow-sm">
+      <div class="border-b border-emerald-100 bg-emerald-50/60 p-4">
+        <p class="text-[10px] font-semibold uppercase tracking-wider text-emerald-700">Consulta Urbanística</p>
+        <h3 class="mt-1 text-base font-bold text-slate-800" x-text="selectedUrbanData ? selectedUrbanData.nome : ''"></h3>
+        <p class="mt-1 text-xs leading-relaxed text-slate-600" x-text="selectedUrbanData ? selectedUrbanData.descricao : ''"></p>
+      </div>
+      <div class="space-y-4 p-4 text-xs">
+        <div>
+          <h4 class="font-bold text-slate-700">O que pode fazer aqui</h4>
+          <ul class="mt-1 list-disc space-y-1 pl-4 text-slate-600">
+            <template x-for="item in selectedUrbanData ? selectedUrbanData.usosPermitidos : []" :key="`permitido-${item}`">
+              <li x-text="item"></li>
+            </template>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-bold text-slate-700">O que não pode fazer aqui</h4>
+          <ul class="mt-1 list-disc space-y-1 pl-4 text-slate-600">
+            <template x-for="item in selectedUrbanData ? selectedUrbanData.usosProibidos : []" :key="`proibido-${item}`">
+              <li x-text="item"></li>
+            </template>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-bold text-slate-700">Parâmetros urbanísticos</h4>
+          <dl class="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 text-slate-600">
+            <template x-for="parameter in selectedUrbanData ? selectedUrbanData.parametros : []" :key="parameter.rotulo">
+              <div>
+                <dt class="text-[10px] uppercase tracking-wide text-slate-400" x-text="parameter.rotulo"></dt>
+                <dd class="font-semibold" x-text="parameter.valor"></dd>
+              </div>
+            </template>
+          </dl>
+        </div>
+        <div class="border-t border-slate-100 pt-3">
+          <p><strong class="text-slate-700">Legislação:</strong> <span class="text-slate-600" x-text="selectedUrbanData ? selectedUrbanData.legislacao : ''"></span></p>
+          <p class="mt-1"><strong class="text-slate-700">Bairro:</strong> <span class="text-slate-600" x-text="selectedUrbanData ? selectedUrbanData.bairro : ''"></span></p>
+        </div>
+      </div>
+    </section>
+
     <!-- Modos de Estilo dos Polígonos -->
     <div x-show="!isMobileViewport || bottomSheetState !== 'collapsed'" x-cloak class="p-4 border-b border-slate-100 bg-slate-50/30">
       <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Estilo das Camadas</label>
@@ -123,7 +192,7 @@
     <!-- Lista Dinâmica de Zonas -->
     <div x-show="!isMobileViewport || bottomSheetState !== 'collapsed'" x-cloak class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 space-y-2 custom-scrollbar">
       <div class="flex items-center justify-between mb-2">
-        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Filtrar Zonas</span>
+        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider" x-text="activeModeConfig.listaTitulo"></span>
         <button 
           x-show="selectedZone !== null" 
           @click="selectZone(null)" 
@@ -229,6 +298,49 @@
 
     <div id="leaflet-map" class="absolute inset-0 w-full h-full z-0"></div>
 
+    <!-- Card contextual próprio: resumo rápido da área clicada, sem usar popup do Leaflet. -->
+    <article
+      x-show="contextCard && !isMobileViewport"
+      x-cloak
+      @click.stop
+      class="absolute z-[850] w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white shadow-lg transition-all duration-200"
+      :style="`left: ${contextCard ? contextCard.position.x : 0}px; top: ${contextCard ? contextCard.position.y : 0}px`">
+      <div class="border-b border-slate-100 p-4">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-brand-blue" x-text="contextCard ? contextCard.sigla : ''"></span>
+            <h3 class="mt-1 text-sm font-bold text-slate-800" x-text="contextCard ? contextCard.nome : ''"></h3>
+          </div>
+          <button @click="closeContextCard()" title="Fechar resumo" class="shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+            <i data-lucide="x" class="h-4 w-4"></i>
+          </button>
+        </div>
+        <p class="mt-2 text-xs leading-relaxed text-slate-600" x-text="contextCard ? contextCard.descricao : ''"></p>
+      </div>
+      <div class="space-y-3 p-4 text-xs">
+        <div>
+          <p class="font-bold text-slate-700">O que pode fazer aqui</p>
+          <ul class="mt-1 space-y-1 text-slate-600">
+            <template x-for="item in contextCard ? contextCard.usosPermitidos : []" :key="`card-permitido-${item}`">
+              <li class="flex gap-1.5"><span class="text-emerald-600">+</span><span x-text="item"></span></li>
+            </template>
+          </ul>
+        </div>
+        <div>
+          <p class="font-bold text-slate-700">O que não pode fazer aqui</p>
+          <ul class="mt-1 space-y-1 text-slate-600">
+            <template x-for="item in contextCard ? contextCard.usosProibidos : []" :key="`card-proibido-${item}`">
+              <li class="flex gap-1.5"><span class="text-red-600">-</span><span x-text="item"></span></li>
+            </template>
+          </ul>
+        </div>
+        <button @click="openContextDetails()" class="flex w-full items-center justify-center gap-2 rounded-md bg-brand-blue px-3 py-2 text-xs font-bold text-white hover:bg-brand-darkblue">
+          <span>Ver detalhes</span>
+          <i data-lucide="arrow-right" class="h-3.5 w-3.5"></i>
+        </button>
+      </div>
+    </article>
+
     <!-- Seletor de Mapa Base (OpenStreetMap vs Satélite) -->
   <div
   class="absolute top-4 left-1/2 z-[500] flex max-w-[calc(100vw-10rem)] -translate-x-1/2 gap-1 overflow-hidden rounded-lg border border-slate-200 bg-white/90 p-1 shadow-md backdrop-blur">
@@ -271,18 +383,147 @@
 function mapaZoneamentoApp() {
   return {
 
-    teste: 'OK',
-    driveFileId: '1oud92GigcCUYgD09eFMes2i6NeL_tWHy',
+    /*
+     * Configuração central do módulo. Os valores atuais são mantidos para que
+     * a refatoração não altere a experiência nem o arquivo já publicado.
+     */
+    appConfig: {
+      defaultMode: 'consulta-urbanistica',
+      defaultScenario: 'proposto',
+      defaultBaseLayer: 'street',
+      mapCenter: [-13.5432, -58.8123],
+      fallbackBounds: [[-13.64, -58.94], [-13.44, -58.68]]
+    },
 
-    //driveFileIdPerimetro:'16WVP93hwyCYZJfnvJyipLd8pFrbEqJT0',
+    /* Catálogo das camadas previstas. Somente as camadas já usadas continuam ativas. */
+    layersConfig: {
+      groups: {
+        planejamentoUrbano: 'Planejamento Urbano',
+        estruturaUrbana: 'Estrutura Urbana',
+        evolucaoTerritorial: 'Evolução Territorial',
+        meioAmbiente: 'Meio Ambiente',
+        equipamentosPublicos: 'Equipamentos Públicos'
+      },
+      items: {
+        zoneamentoProposto: {
+          id: 'zoneamento-proposto',
+          nome: 'Zoneamento Proposto',
+          grupo: 'planejamentoUrbano',
+          ativo: true,
+          tipo: 'geojson',
+          source: '1oud92GigcCUYgD09eFMes2i6NeL_tWHy'
+        },
+        zoneamentoVigente: {
+          id: 'zoneamento-vigente',
+          nome: 'Zoneamento Vigente',
+          grupo: 'planejamentoUrbano',
+          ativo: false,
+          tipo: 'geojson',
+          source: null
+        },
+        bairros: { id: 'bairros', nome: 'Bairros', grupo: 'estruturaUrbana', ativo: false, tipo: 'geojson', source: null },
+        perimetroUrbano: { id: 'perimetro-urbano', nome: 'Perímetro Urbano', grupo: 'planejamentoUrbano', ativo: true, tipo: 'geojson', source: 'Perimetro_urbano_vigente_v2.geojson' },
+        equipamentosPublicos: { id: 'equipamentos-publicos', nome: 'Equipamentos Públicos', grupo: 'equipamentosPublicos', ativo: false, tipo: 'geojson', source: null },
+        areasPublicas: { id: 'areas-publicas', nome: 'Áreas Públicas', grupo: 'estruturaUrbana', ativo: false, tipo: 'geojson', source: null },
+        vaziosUrbanos: { id: 'vazios-urbanos', nome: 'Vazios Urbanos', grupo: 'evolucaoTerritorial', ativo: false, tipo: 'geojson', source: null },
+        evolucaoUrbana: { id: 'evolucao-urbana', nome: 'Evolução Urbana', grupo: 'evolucaoTerritorial', ativo: false, tipo: 'geojson', source: null },
+        app: { id: 'app', nome: 'APP', grupo: 'meioAmbiente', ativo: false, tipo: 'geojson', source: null }
+      }
+    },
+
+    /* Cenários preparados para a comparação futura; o vigente ainda não possui fonte. */
+    scenarioConfig: {
+      vigente: null,
+      proposto: {
+        id: 'proposto',
+        nome: 'Zoneamento Proposto',
+        layerId: 'zoneamento-proposto'
+      }
+    },
+
+    /* Infraestrutura dos modos internos; as regras completas serão adicionadas depois. */
+    modeConfig: [
+      {
+        id: 'consulta-urbanistica',
+        nome: 'Consulta Urbanística',
+        pergunta: 'Consulta cidadã',
+        descricao: 'Consulte as zonas e localize as informações urbanísticas disponíveis.',
+        layerIds: ['zoneamento-proposto', 'perimetro-urbano'],
+        listaTitulo: 'Filtrar Zonas'
+      },
+      {
+        id: 'comparador-revisao',
+        nome: 'Comparador da Revisão',
+        pergunta: 'Comparação da revisão',
+        descricao: 'Estrutura reservada para comparar cenários do Plano Diretor.',
+        layerIds: ['zoneamento-proposto', 'zoneamento-vigente'],
+        listaTitulo: 'Zonas para comparar'
+      },
+      {
+        id: 'analise-territorial',
+        nome: 'Análise Territorial',
+        pergunta: 'Análise territorial',
+        descricao: 'Estrutura reservada para indicadores e leitura da evolução urbana.',
+        layerIds: ['perimetro-urbano', 'bairros', 'evolucao-urbana'],
+        listaTitulo: 'Camadas de análise'
+      }
+    ],
+
+    /* A aparência das zonas pertence ao código, e não aos atributos do GeoJSON. */
+    zoneStyleConfig: {
+      ZE: { fill: '#90CAF9', stroke: '#1565C0' },
+      ZCS: { fill: '#FFAB91', stroke: '#D84315' },
+      ZEIA: { fill: '#A5D6A7', stroke: '#1B5E20' },
+      ZEIS: { fill: '#81C784', stroke: '#2E7D32' },
+      ZI: { fill: '#BCAAA4', stroke: '#5D4037' },
+      ZM: { fill: '#CE93D8', stroke: '#7B1FA2' },
+      ZRI: { fill: '#FFE082', stroke: '#F57F17' },
+      ZRII: { fill: '#F8BBD0', stroke: '#C2185B' },
+      ZRIII: { fill: '#FFF176', stroke: '#F9A825' },
+      OUTROS: { fill: '#93C5FD', stroke: '#1D4ED8' }
+    },
+
+    /* Mock temporário da consulta cidadã; depois será substituído pelas abas da planilha. */
+    urbanMockData: {
+      ZRI: {
+        descricao: 'Área prioritariamente residencial, com comércio local de apoio ao bairro.',
+        usosPermitidos: ['Moradia unifamiliar e multifamiliar', 'Comércio local de baixo impacto', 'Serviços de vizinhança'],
+        usosProibidos: ['Atividades industriais de alto impacto', 'Depósitos com risco à vizinhança'],
+        parametros: [{ rotulo: 'Lote mínimo', valor: '250 m²' }, { rotulo: 'Gabarito', valor: 'Até 2 pavimentos' }, { rotulo: 'Taxa de ocupação', valor: '60%' }, { rotulo: 'Recuo frontal', valor: '3 m' }],
+        legislacao: 'Plano Diretor Municipal - referência ilustrativa',
+        bairro: 'Centro / área residencial consolidada'
+      },
+      ZRII: {
+        descricao: 'Zona residencial de média intensidade, adequada à expansão organizada da cidade.',
+        usosPermitidos: ['Moradia unifamiliar e multifamiliar', 'Comércio e serviços de bairro', 'Equipamentos comunitários'],
+        usosProibidos: ['Indústria pesada', 'Atividades com tráfego incompatível'],
+        parametros: [{ rotulo: 'Lote mínimo', valor: '300 m²' }, { rotulo: 'Gabarito', valor: 'Até 3 pavimentos' }, { rotulo: 'Taxa de ocupação', valor: '60%' }, { rotulo: 'Recuo frontal', valor: '3 m' }],
+        legislacao: 'Plano Diretor Municipal - referência ilustrativa',
+        bairro: 'Área de expansão urbana'
+      },
+      ZCS: {
+        descricao: 'Eixo destinado ao comércio e aos serviços, com maior diversidade de atividades urbanas.',
+        usosPermitidos: ['Comércio varejista', 'Serviços profissionais', 'Uso misto com moradia'],
+        usosProibidos: ['Atividades poluentes', 'Ocupação que impeça a circulação pública'],
+        parametros: [{ rotulo: 'Lote mínimo', valor: '250 m²' }, { rotulo: 'Gabarito', valor: 'Até 4 pavimentos' }, { rotulo: 'Taxa de ocupação', valor: '70%' }, { rotulo: 'Recuo frontal', valor: 'Opcional' }],
+        legislacao: 'Plano Diretor Municipal - referência ilustrativa',
+        bairro: 'Eixo comercial principal'
+      }
+    },
+
+    // Alias público preservado para integrações antigas que ainda consultem este campo.
+    driveFileId: '1oud92GigcCUYgD09eFMes2i6NeL_tWHy',
     
     loading: true,
     error: false,
     errorMessage: '',
     searchQuery: '',
     selectedZone: null,
+    contextCard: null,
     visMode: 'colorido',
     baseLayer: 'street', // 'street' ou 'satellite'
+    currentMode: 'consulta-urbanistica',
+    currentScenario: 'proposto',
     // No celular o painel começa recolhido, mas visível como uma faixa inferior para preservar a descoberta da interação.
     sidebarOpen: true,
     legendOpen: true,
@@ -300,6 +541,34 @@ function mapaZoneamentoApp() {
     geoJsonLayer: null,
     perimetroLayer: null,
     tileLayers: {},
+    /*
+     * LayerManager controla o registro e a visibilidade das camadas sem
+     * carregar fontes novas. A carga continua explícita em fetchGeoJson()
+     * e fetchPerimetro(), preservando o comportamento atual do módulo.
+     */
+    layerManager: {
+      loaded: {},
+      visible: ['zoneamento-proposto', 'perimetro-urbano'],
+
+      register(layerId, layer) {
+        this.loaded[layerId] = layer;
+        return layer;
+      },
+
+      get(layerId) {
+        return this.loaded[layerId] || null;
+      },
+
+      isVisible(layerId) {
+        return this.visible.includes(layerId);
+      },
+
+      setVisible(layerId, visible) {
+        this.visible = visible
+          ? [...new Set([...this.visible, layerId])]
+          : this.visible.filter((id) => id !== layerId);
+      }
+    },
     
 
     // Coordenadas Centrais de Sapezal - MT
@@ -315,13 +584,17 @@ function mapaZoneamentoApp() {
       'ZEIS':  { order: 6, nome: 'Zona de Interesse Social' },
       'ZEPP':  { order: 7, nome: 'Zona Especial de Preservação Permanente' },
       'ZI':    { order: 8, nome: 'Zona Industrial' },
-      'ZE':    { order: 9, nome: 'Zona Empresarial' }
+      'ZE':    { order: 9, nome: 'Zona Empresarial' },
+      'ZEIA':  { order: 99, nome: 'Zona Especial de Interesse Ambiental' }
     },
 
     initApp() {
       this.$nextTick(() => {
           // A altura do painel é recalculada somente para a experiência mobile; no desktop a sidebar usa o espaço do mapa.
           this.isMobileViewport = window.innerWidth < 1024;
+        this.currentMode = this.appConfig.defaultMode;
+        this.currentScenario = this.appConfig.defaultScenario;
+        this.baseLayer = this.appConfig.defaultBaseLayer;
         this.initMap();
         this.fetchGeoJson();
         this.fetchPerimetro();
@@ -428,6 +701,10 @@ function mapaZoneamentoApp() {
 
       this.tileLayers.street.addTo(this.map);
 
+      // O card acompanha o mapa durante pan/zoom e fecha quando o usuário clica fora dele.
+      this.map.on('move zoomend', () => this.updateContextCardPosition());
+      this.map.on('click', () => this.closeContextCard());
+
       setTimeout(() => { if (this.map) this.map.invalidateSize(); }, 300);
     },
 
@@ -437,6 +714,92 @@ function mapaZoneamentoApp() {
       this.map.removeLayer(this.tileLayers[this.baseLayer]);
       this.tileLayers[layerType].addTo(this.map);
       this.baseLayer = layerType;
+    },
+
+    getLayerConfig(layerId) {
+      return Object.values(this.layersConfig.items).find((layer) => layer.id === layerId) || null;
+    },
+
+    getMapFitPadding() {
+      const basePadding = 16;
+      let leftInset = basePadding;
+      let bottomInset = basePadding;
+
+      if (this.sidebarOpen && !this.isMobileViewport) {
+        const mapElement = document.getElementById('leaflet-map');
+        const sidebarElement = this.$root ? this.$root.querySelector('aside') : null;
+        const mapRect = mapElement ? mapElement.getBoundingClientRect() : null;
+        const sidebarRect = sidebarElement ? sidebarElement.getBoundingClientRect() : null;
+
+        // No desktop, a sidebar sobreposta ocupa a faixa esquerda do mapa; o padding desloca o centro para a área livre.
+        if (mapRect && sidebarRect && sidebarRect.right > mapRect.left) {
+          leftInset = Math.ceil(Math.min(sidebarRect.right - mapRect.left + basePadding, mapRect.width * 0.65));
+        } else {
+          leftInset = 24 * 16 + basePadding;
+        }
+      }
+
+      if (this.sidebarOpen && this.isMobileViewport) {
+        // No mobile, o painel ocupa a parte inferior; o mapa continua livre horizontalmente.
+        bottomInset = Math.ceil(Math.min(parseFloat(this.bottomSheetHeight) + basePadding, (window.innerHeight || 700) * 0.8));
+      }
+
+      return {
+        paddingTopLeft: [leftInset, basePadding],
+        paddingBottomRight: [basePadding, bottomInset]
+      };
+    },
+
+    fitBoundsInUsableArea(bounds, options = {}) {
+      if (!this.map || !bounds || !bounds.isValid()) return;
+
+      // Centraliza no espaço realmente disponível, e não no retângulo total da viewport.
+      this.map.fitBounds(bounds, {
+        ...this.getMapFitPadding(),
+        ...options
+      });
+    },
+
+    get activeModeConfig() {
+      return this.modeConfig.find((mode) => mode.id === this.currentMode) || this.modeConfig[0];
+    },
+
+    get availableModeLayers() {
+      return this.activeModeConfig.layerIds
+        .map((layerId) => this.getLayerConfig(layerId))
+        .filter(Boolean);
+    },
+
+    getActiveLayerConfigs() {
+      return Object.values(this.layersConfig.items).filter((layer) => layer.ativo);
+    },
+
+    setMode(modeId) {
+      // A troca atualiza o contexto da sidebar e prepara as camadas futuras sem carregar novas fontes.
+      if (!this.modeConfig.some((mode) => mode.id === modeId)) return;
+      this.currentMode = modeId;
+      this.selectedZone = null;
+    },
+
+    setScenario(scenarioId) {
+      // A troca de cenário fica preparada para o comparador, mas não altera a interface enquanto não houver fonte vigente.
+      if (!this.scenarioConfig[scenarioId]) return;
+      this.currentScenario = scenarioId;
+      const scenario = this.scenarioConfig[scenarioId];
+      if (!scenario || !scenario.layerId) return;
+
+      const layer = this.getLayerConfig(scenario.layerId);
+      if (layer && layer.source && this.geoJsonRaw) this.renderMapLayer();
+    },
+
+    compareZones() {
+      // Ponto de extensão reservado para a comparação espacial entre cenários.
+      return [];
+    },
+
+    compareParameters() {
+      // Ponto de extensão reservado para a comparação de parâmetros urbanísticos.
+      return {};
     },
 
   fetchGeoJson() {
@@ -464,7 +827,7 @@ function mapaZoneamentoApp() {
           this.error = true;
           this.errorMessage = err.message || 'Falha de comunicação com o servidor.';
         })
-        .getGeoJsonData(this.driveFileId);
+        .getGeoJsonData(this.getLayerConfig(this.scenarioConfig.proposto.layerId).source);
     },
       
     fetchPerimetro() {
@@ -486,12 +849,13 @@ function mapaZoneamentoApp() {
 
           // O limite fica atrás das zonas e funciona como contexto, não como máscara visual.
           this.perimetroLayer.bringToBack();
+          this.layerManager.register('perimetro-urbano', this.perimetroLayer);
         })
         .withFailureHandler(() => {
           // A camada complementar não deve bloquear o carregamento do mapa principal.
         })
         // O sufixo garante que o backend procure o arquivo pelo nome, não como ID.
-        .getGeoJsonData('Perimetro_urbano_vigente_v2.geojson');
+        .getGeoJsonData(this.getLayerConfig('perimetro-urbano').source);
     },
     processGeoJson() {
       if (!this.geoJsonRaw || !this.geoJsonRaw.features) return;
@@ -510,8 +874,9 @@ function mapaZoneamentoApp() {
             nome: config.nome,
             order: config.order,
             descricao: props.descricao || 'Sem descrição cadastrada.',
-            cor_fill: props.cor_fill || '#3b82f6',
-            cor_stroke: props.cor_stroke || '#1d4ed8',
+            // As cores são resolvidas pelo catálogo local, ignorando atributos visuais do GeoJSON.
+            cor_fill: this.getZoneStyle(sigla).fill,
+            cor_stroke: this.getZoneStyle(sigla).stroke,
             count: 0
           };
         }
@@ -537,7 +902,7 @@ function mapaZoneamentoApp() {
       this.map.setMaxBounds(safeBounds.pad(0.25));
       const zoom = this.map.getBoundsZoom(safeBounds, false);
       this.map.setMinZoom(Math.min(Math.max(zoom, 13), 16));
-      this.map.fitBounds(safeBounds, { padding: [24, 24], maxZoom: 16 });
+      this.fitBoundsInUsableArea(safeBounds, { maxZoom: 16 });
     },
 
     get filteredZones() {
@@ -553,10 +918,95 @@ function mapaZoneamentoApp() {
       return this.availableZones.find((zone) => zone.sigla === this.selectedZone) || null;
     },
 
+    get selectedUrbanData() {
+      if (!this.selectedZoneDetails) return null;
+      const mock = this.urbanMockData[this.selectedZoneDetails.sigla] || {};
+      return {
+        nome: this.selectedZoneDetails.nome,
+        descricao: mock.descricao || 'Informações cidadãs desta zona serão detalhadas na base urbanística.',
+        usosPermitidos: mock.usosPermitidos || ['Uso conforme diretrizes urbanísticas municipais'],
+        usosProibidos: mock.usosProibidos || ['Atividades incompatíveis com a zona'],
+        parametros: mock.parametros || [{ rotulo: 'Situação', valor: 'Dados em preparação' }],
+        legislacao: mock.legislacao || 'Legislação municipal em preparação',
+        bairro: mock.bairro || 'Bairro a identificar pela camada de bairros'
+      };
+    },
+
+    getContextCardData(sigla, properties = {}, type = 'zoneamento') {
+      const config = this.zoneConfig[sigla] || { nome: sigla };
+      const mock = this.urbanMockData[sigla] || {};
+
+      // A mesma estrutura atende zoneamento e futuras camadas territoriais.
+      return {
+        type,
+        sigla,
+        nome: config.nome,
+        descricao: mock.descricao || properties.descricao || 'Informações desta área serão detalhadas na consulta urbanística.',
+        usosPermitidos: mock.usosPermitidos || ['Uso conforme diretrizes urbanísticas municipais'],
+        usosProibidos: mock.usosProibidos || ['Atividades incompatíveis com a zona']
+      };
+    },
+
+    showContextCard(feature, latlng, type = 'zoneamento') {
+      const properties = feature.properties || {};
+      const sigla = (properties.zona || properties.sigla || 'OUTROS').toUpperCase();
+
+      if (this.isMobileViewport) {
+        // No mobile, o resumo usa diretamente o bottom sheet para preservar a área livre do mapa.
+        this.contextCard = null;
+        this.selectZone(sigla);
+        return;
+      }
+
+      this.selectedZone = sigla;
+      this.renderMapLayer();
+      this.contextCard = {
+        ...this.getContextCardData(sigla, properties, type),
+        latlng,
+        position: { x: 0, y: 0 }
+      };
+
+      this.$nextTick(() => this.updateContextCardPosition());
+    },
+
+    updateContextCardPosition() {
+      if (!this.contextCard || !this.map) return;
+
+      const mapElement = this.map.getContainer();
+      const mapRect = mapElement.getBoundingClientRect();
+      const point = this.map.latLngToContainerPoint(this.contextCard.latlng);
+      const cardWidth = 288;
+      const cardHeight = 270;
+      const padding = this.getMapFitPadding();
+      const minX = padding.paddingTopLeft[0];
+      const maxX = Math.max(minX, mapRect.width - cardWidth - 12);
+      const maxY = Math.max(12, mapRect.height - cardHeight - padding.paddingBottomRight[1]);
+
+      // Mantém o card próximo ao ponto, mas dentro da área útil e fora da faixa da sidebar.
+      this.contextCard.position = {
+        x: Math.round(Math.max(minX, Math.min(point.x + 14, maxX))),
+        y: Math.round(Math.max(12, Math.min(point.y - 32, maxY)))
+      };
+    },
+
+    closeContextCard() {
+      this.contextCard = null;
+    },
+
+    openContextDetails() {
+      if (!this.contextCard) return;
+      this.selectedZone = this.contextCard.sigla;
+      this.closeContextCard();
+      this.sidebarOpen = true;
+      if (this.isMobileViewport) this.bottomSheetState = 'half';
+      this.renderMapLayer();
+    },
+
     getStyle(feature) {
       const props = feature.properties || {};
-      const fill = props.cor_fill || '#3b82f6';
-      const stroke = props.cor_stroke || '#1d4ed8';
+      const zoneStyle = this.getZoneStyle((props.zona || 'OUTROS').toUpperCase());
+      const fill = zoneStyle.fill;
+      const stroke = zoneStyle.stroke;
       const isSelected = this.selectedZone &&
         (props.zona || '').toUpperCase() === this.selectedZone;
 
@@ -572,6 +1022,10 @@ function mapaZoneamentoApp() {
       } else { 
         return { fillColor: 'transparent', fillOpacity: 0, color: stroke, weight: isSelected ? 4 : 2.5 };
       }
+    },
+
+    getZoneStyle(sigla) {
+      return this.zoneStyleConfig[sigla] || this.zoneStyleConfig.OUTROS;
     },
 
     renderMapLayer() {
@@ -593,23 +1047,14 @@ function mapaZoneamentoApp() {
         filter: () => true,
         style: (feature) => this.getStyle(feature),
         onEachFeature: (feature, layer) => {
-          const props = feature.properties || {};
-          const sigla = (props.zona || '').toUpperCase();
-          const config = this.zoneConfig[sigla] || {};
-          const nome = config.nome || sigla;
-
-          layer.bindPopup(`
-            <div class="font-sans p-1 max-w-xs">
-              <div class="flex items-center space-x-1.5 mb-1">
-                <span class="font-bold text-slate-800 text-sm">${sigla}</span>
-                <span class="text-slate-400">•</span>
-                <span class="text-xs text-slate-600 font-medium">${nome}</span>
-              </div>
-              <p class="text-xs text-slate-600 mb-2 leading-relaxed">${props.descricao || 'Sem descrição cadastrada.'}</p>
-            </div>
-          `);
+          // O clique alimenta o card contextual próprio; não usamos bindPopup do Leaflet.
+          layer.on('click', (event) => {
+            L.DomEvent.stopPropagation(event.originalEvent);
+            this.showContextCard(feature, event.latlng);
+          });
         }
       }).addTo(this.map);
+      this.layerManager.register('zoneamento-proposto', this.geoJsonLayer);
 
       const selectedLayer = this.selectedZone ? L.geoJSON(this.geoJsonRaw, {
         filter: (feature) => (feature.properties.zona || '').toUpperCase() === this.selectedZone
@@ -617,8 +1062,7 @@ function mapaZoneamentoApp() {
       const selectedBounds = selectedLayer ? selectedLayer.getBounds() : null;
 
       if (selectedBounds && selectedBounds.isValid()) {
-        this.map.fitBounds(selectedBounds, {
-          padding: [48, 48],
+        this.fitBoundsInUsableArea(selectedBounds, {
           maxZoom: 17,
           animate: false
         });
@@ -633,13 +1077,24 @@ function mapaZoneamentoApp() {
 
     selectZone(sigla) {
       this.selectedZone = sigla;
+      this.closeContextCard();
+      // No mobile, abrir até meia tela revela o resultado sem esconder completamente o mapa.
+      if (sigla && this.isMobileViewport) {
+        this.sidebarOpen = true;
+        this.bottomSheetState = 'half';
+      }
       this.renderMapLayer();
     },
 
     resetView() {
       this.selectedZone = null;
       this.renderMapLayer();
-      this.map.setView(this.sapezalCenter, 14);
+      const bounds = this.geoJsonRaw ? L.geoJSON(this.geoJsonRaw).getBounds() : null;
+      if (bounds && bounds.isValid()) {
+        this.fitBoundsInUsableArea(bounds, { maxZoom: 16, animate: false });
+      } else {
+        this.map.setView(this.sapezalCenter, 14, { animate: false });
+      }
     }
   };
 }

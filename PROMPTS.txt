@@ -1,0 +1,291 @@
+CONTEXTO
+
+O módulo atual "Mapas Urbanos" funciona corretamente.
+
+Ele possui:
+- Leaflet
+- Alpine.js
+- Sidebar de zoneamento
+- Carregamento de GeoJSON
+- Filtros de zona
+- Alternância mapa/satélite
+
+OBJETIVO
+
+Preparar a arquitetura para futuras expansões sem alterar a experiência atual.
+
+IMPORTANTE
+
+Não modificar o layout visual.
+Não modificar o menu superior.
+Não adicionar novas telas.
+Não criar novas páginas.
+
+IMPLEMENTAR
+
+1. Criar um objeto centralizado chamado appConfig.
+
+2. Criar um objeto layerConfig.
+
+3. Criar um objeto scenarioConfig.
+
+4. Criar um objeto zoneStyleConfig.
+
+5. Remover dependência de cores vindas do GeoJSON.
+
+6. Todas as cores, opacidades e contornos devem passar a vir do código.
+
+7. Manter comportamento idêntico ao atual.
+
+RESULTADO ESPERADO
+
+Nenhuma alteração visual para o usuário.
+
+Apenas reorganização interna do código para permitir:
+- Zoneamento Vigente
+- Zoneamento Proposto
+- Comparador futuro
+- Novas camadas GeoJSON
+
+----------------------------- 2
+CONTEXTO
+
+O mapa será expandido para suportar múltiplas camadas.
+
+Camadas previstas:
+
+- Zoneamento Proposto
+- Zoneamento Vigente
+- Bairros
+- Perímetro Urbano
+- Equipamentos Públicos
+- Áreas Públicas
+- Vazios Urbanos
+- Evolução Urbana
+- APP
+
+OBJETIVO
+
+Implementar um LayerManager.
+
+IMPLEMENTAR
+
+1. Criar estrutura layersConfig.
+
+2. Organizar as camadas por grupo.
+
+Grupos:
+
+Planejamento Urbano
+
+Estrutura Urbana
+
+Evolução Territorial
+
+Meio Ambiente
+
+Equipamentos Públicos
+
+3. Cada camada deve possuir:
+
+id
+nome
+grupo
+ativo
+tipo
+
+4. Não alterar o layout atual.
+
+5. Não carregar novas camadas ainda.
+
+RESULTADO
+
+Arquitetura pronta para expansão futura.
+-----------------------3
+
+CONTEXTO
+
+Mapas Urbanos continuará sendo apenas uma aba do portal.
+
+Não criar novas páginas.
+Não criar novas abas no menu principal.
+
+OBJETIVO
+
+Transformar o sistema em modos internos.
+
+IMPLEMENTAR
+
+Novo seletor:
+
+Modo Atual
+
+○ Consulta Urbanística
+
+○ Comparador da Revisão
+
+○ Análise Territorial
+
+REQUISITOS
+
+1. Utilizar a sidebar existente.
+
+2. O mapa deve permanecer único.
+
+3. Ao trocar o modo devem mudar:
+
+- conteúdo da sidebar
+- camadas disponíveis
+- painéis de informação
+
+4. Não implementar lógica completa ainda.
+
+5. Criar apenas a infraestrutura.
+
+--------------------------4
+CONTEXTO
+
+Será utilizada a planilha:
+
+PARAMETROS_ZONAS
+USOS_ZONA
+LEGISLACAO_ZONA
+GLOSSARIO
+MENSAGENS_CIDADAO
+
+OBJETIVO
+
+Transformar o sistema em uma ferramenta de consulta urbanística para cidadãos.
+
+IMPLEMENTAR
+
+Ao clicar em uma área:
+
+1. Identificar a zona.
+
+2. Buscar parâmetros da planilha.
+
+3. Exibir painel cidadão.
+
+O painel deve conter:
+
+- Nome da zona
+- Descrição simplificada
+- O que pode fazer aqui
+- O que não pode fazer aqui
+- Parâmetros urbanísticos
+- Bairro
+- Legislação
+
+IMPORTANTE
+
+Priorizar linguagem cidadã.
+
+Mostrar texto explicativo antes dos parâmetros técnicos.
+
+-------------------------5
+OBJETIVO
+
+Implementar mecanismo de localização.
+
+Fontes:
+
+Camada de bairros.
+Base futura de ruas.
+
+IMPLEMENTAR
+
+Busca em tempo real.
+
+Ao localizar:
+
+1. Centralizar mapa.
+
+2. Destacar local.
+
+3. Abrir painel contextual.
+
+4. Mostrar:
+
+- Bairro
+- Zona
+- Informações urbanísticas
+---------------------------6
+CONTEXTO
+
+Atualmente existe apenas o Zoneamento Proposto.
+
+O Zoneamento Vigente será disponibilizado futuramente.
+
+OBJETIVO
+
+Preparar o sistema para comparação.
+
+IMPLEMENTAR
+
+Criar:
+
+scenarioConfig
+
+Estrutura:
+
+vigente
+proposto
+
+No momento:
+
+vigente = null
+
+proposto = geojson atual
+
+Criar funções:
+
+setScenario()
+
+compareZones()
+
+compareParameters()
+
+Estas funções podem retornar vazio por enquanto.
+
+IMPORTANTE
+
+Não implementar comparação visual ainda.
+
+Preparar apenas a arquitetura.
+
+
+-----------
+
+CONTEXTO
+
+Estou enviando 3 imagens de referência.
+
+aba_map_desktop_atual.png 
+Estado atual do módulo "Mapas Urbanos".
+
+aba_map_desktop.png 
+Proposta conceitual para desktop.
+
+aba_map_mobile.png 
+Proposta conceitual para mobile com bottom sheet.
+
+IMPORTANTE
+
+As imagens NÃO devem ser reproduzidas fielmente.
+
+Utilize as imagens apenas para compreender:
+
+- hierarquia visual;
+- organização da informação;
+- comportamento esperado dos painéis;
+- experiência do usuário;
+- relacionamento entre mapa e controles.
+
+Preservar a identidade visual atual do portal.
+
+Não alterar o menu principal do sistema.
+
+Não criar novas páginas.
+
+Não criar novas abas no cabeçalho principal.
