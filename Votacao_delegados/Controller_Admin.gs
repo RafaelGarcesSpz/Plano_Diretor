@@ -46,7 +46,7 @@ function adminListarInscricoes(filtroStatus) {
     const lista = [];
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
-      const status = String(row[16] || "Pendente").trim();
+      const status = String(row[15] || "Pendente").trim();
 
       if (!filtroStatus || filtroStatus === 'todos' || status.toLowerCase() === filtroStatus.toLowerCase()) {
         lista.push({
@@ -55,20 +55,19 @@ function adminListarInscricoes(filtroStatus) {
           nomeCompleto: row[2],
           nomeUrna: row[3],
           cpf: row[4],
-          rg: row[5],
-          dataNasc: row[6],
-          telefone: row[7],
-          email: row[8],
-          bairro: row[9],
-          segmento: row[10],
-          minibio: row[11],
-          linkIdentidade: row[12],
-          linkResidencia: row[13],
-          linkQuitacao: row[14],
-          linkFoto: row[15],
+          dataNasc: row[5],
+          telefone: row[6],
+          email: row[7],
+          bairro: row[8],
+          segmento: row[9],
+          minibio: row[10],
+          linkIdentidade: row[11],
+          linkResidencia: row[12],
+          linkQuitacao: row[13],
+          linkFoto: row[14],
           status: status,
-          parecer: row[17] || "",
-          dataAtualizacao: row[18] || ""
+          parecer: row[16] || "",
+          dataAtualizacao: row[17] || ""
         });
       }
     }
@@ -103,9 +102,9 @@ function adminAtualizarStatus(protocolo, novoStatus, parecer) {
     }
 
     const timestamp = Utilities.formatDate(new Date(), "America/Cuiaba", "dd/MM/yyyy HH:mm:ss");
-    sheet.getRange(linhaEncontrada, 17).setValue(novoStatus); // Coluna Q: Status
-    sheet.getRange(linhaEncontrada, 18).setValue(parecer || ""); // Coluna R: Parecer
-    sheet.getRange(linhaEncontrada, 19).setValue(timestamp); // Coluna S: Data Atualização
+    sheet.getRange(linhaEncontrada, 16).setValue(novoStatus); // Coluna P: Status
+    sheet.getRange(linhaEncontrada, 17).setValue(parecer || ""); // Coluna Q: Parecer
+    sheet.getRange(linhaEncontrada, 18).setValue(timestamp); // Coluna R: Data Atualização
 
     return {
       success: true,

@@ -181,7 +181,7 @@ function salvarInscricao(payload) {
       );
     }
 
-    // 6. Registro na Planilha
+    // 6. Registro na Planilha (18 colunas sem RG)
     const timestamp = Utilities.formatDate(new Date(), "America/Cuiaba", "dd/MM/yyyy HH:mm:ss");
     
     sheetInscricoes.appendRow([
@@ -190,7 +190,6 @@ function salvarInscricao(payload) {
       dp.nomeCompleto.trim(),
       dd.nomeUrna ? dd.nomeUrna.trim() : dp.nomeCompleto.trim(),
       dp.cpf,
-      dp.rg || "",
       dp.dataNasc || "",
       dp.telefone,
       dp.email || "",

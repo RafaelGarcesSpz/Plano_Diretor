@@ -33,64 +33,101 @@
   <div x-show="votacaoAberta && !votoConcluido" class="max-w-4xl mx-auto space-y-6">
     
     <!-- ETAPA 1: IDENTIFICAÇÃO CÍVICA DO ELEITOR -->
-    <div x-show="passoVoto === 1" x-transition.opacity.duration.250ms class="max-w-xl mx-auto pdm-card p-6 sm:p-8 space-y-6">
-      <div class="text-center space-y-2">
-        <div class="w-12 h-12 rounded-2xl bg-blue-100 text-[#015797] flex items-center justify-center mx-auto">
-          <i data-lucide="fingerprint" class="w-7 h-7"></i>
+    <div x-show="passoVoto === 1" x-transition.opacity.duration.250ms class="max-w-xl mx-auto space-y-6">
+      
+      <div class="pdm-card p-6 sm:p-8 space-y-6">
+        <div class="text-center space-y-2">
+          <div class="w-12 h-12 rounded-2xl bg-blue-100 text-[#015797] flex items-center justify-center mx-auto">
+            <i data-lucide="fingerprint" class="w-7 h-7"></i>
+          </div>
+          <h2 class="text-xl font-black text-[#072b4c]">Identificação do Eleitor</h2>
+          <p class="text-xs text-slate-500 max-w-sm mx-auto">
+            Informe seu CPF para validação de elegibilidade e assinatura digital da lista de presença.
+          </p>
         </div>
-        <h2 class="text-xl font-black text-[#072b4c]">Identificação do Eleitor</h2>
-        <p class="text-xs text-slate-500 max-w-sm mx-auto">
-          Informe seu CPF para validação de elegibilidade e assinatura digital da lista de presença.
-        </p>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Seu Nome Completo *</label>
+            <input type="text" x-model="eleitor.nome" placeholder="Digite seu nome completo"
+                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
+          </div>
+
+          <!-- CPF com Validação Reativa da Receita Federal -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Seu CPF *</label>
+            <div class="relative">
+              <input type="text" x-model="eleitor.cpf" 
+                     @input="mascararCpfEleitor($event)" 
+                     @blur="validarCpfEleitorAoSair()"
+                     placeholder="000.000.000-00" maxlength="14"
+                     class="w-full px-3.5 py-2.5 rounded-xl border text-sm font-mono outline-hidden transition-all pr-10"
+                     :class="{
+                       'border-emerald-500 bg-emerald-50/30 ring-2 ring-emerald-200 text-emerald-900': cpfStatusEleitor === 'valid',
+                       'border-red-500 bg-red-50/30 ring-2 ring-red-200 text-red-900': cpfStatusEleitor === 'invalid',
+                       'border-slate-300 focus:ring-2 focus:ring-[#015797] focus:border-transparent': cpfStatusEleitor === 'empty' || cpfStatusEleitor === 'typing'
+                     }">
+              <div class="absolute right-3 top-2.5 pointer-events-none">
+                <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600" x-show="cpfStatusEleitor === 'valid'" x-cloak></i>
+                <i data-lucide="alert-circle" class="w-5 h-5 text-red-500" x-show="cpfStatusEleitor === 'invalid'" x-cloak></i>
+              </div>
+            </div>
+            <!-- Feedback Reativo Dinâmico do CPF -->
+            <div x-show="cpfStatusEleitor === 'invalid'" x-cloak class="flex items-center space-x-1.5 text-[11px] text-red-600 font-bold mt-1.5">
+              <i data-lucide="alert-triangle" class="w-3.5 h-3.5 shrink-0"></i>
+              <span x-text="cpfErroMsgEleitor"></span>
+            </div>
+            <div x-show="cpfStatusEleitor === 'valid'" x-cloak class="flex items-center space-x-1.5 text-[11px] text-emerald-600 font-bold mt-1.5">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5 shrink-0"></i>
+              <span>CPF autêntico pela fórmula da Receita Federal</span>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Seu Bairro / Região em Sapezal *</label>
+            <select x-model="eleitor.bairro"
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
+              <option value="">Selecione o Bairro...</option>
+              <option value="Centro">Centro</option>
+              <option value="Cidezal I">Cidezal I</option>
+              <option value="Cidezal II">Cidezal II</option>
+              <option value="Jardim América">Jardim América</option>
+              <option value="Jardim Ipê">Jardim Ipê</option>
+              <option value="Parque das Nações">Parque das Nações</option>
+              <option value="Água Limpa">Água Limpa</option>
+              <option value="Distrito Industrial">Distrito Industrial</option>
+              <option value="Zona Rural / Comunidades">Zona Rural / Comunidades</option>
+            </select>
+          </div>
+
+          <label class="flex items-start space-x-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer">
+            <input type="checkbox" x-model="eleitor.aceite" class="mt-0.5 w-4 h-4 text-[#015797] rounded border-slate-300">
+            <span class="text-[11px] text-slate-600 leading-relaxed">
+              Declaro residir em Sapezal/MT e autorizo a verificação de meu CPF exclusivamente para registro na lista de eleitores aptos.
+            </span>
+          </label>
+        </div>
+
+        <button @click="entrarCabine()" :disabled="!formEleitorValido"
+                class="w-full py-3 rounded-xl btn-brand-primary font-bold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-md transition-all"
+                :class="!formEleitorValido ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg'">
+          <i data-lucide="check-square" class="w-4 h-4"></i>
+          <span>Entrar na Cabine de Votação</span>
+        </button>
+
+        <div class="pt-1 text-center">
+          <button @click="navigate('sigilo')" type="button" class="text-xs text-[#015797] hover:underline font-semibold inline-flex items-center space-x-1.5 cursor-pointer">
+            <i data-lucide="shield-check" class="w-4 h-4 text-[#ffd200]"></i>
+            <span>Dúvidas sobre o sigilo do seu voto? Clique aqui</span>
+          </button>
+        </div>
       </div>
 
-      <div class="space-y-4">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Seu Nome Completo *</label>
-          <input type="text" x-model="eleitor.nome" placeholder="Digite seu nome completo"
-                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Seu CPF *</label>
-          <input type="text" x-model="eleitor.cpf" @input="mascararCpfEleitor($event)" placeholder="000.000.000-00" maxlength="14"
-                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Seu Bairro / Região em Sapezal *</label>
-          <select x-model="eleitor.bairro"
-                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
-            <option value="">Selecione o Bairro...</option>
-            <option value="Centro">Centro</option>
-            <option value="Cidezal I">Cidezal I</option>
-            <option value="Cidezal II">Cidezal II</option>
-            <option value="Jardim América">Jardim América</option>
-            <option value="Jardim Ipê">Jardim Ipê</option>
-            <option value="Parque das Nações">Parque das Nações</option>
-            <option value="Água Limpa">Água Limpa</option>
-            <option value="Distrito Industrial">Distrito Industrial</option>
-            <option value="Zona Rural / Comunidades">Zona Rural / Comunidades</option>
-          </select>
-        </div>
-
-        <label class="flex items-start space-x-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer">
-          <input type="checkbox" x-model="eleitor.aceite" class="mt-0.5 w-4 h-4 text-[#015797] rounded border-slate-300">
-          <span class="text-[11px] text-slate-600 leading-relaxed">
-            Declaro residir em Sapezal/MT e autorizo a verificação de meu CPF exclusivamente para registro na lista de eleitores aptos.
-          </span>
-        </label>
+      <!-- Componente Educativo de Sigilo Posicionado Limpo Abaixo do Card -->
+      <div class="mt-4">
+        <?!= include('Comp_SigiloVoto'); ?>
       </div>
 
-      <button @click="entrarCabine()" :disabled="!formEleitorValido"
-              class="w-full py-3 rounded-xl btn-brand-primary font-bold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-md transition-all"
-              :class="!formEleitorValido ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg'">
-        <i data-lucide="check-square" class="w-4 h-4"></i>
-        <span>Entrar na Cabine de Votação</span>
-      </button>
-
-      <!-- Componente Educativo de Sigilo -->
-      <?!= include('Comp_SigiloVoto'); ?>
     </div>
 
     <!-- ETAPA 2: CÉDULA DE VOTAÇÃO (ESCOLHA DO CANDIDATO) -->
@@ -157,7 +194,7 @@
                 </div>
               </div>
 
-              <!-- Minibiografia / Proposta -->
+              <!-- Apresentação do Candidato -->
               <p class="text-xs text-slate-600 line-clamp-3 leading-relaxed italic bg-slate-50 p-2.5 rounded-xl border border-slate-100"
                  x-text="cand.minibio || 'Compromisso com o planejamento sustentável e participativo do município de Sapezal.'"></p>
             </div>
@@ -313,6 +350,9 @@ function votacaoComponent() {
     candidatos: [],
     candidatoEscolhido: null,
 
+    cpfStatusEleitor: 'empty', // 'empty' | 'typing' | 'valid' | 'invalid'
+    cpfErroMsgEleitor: '',
+
     eleitor: {
       nome: "",
       cpf: "",
@@ -328,7 +368,7 @@ function votacaoComponent() {
 
     get formEleitorValido() {
       return this.eleitor.nome.trim().length >= 3 &&
-             this.eleitor.cpf.replace(/\D/g, "").length === 11 &&
+             this.cpfStatusEleitor === 'valid' &&
              this.eleitor.bairro !== "" &&
              this.eleitor.aceite;
     },
@@ -375,7 +415,6 @@ function votacaoComponent() {
           })
           .obterCandidatosDeferidos();
       } else {
-        // Fallback para desenvolvimento
         setTimeout(() => {
           this.carregandoStatus = false;
           this.carregandoCandidatos = false;
@@ -407,14 +446,70 @@ function votacaoComponent() {
     mascararCpfEleitor(e) {
       let v = e.target.value.replace(/\D/g, "");
       if (v.length > 11) v = v.substring(0, 11);
+      const raw = v;
+
       v = v.replace(/(\d{3})(\d)/, "$1.$2");
       v = v.replace(/(\d{3})(\d)/, "$1.$2");
       v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
       this.eleitor.cpf = v;
+
+      if (raw.length === 0) {
+        this.cpfStatusEleitor = 'empty';
+        this.cpfErroMsgEleitor = '';
+      } else if (raw.length < 11) {
+        this.cpfStatusEleitor = 'typing';
+        this.cpfErroMsgEleitor = 'Digite os 11 dígitos do seu CPF';
+      } else {
+        const valido = window.validarCPF ? window.validarCPF(raw) : (raw.length === 11);
+        if (valido) {
+          this.cpfStatusEleitor = 'valid';
+          this.cpfErroMsgEleitor = '';
+        } else {
+          this.cpfStatusEleitor = 'invalid';
+          this.cpfErroMsgEleitor = 'CPF inválido de acordo com a fórmula da Receita Federal.';
+        }
+      }
+      this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+    },
+
+    validarCpfEleitorAoSair() {
+      const raw = this.eleitor.cpf.replace(/\D/g, "");
+      if (raw.length === 0) {
+        this.cpfStatusEleitor = 'invalid';
+        this.cpfErroMsgEleitor = 'O preenchimento do CPF é obrigatório.';
+      } else if (raw.length < 11) {
+        this.cpfStatusEleitor = 'invalid';
+        this.cpfErroMsgEleitor = 'CPF incompleto. Deve conter 11 dígitos.';
+      } else {
+        const valido = window.validarCPF ? window.validarCPF(raw) : true;
+        if (valido) {
+          this.cpfStatusEleitor = 'valid';
+          this.cpfErroMsgEleitor = '';
+        } else {
+          this.cpfStatusEleitor = 'invalid';
+          this.cpfErroMsgEleitor = 'CPF inválido de acordo com a fórmula da Receita Federal.';
+        }
+      }
+      this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
     },
 
     entrarCabine() {
-      if (!this.formEleitorValido) return;
+      if (!this.formEleitorValido) {
+        if (this.cpfStatusEleitor !== 'valid') {
+          if (window.showToast) {
+            window.showToast("Informe um CPF válido pela Receita Federal para prosseguir.", "error", "CPF Inválido");
+          } else {
+            alert("CPF inválido.");
+          }
+        } else {
+          if (window.showToast) {
+            window.showToast("Preencha todos os dados e marque o termo de residência.", "warning", "Dados Incompletos");
+          } else {
+            alert("Preencha todos os campos obrigatórios.");
+          }
+        }
+        return;
+      }
       this.passoVoto = 2;
       window.scrollTo({ top: 0, behavior: "smooth" });
       this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
@@ -455,15 +550,26 @@ function votacaoComponent() {
                 autenticidade: res.autenticidade,
                 timestamp: res.timestamp
               };
+              if (window.showToast) {
+                window.showToast("Voto computado com sigilo absoluto na urna!", "success", "Voto Confirmado");
+              }
               window.scrollTo({ top: 0, behavior: "smooth" });
               this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
             } else {
-              alert(res ? res.message : "Erro ao processar voto.");
+              if (window.showToast) {
+                window.showToast(res ? res.message : "Erro ao processar voto.", "error", "Falha na Votação");
+              } else {
+                alert(res ? res.message : "Erro ao processar voto.");
+              }
             }
           })
           .withFailureHandler((err) => {
             this.gravandoVoto = false;
-            alert("Erro de comunicação com o servidor: " + err.message);
+            if (window.showToast) {
+              window.showToast("Erro de comunicação com o servidor: " + err.message, "error", "Erro do Servidor");
+            } else {
+              alert("Erro de comunicação: " + err.message);
+            }
           })
           .registrarVoto(payload);
       } else {
@@ -476,6 +582,9 @@ function votacaoComponent() {
             autenticidade: "A7F9-82BC-33E1",
             timestamp: new Date().toLocaleString()
           };
+          if (window.showToast) {
+            window.showToast("Voto simulado registrado com sucesso!", "success", "Voto Confirmado");
+          }
           window.scrollTo({ top: 0, behavior: "smooth" });
           this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
         }, 1000);
@@ -487,6 +596,8 @@ function votacaoComponent() {
       this.votoConcluido = false;
       this.candidatoEscolhido = null;
       this.eleitor = { nome: "", cpf: "", bairro: "", aceite: false };
+      this.cpfStatusEleitor = 'empty';
+      this.cpfErroMsgEleitor = '';
       window.scrollTo({ top: 0, behavior: "smooth" });
       this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
     }

@@ -1,180 +1,224 @@
 /**
  * Sistema de Inscrição e Votação de Delegados - Plano Diretor de Sapezal/MT
- * Arquivo: Controller_Votacao.gs (Lógica de Votação e Urna Eletrônica Anônima)
+ * Arquivo: Controller_Inscricao.gs (Lógica de Inscrição de Candidatos)
  */
 
 /**
- * Retorna a lista pública de candidatos homologados (Deferidos)
+ * Validação do algoritmo do CPF brasileiro
  */
-function obterCandidatosDeferidos() {
-  try {
-    const ss = getSpreadsheet();
-    const sheet = ss.getSheetByName(APP_CONFIG.SHEET_INSCRICOES);
-    if (!sheet) return { success: true, data: [] };
+function validarCPF(cpf) {
+  if (!cpf) return false;
+  cpf = cpf.replace(/[^\d]+/g, '');
+  if (cpf.length !== 11 || !!cpf.match(/(\d)\1{10}/)) return false;
 
-    const rows = sheet.getDataRange().getValues();
-    if (rows.length <= 1) return { success: true, data: [] };
-
-    const candidatos = [];
-    // Índices baseados na estrutura de colunas de Inscricoes:
-    // 0: Protocolo, 1: Timestamp, 2: Nome Completo, 3: Nome de Urna, 7: Telefone, 8: Email, 9: Bairro, 10: Segmento, 11: Minibio, 15: Link Foto, 16: Status
-    for (let i = 1; i < rows.length; i++) {
-      const row = rows[i];
-      const status = String(row[16]).trim().toLowerCase();
-      
-      if (status === 'deferida' || status === 'aprovado' || status === 'deferido') {
-        candidatos.push({
-          id: row[0],
-          nome: row[2],
-          nomeUrna: row[3] || row[2],
-          bairro: row[9],
-          segmento: row[10],
-          minibio: row[11],
-          fotoUrl: row[15] || ""
-        });
-      }
-    }
-
-    return {
-      success: true,
-      data: candidatos
-    };
-  } catch (err) {
-    console.error("Erro ao obter candidatos: " + err);
-    return {
-      success: false,
-      message: "Não foi possível carregar a lista de candidatos: " + err.message,
-      data: []
-    };
+  let soma = 0;
+  let resto;
+  for (let i = 1; i <= 9; i++) {
+    soma = soma + parseInt(cpf.substring(i - 1, i)) * (11 - i);
   }
+  resto = (soma * 10) % 11;
+  if (resto === 10 || resto === 11) resto = 0;
+  if (resto !== parseInt(cpf.substring(9, 10))) return false;
+
+  soma = 0;
+  for (let i = 1; i <= 10; i++) {
+    soma = soma + parseInt(cpf.substring(i - 1, i)) * (12 - i);
+  }
+  resto = (soma * 10) % 11;
+  if (resto === 10 || resto === 11) resto = 0;
+  if (resto !== parseInt(cpf.substring(10, 11))) return false;
+
+  return true;
 }
 
 /**
- * Mascara o CPF para preservação de privacidade (ex: ***.456.789-**)
+ * Salva arquivo a partir de string Base64 em pasta do Drive
  */
-function mascararCPF(cpf) {
-  const digits = String(cpf).replace(/\D/g, '');
-  if (digits.length !== 11) return '***.***.***-**';
-  return '***.' + digits.substring(3, 6) + '.' + digits.substring(6, 9) + '-**';
+function salvarArquivoDrive(pasta, base64Data, nomeArquivo, mimeTypePadrao) {
+  if (!base64Data || typeof base64Data !== 'string') return "";
+  
+  let cleanBase64 = base64Data;
+  let mimeType = mimeTypePadrao || 'application/octet-stream';
+  
+  // Extrai MIME type caso venha no formato DataURL: data:image/png;base64,...
+  if (base64Data.indexOf(';base64,') !== -1) {
+    const parts = base64Data.split(';base64,');
+    mimeType = parts[0].replace('data:', '');
+    cleanBase64 = parts[1];
+  }
+
+  const bytes = Utilities.base64Decode(cleanBase64);
+  const blob = Utilities.newBlob(bytes, mimeType, nomeArquivo);
+  const file = pasta.createFile(blob);
+  return file.getUrl();
 }
 
 /**
- * Registro de voto com desacoplamento criptográfico de identidade
+ * Endpoint principal de submissão da inscrição
  */
-function registrarVoto(payload) {
+function salvarInscricao(payload) {
   const lock = LockService.getScriptLock();
   
+  // Tenta obter lock por até 30 segundos para evitar concorrência
   try {
     const lockAcquired = lock.tryLock(30000);
     if (!lockAcquired) {
       return {
         success: false,
-        message: "A urna está ocupada processando outro voto. Por favor, tente novamente em alguns segundos."
+        message: "O servidor está ocupado processando outras inscrições. Por favor, tente novamente em alguns instantes."
       };
     }
 
-    // 1. Checagem de prazo de votação
+    // 1. Verificação de Prazo Oficial
     const status = obterStatusSistema();
-    if (status.success && !status.data.votacao.aberta) {
+    if (status.success && !status.data.inscricao.aberta) {
       return {
         success: false,
-        message: "O período oficial de votação não está aberto no momento."
+        message: "O período oficial de inscrições de delegados encontra-se encerrado ou não iniciado."
       };
     }
 
-    // 2. Validação do eleitor
-    if (!payload || !payload.eleitor || !payload.voto) {
+    // 2. Validações básicas de preenchimento
+    if (!payload || !payload.dadosPessoais || !payload.dadosDivulgacao) {
       return {
         success: false,
-        message: "Dados de votação corrompidos ou incompletos."
+        message: "Dados de inscrição incompletos ou corrompidos."
       };
     }
 
-    const el = payload.eleitor;
-    const vt = payload.voto;
+    const dp = payload.dadosPessoais;
+    const dd = payload.dadosDivulgacao;
+    const arq = payload.arquivosUpload || {};
+    const dec = payload.declaracoes || {};
 
-    const cpfLimpo = String(el.cpf || "").replace(/\D/g, '');
+    if (!dp.nomeCompleto || !dp.cpf || !dp.bairro || !dp.telefone) {
+      return {
+        success: false,
+        message: "Campos obrigatórios de identificação não foram preenchidos."
+      };
+    }
+
+    // Valida CPF
+    const cpfLimpo = dp.cpf.replace(/[^\d]/g, '');
     if (!validarCPF(cpfLimpo)) {
       return {
         success: false,
-        message: "CPF do eleitor inválido. Verifique os números digitados."
+        message: "O CPF informado é inválido. Por favor, revise seus dados."
       };
     }
 
-    if (!el.nome || el.nome.trim().length < 3) {
+    // Verifica declarações obrigatórias
+    if (!dec.residencia || !dec.maioridade || !dec.veracidade || !dec.lgpd) {
       return {
         success: false,
-        message: "Por favor, informe seu nome completo."
+        message: "Todas as declarações de compromisso e termos da Lei do Plano Diretor devem ser aceitas."
       };
     }
 
-    if (!vt.candidatoId || !vt.candidatoNome) {
-      return {
-        success: false,
-        message: "Nenhum candidato selecionado para confirmação."
-      };
-    }
-
+    // 3. Verificação de Duplicidade de CPF na aba Inscricoes
     const ss = getSpreadsheet();
-    const sheetEleitores = ss.getSheetByName(APP_CONFIG.SHEET_ELEITORES);
-    const sheetUrna = ss.getSheetByName(APP_CONFIG.SHEET_URNA);
+    const sheetInscricoes = ss.getSheetByName(APP_CONFIG.SHEET_INSCRICOES);
+    const dadosExistentes = sheetInscricoes.getDataRange().getValues();
 
-    // 3. Prevenção de Duplicidade: Verifica se o CPF já votou
-    const dadosEleitores = sheetEleitores.getDataRange().getValues();
-    for (let i = 1; i < dadosEleitores.length; i++) {
-      const hashRegistrado = String(dadosEleitores[i][5]);
-      // Gera hash local para checagem rápida sem expor CPF na memória aberta
-      const cpfHash = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, cpfLimpo));
-      if (hashRegistrado === cpfHash) {
+    // Coluna E (índice 4) armazena o CPF
+    for (let i = 1; i < dadosExistentes.length; i++) {
+      const cpfLinha = String(dadosExistentes[i][4]).replace(/[^\d]/g, '');
+      if (cpfLinha === cpfLimpo) {
         return {
           success: false,
-          message: "Este CPF já registrou voto nesta eleição. Cada cidadão tem direito a votar apenas uma vez."
+          message: "Já existe uma inscrição registrada para este CPF com o protocolo: " + dadosExistentes[i][0]
         };
       }
     }
 
-    // 4. Registro Desacoplado
-    const timestampFormatado = Utilities.formatDate(new Date(), "America/Cuiaba", "dd/MM/yyyy HH:mm:ss");
-    const numProtocoloVoto = "VOT-" + new Date().getFullYear() + "-" + Math.floor(100000 + Math.random() * 900000);
-    const cpfHash = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, cpfLimpo));
-    const comprovanteAutenticidade = Utilities.base64Encode(
-      Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, numProtocoloVoto + "_" + timestampFormatado)
-    ).substring(0, 16).toUpperCase();
+    // 4. Geração de Protocolo Único
+    const anoAtual = new Date().getFullYear();
+    const numeroAleatorio = Math.floor(10000 + Math.random() * 90000);
+    const protocolo = "DEL-" + anoAtual + "-" + numeroAleatorio;
 
-    // A) Salva na lista de presença (Eleitores_Votacao) - Sem qualquer vínculo com o candidato escolhido!
-    sheetEleitores.appendRow([
-      numProtocoloVoto,
-      timestampFormatado,
-      el.nome.trim(),
-      mascararCPF(cpfLimpo),
-      el.bairro || "Sapezal",
-      cpfHash
-    ]);
+    // 5. Upload Seguro dos Arquivos no Google Drive
+    const pastas = getDriveFolders();
+    const nomePrefixo = protocolo + "_" + cpfLimpo.substring(0, 6);
 
-    // B) Salva na Urna_Votos - 100% Anônimo, sem identificação do eleitor
-    const idVotoUrna = Utilities.getUuid();
-    sheetUrna.appendRow([
-      idVotoUrna,
-      timestampFormatado,
-      vt.candidatoId,
-      vt.candidatoNome,
-      vt.candidatoBairro || ""
+    let urlIdentidade = "";
+    let urlResidencia = "";
+    let urlCertidao = "";
+    let urlFoto = "";
+
+    if (arq.docIdentidade) {
+      urlIdentidade = salvarArquivoDrive(
+        pastas.documentos,
+        arq.docIdentidade,
+        nomePrefixo + "_Identidade",
+        arq.docIdentidadeType
+      );
+    }
+
+    if (arq.compResidencia) {
+      urlResidencia = salvarArquivoDrive(
+        pastas.documentos,
+        arq.compResidencia,
+        nomePrefixo + "_Residencia",
+        arq.compResidenciaType
+      );
+    }
+
+    if (arq.certQuitacao) {
+      urlCertidao = salvarArquivoDrive(
+        pastas.documentos,
+        arq.certQuitacao,
+        nomePrefixo + "_Quitacao",
+        arq.certQuitacaoType
+      );
+    }
+
+    if (arq.fotoRosto) {
+      urlFoto = salvarArquivoDrive(
+        pastas.fotos,
+        arq.fotoRosto,
+        nomePrefixo + "_FotoDivulgacao",
+        arq.fotoRostoType
+      );
+    }
+
+    // 6. Registro na Planilha (18 colunas sem RG)
+    const timestamp = Utilities.formatDate(new Date(), "America/Cuiaba", "dd/MM/yyyy HH:mm:ss");
+    
+    sheetInscricoes.appendRow([
+      protocolo,
+      timestamp,
+      dp.nomeCompleto.trim(),
+      dd.nomeUrna ? dd.nomeUrna.trim() : dp.nomeCompleto.trim(),
+      dp.cpf,
+      dp.dataNasc || "",
+      dp.telefone,
+      dp.email || "",
+      dp.bairro,
+      dp.segmento || "Sociedade Civil",
+      dd.minibio ? dd.minibio.trim() : "",
+      urlIdentidade,
+      urlResidencia,
+      urlCertidao,
+      urlFoto,
+      "Pendente", // Status inicial
+      "", // Parecer comissão vazio
+      timestamp
     ]);
 
     return {
       success: true,
-      protocolo: numProtocoloVoto,
-      autenticidade: comprovanteAutenticidade,
-      timestamp: timestampFormatado,
-      nomeEleitor: el.nome.trim(),
-      message: "Voto computado com sucesso! Seu voto foi depositado na urna com sigilo absoluto."
+      protocolo: protocolo,
+      nome: dp.nomeCompleto,
+      bairro: dp.bairro,
+      timestamp: timestamp,
+      message: "Inscrição realizada com sucesso! Guarde o seu protocolo para acompanhamento."
     };
 
   } catch (err) {
-    console.error("Erro em registrarVoto: " + err);
+    console.error("Erro em salvarInscricao: " + err);
     return {
       success: false,
-      message: "Falha ao registrar voto: " + err.message
+      message: "Erro interno no servidor: " + err.message
     };
   } finally {
     lock.releaseLock();

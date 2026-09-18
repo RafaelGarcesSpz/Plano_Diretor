@@ -34,10 +34,10 @@ function doGet(e) {
 }
 
 /**
- * Mecanismo de inclusão modular de arquivos HTML
+ * Mecanismo de inclusão modular de arquivos HTML (com suporte a scriptlets aninhados)
  */
 function include(filename) {
-  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+  return HtmlService.createTemplateFromFile(filename).evaluate().getContent();
 }
 
 /**
@@ -89,7 +89,7 @@ function initDatabase(ssInstance) {
     sheetConfig.getRange("A1:C1").setFontWeight("bold").setBackground("#015797").setFontColor("#ffffff");
   }
 
-  // 2. Aba Inscricoes
+  // 2. Aba Inscricoes (Sem coluna RG)
   let sheetInscricoes = ss.getSheetByName(APP_CONFIG.SHEET_INSCRICOES);
   if (!sheetInscricoes) {
     sheetInscricoes = ss.insertSheet(APP_CONFIG.SHEET_INSCRICOES);
@@ -99,13 +99,12 @@ function initDatabase(ssInstance) {
       "Nome Completo",
       "Nome de Urna",
       "CPF",
-      "RG",
       "Data Nascimento",
       "Telefone",
       "Email",
       "Bairro",
       "Segmento",
-      "Biografia Proposta",
+      "Apresentacao Minibiografia",
       "Link Doc Identidade",
       "Link Comprovante Residencia",
       "Link Certidao Quitacao",
@@ -114,7 +113,7 @@ function initDatabase(ssInstance) {
       "Parecer Comissao",
       "Data Atualizacao"
     ]);
-    sheetInscricoes.getRange("A1:S1").setFontWeight("bold").setBackground("#015797").setFontColor("#ffffff");
+    sheetInscricoes.getRange("A1:R1").setFontWeight("bold").setBackground("#015797").setFontColor("#ffffff");
     sheetInscricoes.setFrozenRows(1);
   }
 

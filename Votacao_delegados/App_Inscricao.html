@@ -85,50 +85,96 @@
         <!-- Nome Completo -->
         <div class="sm:col-span-2">
           <label class="block text-xs font-bold text-slate-700 mb-1">Nome Completo *</label>
-          <input type="text" x-model="form.dadosPessoais.nomeCompleto" placeholder="Ex: João da Silva Santos"
-                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
+          <input type="text" x-model="form.dadosPessoais.nomeCompleto" 
+                 @blur="validarCampo('nomeCompleto')"
+                 placeholder="Ex: João da Silva Santos"
+                 class="w-full px-3.5 py-2.5 rounded-xl border text-sm outline-hidden transition-all"
+                 :class="errosCampos.nomeCompleto ? 'border-red-500 bg-red-50/20 ring-2 ring-red-100 text-red-900' : 'border-slate-300 focus:ring-2 focus:ring-[#015797] focus:border-transparent'">
+          <div x-show="errosCampos.nomeCompleto" x-cloak class="flex items-center space-x-1.5 text-[11px] text-red-600 font-bold mt-1">
+            <i data-lucide="alert-circle" class="w-3.5 h-3.5 shrink-0"></i>
+            <span>Por favor, informe seu nome completo.</span>
+          </div>
         </div>
 
-        <!-- CPF -->
-        <div>
+        <!-- CPF com Validação Matemática da Receita Federal -->
+        <div class="sm:col-span-1">
           <label class="block text-xs font-bold text-slate-700 mb-1">CPF (apenas números ou formatado) *</label>
-          <input type="text" x-model="form.dadosPessoais.cpf" @input="mascararCpfInput($event)" placeholder="000.000.000-00" maxlength="14"
-                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
-        </div>
-
-        <!-- RG -->
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">RG / Órgão Expedidor *</label>
-          <input type="text" x-model="form.dadosPessoais.rg" placeholder="Ex: 1234567 SSP/MT"
-                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
+          <div class="relative">
+            <input type="text" x-model="form.dadosPessoais.cpf" 
+                   @input="mascararCpfInput($event)" 
+                   @blur="validarCpfAoSair()"
+                   placeholder="000.000.000-00" maxlength="14"
+                   class="w-full px-3.5 py-2.5 rounded-xl border text-sm font-mono outline-hidden transition-all pr-10"
+                   :class="{
+                     'border-emerald-500 bg-emerald-50/30 ring-2 ring-emerald-200 text-emerald-900': cpfStatus === 'valid',
+                     'border-red-500 bg-red-50/30 ring-2 ring-red-200 text-red-900': cpfStatus === 'invalid',
+                     'border-slate-300 focus:ring-2 focus:ring-[#015797] focus:border-transparent': cpfStatus === 'empty' || cpfStatus === 'typing'
+                   }">
+            <div class="absolute right-3 top-2.5 pointer-events-none">
+              <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600" x-show="cpfStatus === 'valid'" x-cloak></i>
+              <i data-lucide="alert-circle" class="w-5 h-5 text-red-500" x-show="cpfStatus === 'invalid'" x-cloak></i>
+            </div>
+          </div>
+          <!-- Feedback Reativo Dinâmico do CPF -->
+          <div x-show="cpfStatus === 'invalid'" x-cloak class="flex items-center space-x-1.5 text-[11px] text-red-600 font-bold mt-1.5">
+            <i data-lucide="alert-triangle" class="w-3.5 h-3.5 shrink-0"></i>
+            <span x-text="cpfErroMsg"></span>
+          </div>
+          <div x-show="cpfStatus === 'valid'" x-cloak class="flex items-center space-x-1.5 text-[11px] text-emerald-600 font-bold mt-1.5">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5 shrink-0"></i>
+            <span>CPF autêntico pela fórmula da Receita Federal</span>
+          </div>
         </div>
 
         <!-- Data de Nascimento -->
-        <div>
+        <div class="sm:col-span-1">
           <label class="block text-xs font-bold text-slate-700 mb-1">Data de Nascimento *</label>
           <input type="date" x-model="form.dadosPessoais.dataNasc"
-                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
+                 @blur="validarCampo('dataNasc')"
+                 class="w-full px-3.5 py-2.5 rounded-xl border text-sm outline-hidden transition-all"
+                 :class="errosCampos.dataNasc ? 'border-red-500 bg-red-50/20 ring-2 ring-red-100 text-red-900' : 'border-slate-300 focus:ring-2 focus:ring-[#015797] focus:border-transparent'">
+          <div x-show="errosCampos.dataNasc" x-cloak class="flex items-center space-x-1.5 text-[11px] text-red-600 font-bold mt-1">
+            <i data-lucide="alert-circle" class="w-3.5 h-3.5 shrink-0"></i>
+            <span>Informe sua data de nascimento.</span>
+          </div>
         </div>
 
         <!-- Telefone / WhatsApp -->
-        <div>
+        <div class="sm:col-span-1">
           <label class="block text-xs font-bold text-slate-700 mb-1">Telefone / WhatsApp *</label>
-          <input type="text" x-model="form.dadosPessoais.telefone" @input="mascararTelefoneInput($event)" placeholder="(65) 90000-0000" maxlength="15"
-                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
+          <input type="text" x-model="form.dadosPessoais.telefone" 
+                 @input="mascararTelefoneInput($event)" 
+                 @blur="validarCampo('telefone')"
+                 placeholder="(65) 90000-0000" maxlength="15"
+                 class="w-full px-3.5 py-2.5 rounded-xl border text-sm font-mono outline-hidden transition-all"
+                 :class="errosCampos.telefone ? 'border-red-500 bg-red-50/20 ring-2 ring-red-100 text-red-900' : 'border-slate-300 focus:ring-2 focus:ring-[#015797] focus:border-transparent'">
+          <div x-show="errosCampos.telefone" x-cloak class="flex items-center space-x-1.5 text-[11px] text-red-600 font-bold mt-1">
+            <i data-lucide="alert-circle" class="w-3.5 h-3.5 shrink-0"></i>
+            <span>Informe um telefone para contato.</span>
+          </div>
         </div>
 
         <!-- E-mail -->
-        <div class="sm:col-span-2">
+        <div class="sm:col-span-1">
           <label class="block text-xs font-bold text-slate-700 mb-1">E-mail para Contato *</label>
-          <input type="email" x-model="form.dadosPessoais.email" placeholder="seu.email@exemplo.com"
-                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
+          <input type="email" x-model="form.dadosPessoais.email" 
+                 @blur="validarCampo('email')"
+                 placeholder="seu.email@exemplo.com"
+                 class="w-full px-3.5 py-2.5 rounded-xl border text-sm outline-hidden transition-all"
+                 :class="errosCampos.email ? 'border-red-500 bg-red-50/20 ring-2 ring-red-100 text-red-900' : 'border-slate-300 focus:ring-2 focus:ring-[#015797] focus:border-transparent'">
+          <div x-show="errosCampos.email" x-cloak class="flex items-center space-x-1.5 text-[11px] text-red-600 font-bold mt-1">
+            <i data-lucide="alert-circle" class="w-3.5 h-3.5 shrink-0"></i>
+            <span>Informe um e-mail válido.</span>
+          </div>
         </div>
 
         <!-- Bairro / Comunidade -->
-        <div>
+        <div class="sm:col-span-1">
           <label class="block text-xs font-bold text-slate-700 mb-1">Bairro / Região em Sapezal *</label>
           <select x-model="form.dadosPessoais.bairro"
-                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
+                  @change="validarCampo('bairro')"
+                  class="w-full px-3.5 py-2.5 rounded-xl border text-sm bg-white outline-hidden transition-all"
+                  :class="errosCampos.bairro ? 'border-red-500 bg-red-50/20 ring-2 ring-red-100 text-red-900' : 'border-slate-300 focus:ring-2 focus:ring-[#015797] focus:border-transparent'">
             <option value="">Selecione o Bairro...</option>
             <option value="Centro">Centro</option>
             <option value="Cidezal I">Cidezal I</option>
@@ -140,10 +186,14 @@
             <option value="Distrito Industrial">Distrito Industrial</option>
             <option value="Zona Rural / Comunidades">Zona Rural / Comunidades</option>
           </select>
+          <div x-show="errosCampos.bairro" x-cloak class="flex items-center space-x-1.5 text-[11px] text-red-600 font-bold mt-1">
+            <i data-lucide="alert-circle" class="w-3.5 h-3.5 shrink-0"></i>
+            <span>Selecione seu bairro de residência.</span>
+          </div>
         </div>
 
         <!-- Segmento Representado -->
-        <div>
+        <div class="sm:col-span-1">
           <label class="block text-xs font-bold text-slate-700 mb-1">Segmento Representativo *</label>
           <select x-model="form.dadosPessoais.segmento"
                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
@@ -157,14 +207,14 @@
       </div>
     </section>
 
-    <!-- TELA 2: PROPOSTA & PREVIEW REATIVO DO CARTÃO -->
+    <!-- TELA 2: APRESENTAÇÃO & PREVIEW REATIVO DO CARTÃO -->
     <section x-show="step === 2" x-transition.opacity.duration.250ms class="pdm-card p-6 sm:p-8 space-y-6">
       <div class="border-b border-slate-100 pb-3">
         <h3 class="text-lg font-black text-[#072b4c] flex items-center space-x-2">
           <i data-lucide="sparkles" class="w-5 h-5 text-[#ffd200]"></i>
-          <span>Apresentação e Proposta para Sapezal</span>
+          <span>Apresentação</span>
         </h3>
-        <p class="text-xs text-slate-500 mt-1">Estes dados ficarão visíveis para os eleitores votarem em você na cédula eletrônica.</p>
+        <p class="text-xs text-slate-500 mt-1">Estes dados ficarão visíveis para os eleitores conhecerem você na cédula eletrônica.</p>
       </div>
 
       <div class="space-y-4">
@@ -176,20 +226,20 @@
           <span class="text-[10px] text-slate-400">Máximo 40 caracteres.</span>
         </div>
 
-        <!-- Minibiografia / Proposta -->
+        <!-- Apresentação do Candidato -->
         <div>
           <div class="flex items-center justify-between mb-1">
-            <label class="text-xs font-bold text-slate-700">Por que você quer ser Delegado do Plano Diretor? *</label>
+            <label class="text-xs font-bold text-slate-700">Apresentação do Candidato *</label>
             <span class="text-[11px] font-mono font-bold" 
                   :class="500 - (form.dadosDivulgacao.minibio ? form.dadosDivulgacao.minibio.length : 0) < 30 ? 'text-red-500' : 'text-slate-400'"
                   x-text="(500 - (form.dadosDivulgacao.minibio ? form.dadosDivulgacao.minibio.length : 0)) + ' caracteres restantes'"></span>
           </div>
           <textarea x-model="form.dadosDivulgacao.minibio" rows="4" maxlength="500"
-                    placeholder="Conte sua trajetória em Sapezal e quais melhorias você defenderá para seu bairro e cidade (habitação, saneamento, meio ambiente, transporte, lazer)..."
+                    placeholder="Conte sua trajetória em Sapezal, sua experiência comunitária e sua motivação para representar seu bairro na revisão do Plano Diretor..."
                     class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all resize-none"></textarea>
         </div>
 
-        <!-- CARTÃO PREVIEW REATIVO (O "CARTÃO DO CANDIDATO") -->
+        <!-- CARTÃO PREVIEW REATIVO COM INSERÇÃO DIRETA DE FOTO -->
         <div class="mt-4 p-4 rounded-2xl bg-gradient-to-br from-slate-50 to-blue-50/50 border-2 border-dashed border-[#015797]/30 space-y-2">
           <div class="flex items-center justify-between">
             <span class="text-[11px] font-black uppercase text-[#015797] tracking-wider flex items-center space-x-1">
@@ -200,33 +250,56 @@
           </div>
 
           <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center sm:items-start gap-4">
-            <!-- Foto de Preview -->
-            <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center">
+            
+            <!-- Foto de Preview com Upload Direto Interativo -->
+            <div class="relative group w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-slate-100 border-2 border-dashed border-slate-300 hover:border-[#015797] overflow-hidden shrink-0 flex flex-col items-center justify-center cursor-pointer transition-all shadow-xs"
+                 @click="$refs.fotoInputCard.click()"
+                 title="Clique para anexar ou alterar sua foto de rosto">
               <template x-if="fotoPreviewUrl">
                 <img :src="fotoPreviewUrl" alt="Foto Candidato" class="w-full h-full object-cover">
               </template>
               <template x-if="!fotoPreviewUrl">
-                <i data-lucide="user" class="w-10 h-10 text-slate-300"></i>
+                <div class="flex flex-col items-center justify-center p-1 text-center">
+                  <i data-lucide="camera" class="w-6 h-6 text-slate-400 group-hover:text-[#015797] transition-colors"></i>
+                  <span class="text-[9px] font-bold text-slate-500 group-hover:text-[#015797] mt-0.5 leading-tight">Inserir Foto</span>
+                </div>
               </template>
+              <!-- Overlay no hover quando há foto -->
+              <div x-show="fotoPreviewUrl" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[9px] font-bold">
+                <i data-lucide="camera" class="w-4 h-4 mb-0.5"></i>
+                <span>Alterar</span>
+              </div>
             </div>
+            <!-- Input oculto para o upload direto via preview -->
+            <input type="file" x-ref="fotoInputCard" accept="image/*" class="hidden" @change="processarFotoPreview($event)">
 
             <!-- Dados no Cartão -->
             <div class="flex-1 text-center sm:text-left space-y-1">
-              <div class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-[#015797]"
-                    x-text="form.dadosPessoais.bairro || 'Bairro Não Selecionado'"></div>
+              <div class="flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
+                <div class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-[#015797]"
+                      x-text="form.dadosPessoais.bairro || 'Bairro Não Selecionado'"></div>
+                <template x-if="!fotoPreviewUrl">
+                  <span class="text-[10px] text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-md flex items-center space-x-1 cursor-pointer"
+                        @click="$refs.fotoInputCard.click()">
+                    <i data-lucide="upload" class="w-3 h-3"></i>
+                    <span>Clique na foto para anexar</span>
+                  </span>
+                </template>
+              </div>
+
               <h4 class="text-base font-black text-[#072b4c]" 
                   x-text="form.dadosDivulgacao.nomeUrna || form.dadosPessoais.nomeCompleto || 'Nome de Urna do Candidato'"></h4>
               <p class="text-xs text-slate-500 font-medium" 
                  x-text="form.dadosPessoais.segmento || 'Segmento Representativo'"></p>
               <p class="text-xs text-slate-700 line-clamp-3 italic pt-1" 
-                 x-text="form.dadosDivulgacao.minibio || 'Sua mensagem e propostas de atuação aparecerão aqui para os cidadãos de Sapezal.'"></p>
+                 x-text="form.dadosDivulgacao.minibio || 'Sua apresentação e trajetória comunitária aparecerão aqui para os cidadãos de Sapezal.'"></p>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- TELA 3: UPLOAD DOS 4 ARQUIVOS COM CONVERSÃO ASSÍNCRONA EM BASE64 -->
+    <!-- TELA 3: UPLOAD DOS DOCUMENTOS COM CONVERSÃO ASSÍNCRONA EM BASE64 -->
     <section x-show="step === 3" x-transition.opacity.duration.250ms class="pdm-card p-6 sm:p-8 space-y-5">
       <div class="border-b border-slate-100 pb-3">
         <h3 class="text-lg font-black text-[#072b4c] flex items-center space-x-2">
@@ -253,42 +326,43 @@
           </div>
         </div>
 
-        <!-- 2. Comprovante de Residência -->
-        <div class="p-4 rounded-xl border-2 border-dashed transition-all"
+        <!-- 2. Comprovante de Residência ou Declaração de Residência -->
+        <div class="p-4 rounded-xl border-2 border-dashed transition-all sm:col-span-2"
              :class="form.arquivosUpload.compResidencia ? 'border-emerald-500 bg-emerald-50/40' : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'">
-          <div class="flex items-center space-x-2.5 mb-2">
-            <i data-lucide="home" class="w-5 h-5 text-[#015797]"></i>
-            <span class="text-xs font-bold text-slate-800">2. Comprovante de Residência *</span>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+            <div class="flex items-center space-x-2.5">
+              <i data-lucide="home" class="w-5 h-5 text-[#015797]"></i>
+              <span class="text-xs font-bold text-slate-800">2. Comprovante de Residência ou Declaração de Residência *</span>
+            </div>
+            <button type="button" @click="abrirModalDeclaracao = true" 
+                    class="inline-flex items-center space-x-1.5 text-xs font-bold text-[#015797] bg-blue-50 hover:bg-blue-100 border border-blue-200 px-3 py-1.5 rounded-lg transition-colors self-start sm:self-auto shadow-2xs">
+              <i data-lucide="file-down" class="w-3.5 h-3.5 text-[#015797]"></i>
+              <span>Baixar Modelo de Declaração de Residência</span>
+            </button>
           </div>
-          <input type="file" accept="image/*,.pdf" @change="processarUploadArquivo($event, 'compResidencia', 'compResidenciaName', 'compResidenciaType')"
-                 class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-[#015797] hover:file:bg-blue-200 cursor-pointer">
+          
+          <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div class="flex-1">
+              <input type="file" accept="image/*,.pdf" @change="processarUploadArquivo($event, 'compResidencia', 'compResidenciaName', 'compResidenciaType')"
+                     class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-[#015797] hover:file:bg-blue-200 cursor-pointer">
+            </div>
+          </div>
+          
           <div x-show="form.arquivosUpload.compResidencia" class="mt-2 text-[11px] text-emerald-700 font-bold flex items-center space-x-1">
             <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
             <span x-text="form.arquivosUpload.compResidenciaName"></span>
           </div>
         </div>
 
-        <!-- 3. Certidão de Quitação Eleitoral -->
-        <div class="p-4 rounded-xl border-2 border-dashed transition-all"
-             :class="form.arquivosUpload.certQuitacao ? 'border-emerald-500 bg-emerald-50/40' : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'">
-          <div class="flex items-center space-x-2.5 mb-2">
-            <i data-lucide="file-check" class="w-5 h-5 text-[#015797]"></i>
-            <span class="text-xs font-bold text-slate-800">3. Certidão de Quitação Eleitoral *</span>
-          </div>
-          <input type="file" accept="image/*,.pdf" @change="processarUploadArquivo($event, 'certQuitacao', 'certQuitacaoName', 'certQuitacaoType')"
-                 class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-[#015797] hover:file:bg-blue-200 cursor-pointer">
-          <div x-show="form.arquivosUpload.certQuitacao" class="mt-2 text-[11px] text-emerald-700 font-bold flex items-center space-x-1">
-            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
-            <span x-text="form.arquivosUpload.certQuitacaoName"></span>
-          </div>
-        </div>
-
-        <!-- 4. Foto de Rosto para Divulgação -->
-        <div class="p-4 rounded-xl border-2 border-dashed transition-all"
+        <!-- 3. Foto de Rosto para Divulgação -->
+        <div class="p-4 rounded-xl border-2 border-dashed transition-all sm:col-span-2"
              :class="form.arquivosUpload.fotoRosto ? 'border-emerald-500 bg-emerald-50/40' : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'">
-          <div class="flex items-center space-x-2.5 mb-2">
-            <i data-lucide="camera" class="w-5 h-5 text-[#409240]"></i>
-            <span class="text-xs font-bold text-slate-800">4. Foto de Rosto (Divulgação Pública) *</span>
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center space-x-2.5">
+              <i data-lucide="camera" class="w-5 h-5 text-[#409240]"></i>
+              <span class="text-xs font-bold text-slate-800">3. Foto de Rosto (Divulgação Pública) *</span>
+            </div>
+            <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">Visível na Cédula</span>
           </div>
           <input type="file" accept="image/*" @change="processarFotoPreview($event)"
                  class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200 cursor-pointer">
@@ -368,14 +442,14 @@
         </div>
 
         <div class="pt-2 border-t border-slate-200">
-          <strong class="text-slate-500">Proposta / Minibiografia:</strong>
+          <strong class="text-slate-500">Apresentação:</strong>
           <p class="text-slate-700 italic mt-1" x-text="form.dadosDivulgacao.minibio"></p>
         </div>
 
         <div class="pt-2 border-t border-slate-200 flex flex-wrap gap-2">
           <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-md font-semibold text-[11px] flex items-center space-x-1">
             <i data-lucide="check" class="w-3.5 h-3.5"></i>
-            <span>4 Documentos Anexados</span>
+            <span>Documentos e Foto Anexados</span>
           </span>
           <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-md font-semibold text-[11px] flex items-center space-x-1">
             <i data-lucide="check" class="w-3.5 h-3.5"></i>
@@ -432,6 +506,74 @@
 
   </div>
 
+  <!-- MODAL DE MODELO DE DECLARAÇÃO DE RESIDÊNCIA -->
+  <div x-show="abrirModalDeclaracao" x-cloak class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full p-6 sm:p-8 space-y-5 animate-ballot-drop max-h-[90vh] flex flex-col">
+      
+      <!-- Cabeçalho do Modal -->
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center space-x-2.5">
+          <div class="p-2 bg-blue-50 text-[#015797] rounded-xl">
+            <i data-lucide="file-text" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base sm:text-lg font-black text-[#072b4c]">Modelo de Declaração de Residência</h3>
+            <p class="text-xs text-slate-500">Documento oficial para quem não possui comprovante de endereço em nome próprio.</p>
+          </div>
+        </div>
+        <button @click="abrirModalDeclaracao = false" class="p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Corpo do Modelo Imprimível -->
+      <div id="areaDeclaracaoResidencia" class="flex-1 overflow-y-auto bg-slate-50 p-5 rounded-2xl border border-slate-200 text-xs text-slate-800 space-y-4 font-serif leading-relaxed">
+        <div class="text-center space-y-1 pb-3 border-b border-slate-200">
+          <p class="font-bold text-[11px] text-[#072b4c] uppercase tracking-wider">MUNICÍPIO DE SAPEZAL - ESTADO DE MATO GROSSO</p>
+          <p class="text-[10px] text-slate-500 font-sans">COMISSÃO ELEITORAL DE REVISÃO DO PLANO DIRETOR MUNICIPAL</p>
+          <h4 class="font-black text-sm font-sans text-[#072b4c] pt-2 uppercase">DECLARAÇÃO DE RESIDÊNCIA E DOMICÍLIO</h4>
+        </div>
+
+        <p class="text-justify">
+          Eu, <strong class="font-sans text-[#015797]" x-text="form.dadosPessoais.nomeCompleto || '____________________________________________________'"></strong>, 
+          inscrito(a) no CPF sob o nº <strong class="font-sans font-mono text-[#015797]" x-text="form.dadosPessoais.cpf || '_____________________'"></strong>, 
+          residente no Município de Sapezal/MT, no Bairro <strong class="font-sans text-[#015797]" x-text="form.dadosPessoais.bairro || '_____________________'"></strong>,
+        </p>
+
+        <p class="text-justify">
+          <strong>DECLARO</strong> para os devidos fins de comprovação e registro de candidatura à <strong>Comissão de Delegados do Plano Diretor Municipal de Sapezal/MT (Votação 2026)</strong>, sob as penas da lei (em especial o Artigo 299 do Código Penal Brasileiro referente à falsidade ideológica), que <strong>resido de forma habitual, contínua e ininterrupta no Município de Sapezal/MT</strong> há mais de 1 (um) ano.
+        </p>
+
+        <p class="text-justify">
+          Declaro ainda que todas as informações prestadas são a expressão da verdade e que estou ciente de que a falsidade desta declaração ensejará a imediata anulação da candidatura ou mandato eletivo como delegado, sem prejuízo das sanções civis e criminais cabíveis.
+        </p>
+
+        <div class="pt-6 space-y-8 text-center font-sans">
+          <p class="text-xs text-slate-600">Sapezal/MT, _____ de ____________________ de 2026.</p>
+          <div class="pt-6 border-t border-slate-300 max-w-xs mx-auto">
+            <p class="font-bold text-xs text-slate-800" x-text="form.dadosPessoais.nomeCompleto || 'Assinatura do(a) Declarante'"></p>
+            <p class="text-[10px] text-slate-500">Assinatura do(a) Candidato(a)</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rodapé do Modal com Ações -->
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+        <span class="text-[11px] text-slate-500">Imprima, assine, tire uma foto ou digitalize e envie no campo 2.</span>
+        <div class="flex items-center space-x-2">
+          <button type="button" @click="imprimirModeloDeclaracao()" class="px-4 py-2 rounded-xl btn-brand-primary text-xs font-bold flex items-center space-x-1.5 shadow-xs">
+            <i data-lucide="printer" class="w-4 h-4"></i>
+            <span>Imprimir / Salvar PDF</span>
+          </button>
+          <button type="button" @click="abrirModalDeclaracao = false" class="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-bold transition-colors">
+            Fechar
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- TELA DE SUCESSO E EMISSÃO DE PROTOCOLO -->
   <div x-show="sucessoEnvio" x-cloak class="max-w-2xl mx-auto space-y-6">
     <div class="bg-white p-6 sm:p-10 rounded-2xl border-2 border-emerald-500 shadow-xl text-center space-y-5 animate-ballot-drop">
@@ -483,7 +625,7 @@ function inscricaoComponent() {
     step: 1,
     nomesEtapas: [
       "Dados Pessoais",
-      "Proposta e Apresentação",
+      "Apresentação",
       "Upload de Documentos",
       "Declarações Obrigatórias",
       "Revisão e Envio"
@@ -495,12 +637,22 @@ function inscricaoComponent() {
     protocoloGerado: "",
     fotoPreviewUrl: "",
     explicarSigilo: false,
+    abrirModalDeclaracao: false,
+
+    cpfStatus: 'empty', // 'empty' | 'typing' | 'valid' | 'invalid'
+    cpfErroMsg: '',
+    errosCampos: {
+      nomeCompleto: false,
+      dataNasc: false,
+      telefone: false,
+      email: false,
+      bairro: false
+    },
 
     form: {
       dadosPessoais: {
         nomeCompleto: "",
         cpf: "",
-        rg: "",
         dataNasc: "",
         telefone: "",
         email: "",
@@ -561,19 +713,76 @@ function inscricaoComponent() {
           })
           .obterStatusSistema();
       } else {
-        // Fallback para desenvolvimento local
         this.loadingStatus = false;
         this.prazoAberto = true;
       }
     },
 
+    validarCampo(campo) {
+      const dp = this.form.dadosPessoais;
+      if (campo === 'nomeCompleto') {
+        this.errosCampos.nomeCompleto = !dp.nomeCompleto || dp.nomeCompleto.trim().length < 3;
+      } else if (campo === 'dataNasc') {
+        this.errosCampos.dataNasc = !dp.dataNasc;
+      } else if (campo === 'telefone') {
+        this.errosCampos.telefone = !dp.telefone || dp.telefone.replace(/\D/g, "").length < 10;
+      } else if (campo === 'email') {
+        this.errosCampos.email = !dp.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dp.email);
+      } else if (campo === 'bairro') {
+        this.errosCampos.bairro = !dp.bairro;
+      }
+      this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+    },
+
     mascararCpfInput(e) {
       let v = e.target.value.replace(/\D/g, "");
       if (v.length > 11) v = v.substring(0, 11);
+      const raw = v;
+
       v = v.replace(/(\d{3})(\d)/, "$1.$2");
       v = v.replace(/(\d{3})(\d)/, "$1.$2");
       v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
       this.form.dadosPessoais.cpf = v;
+
+      if (raw.length === 0) {
+        this.cpfStatus = 'empty';
+        this.cpfErroMsg = '';
+      } else if (raw.length < 11) {
+        this.cpfStatus = 'typing';
+        this.cpfErroMsg = 'Digite os 11 dígitos do CPF';
+      } else {
+        // Validação Matemática Oficial Receita Federal
+        const valido = window.validarCPF ? window.validarCPF(raw) : (raw.length === 11);
+        if (valido) {
+          this.cpfStatus = 'valid';
+          this.cpfErroMsg = '';
+        } else {
+          this.cpfStatus = 'invalid';
+          this.cpfErroMsg = 'CPF inválido de acordo com a fórmula da Receita Federal.';
+        }
+      }
+      this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+    },
+
+    validarCpfAoSair() {
+      const raw = this.form.dadosPessoais.cpf.replace(/\D/g, "");
+      if (raw.length === 0) {
+        this.cpfStatus = 'invalid';
+        this.cpfErroMsg = 'O preenchimento do CPF é obrigatório.';
+      } else if (raw.length < 11) {
+        this.cpfStatus = 'invalid';
+        this.cpfErroMsg = 'CPF incompleto. Deve conter 11 dígitos.';
+      } else {
+        const valido = window.validarCPF ? window.validarCPF(raw) : true;
+        if (valido) {
+          this.cpfStatus = 'valid';
+          this.cpfErroMsg = '';
+        } else {
+          this.cpfStatus = 'invalid';
+          this.cpfErroMsg = 'CPF inválido de acordo com a fórmula da Receita Federal.';
+        }
+      }
+      this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
     },
 
     mascararTelefoneInput(e) {
@@ -582,6 +791,7 @@ function inscricaoComponent() {
       v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
       v = v.replace(/(\d)(\d{4})$/, "$1-$2");
       this.form.dadosPessoais.telefone = v;
+      this.validarCampo('telefone');
     },
 
     processarUploadArquivo(event, fieldKey, nameKey, typeKey) {
@@ -589,7 +799,11 @@ function inscricaoComponent() {
       if (!file) return;
 
       if (file.size > 4 * 1024 * 1024) {
-        alert("O arquivo selecionado é maior que 4MB. Por favor escolha um arquivo menor.");
+        if (window.showToast) {
+          window.showToast("O arquivo selecionado excede 4MB. Escolha um arquivo menor.", "warning", "Arquivo Muito Grande");
+        } else {
+          alert("O arquivo selecionado é maior que 4MB.");
+        }
         event.target.value = "";
         return;
       }
@@ -601,6 +815,9 @@ function inscricaoComponent() {
       const reader = new FileReader();
       reader.onload = (e) => {
         this.form.arquivosUpload[fieldKey] = e.target.result;
+        if (window.showToast) {
+          window.showToast("Documento carregado com sucesso: " + file.name, "success", "Upload Concluído");
+        }
         this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
       };
       reader.readAsDataURL(file);
@@ -611,7 +828,11 @@ function inscricaoComponent() {
       if (!file) return;
 
       if (file.size > 4 * 1024 * 1024) {
-        alert("A foto selecionada é maior que 4MB.");
+        if (window.showToast) {
+          window.showToast("A foto selecionada excede 4MB.", "warning", "Foto Muito Grande");
+        } else {
+          alert("A foto selecionada é maior que 4MB.");
+        }
         event.target.value = "";
         return;
       }
@@ -623,39 +844,103 @@ function inscricaoComponent() {
       reader.onload = (e) => {
         this.form.arquivosUpload.fotoRosto = e.target.result;
         this.fotoPreviewUrl = e.target.result;
+        if (window.showToast) {
+          window.showToast("Foto de rosto carregada e atualizada no Cartão de Preview!", "success", "Foto Atualizada");
+        }
         this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
       };
       reader.readAsDataURL(file);
     },
 
+    imprimirModeloDeclaracao() {
+      const conteudo = document.getElementById('areaDeclaracaoResidencia').innerHTML;
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Declaração de Residência - Sapezal/MT</title>
+          <style>
+            body { font-family: 'Times New Roman', Times, serif; padding: 40px; color: #111; line-height: 1.6; }
+            h4 { text-align: center; margin-top: 20px; font-size: 16px; }
+            p { text-align: justify; font-size: 14px; margin-bottom: 16px; }
+            .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 30px; font-family: sans-serif; }
+            .header p { text-align: center; margin: 2px 0; font-size: 12px; }
+            .signature { margin-top: 60px; text-align: center; font-family: sans-serif; }
+            .line { border-top: 1px solid #333; width: 300px; margin: 40px auto 10px auto; }
+          </style>
+        </head>
+        <body>
+          ${conteudo}
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+      }, 500);
+    },
+
     avancarEtapa() {
-      // Validações por etapa
       if (this.step === 1) {
         const dp = this.form.dadosPessoais;
-        if (!dp.nomeCompleto || !dp.cpf || !dp.bairro || !dp.telefone) {
-          alert("Por favor, preencha os campos obrigatórios da Identificação (Nome, CPF, Bairro e Telefone).");
+        this.validarCampo('nomeCompleto');
+        this.validarCampo('dataNasc');
+        this.validarCampo('telefone');
+        this.validarCampo('email');
+        this.validarCampo('bairro');
+        this.validarCpfAoSair();
+
+        if (this.cpfStatus !== 'valid') {
+          if (window.showToast) {
+            window.showToast("O CPF digitado é inválido pela fórmula da Receita Federal. Verifique os dígitos.", "error", "CPF Inválido");
+          } else {
+            alert("CPF inválido de acordo com a Receita Federal.");
+          }
+          return;
+        }
+
+        if (this.errosCampos.nomeCompleto || this.errosCampos.dataNasc || this.errosCampos.telefone || this.errosCampos.email || this.errosCampos.bairro) {
+          if (window.showToast) {
+            window.showToast("Por favor, preencha os campos obrigatórios destacados em vermelho.", "warning", "Campos Pendentes");
+          } else {
+            alert("Preencha todos os campos obrigatórios.");
+          }
           return;
         }
       }
 
       if (this.step === 2) {
         if (!this.form.dadosDivulgacao.minibio || this.form.dadosDivulgacao.minibio.trim().length < 10) {
-          alert("Por favor, escreva uma breve proposta ou motivação (mínimo 10 caracteres).");
+          if (window.showToast) {
+            window.showToast("Por favor, elabore sua apresentação com no mínimo 10 caracteres.", "warning", "Apresentação Incompleta");
+          } else {
+            alert("Apresentação incompleta.");
+          }
           return;
         }
       }
 
       if (this.step === 3) {
         const arq = this.form.arquivosUpload;
-        if (!arq.docIdentidade || !arq.compResidencia || !arq.certQuitacao || !arq.fotoRosto) {
-          alert("Por favor, faça o upload de todos os 4 documentos obrigatórios.");
+        if (!arq.docIdentidade || !arq.compResidencia || !arq.fotoRosto) {
+          if (window.showToast) {
+            window.showToast("É obrigatório anexar o Documento de Identidade, Comprovante/Declaração de Residência e a Foto de Rosto.", "warning", "Documentação Pendente");
+          } else {
+            alert("Anexe o Documento de Identidade, Comprovante/Declaração de Residência e a Foto de Rosto.");
+          }
           return;
         }
       }
 
       if (this.step === 4) {
         if (!this.declaracoesCompletas) {
-          alert("É obrigatório concordar e assinalar todas as 4 declarações para continuar.");
+          if (window.showToast) {
+            window.showToast("Você deve assinalar todas as 4 declarações e termos para poder finalizar.", "warning", "Declarações Obrigatórias");
+          } else {
+            alert("Assinale todas as declarações.");
+          }
           return;
         }
       }
@@ -686,23 +971,36 @@ function inscricaoComponent() {
             if (res && res.success) {
               this.sucessoEnvio = true;
               this.protocoloGerado = res.protocolo;
+              if (window.showToast) {
+                window.showToast("Inscrição confirmada com sucesso! Guarde seu protocolo.", "success", "Candidatura Registrada");
+              }
               window.scrollTo({ top: 0, behavior: "smooth" });
               this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
             } else {
-              alert(res ? res.message : "Erro ao registrar inscrição.");
+              if (window.showToast) {
+                window.showToast(res ? res.message : "Erro ao registrar inscrição.", "error", "Falha no Envio");
+              } else {
+                alert(res ? res.message : "Erro ao registrar inscrição.");
+              }
             }
           })
           .withFailureHandler((err) => {
             this.enviando = false;
-            alert("Erro de comunicação com o servidor: " + err.message);
+            if (window.showToast) {
+              window.showToast("Erro de comunicação com o servidor: " + err.message, "error", "Erro do Servidor");
+            } else {
+              alert("Erro de comunicação: " + err.message);
+            }
           })
           .salvarInscricao(payload);
       } else {
-        // Simulação em ambiente local
         setTimeout(() => {
           this.enviando = false;
           this.sucessoEnvio = true;
           this.protocoloGerado = "DEL-2026-98765";
+          if (window.showToast) {
+            window.showToast("Inscrição confirmada com sucesso! Protocolo: DEL-2026-98765", "success", "Sucesso");
+          }
           window.scrollTo({ top: 0, behavior: "smooth" });
           this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
         }, 1200);
@@ -711,7 +1009,11 @@ function inscricaoComponent() {
 
     copiarProtocolo() {
       navigator.clipboard.writeText(this.protocoloGerado);
-      alert("Número do protocolo copiado com sucesso!");
+      if (window.showToast) {
+        window.showToast("Número do protocolo copiado com sucesso!", "success", "Copiado");
+      } else {
+        alert("Número do protocolo copiado!");
+      }
     }
   };
 }

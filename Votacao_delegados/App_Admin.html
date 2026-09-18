@@ -152,17 +152,17 @@
               </div>
             </div>
 
-            <!-- Dados Detalhados -->
+            <!-- Dados Detalhados (Sem RG) -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs bg-slate-50 p-3 rounded-xl border border-slate-100">
               <div><strong class="text-slate-500">CPF:</strong> <span class="font-mono" x-text="item.cpf"></span></div>
-              <div><strong class="text-slate-500">RG:</strong> <span x-text="item.rg"></span></div>
+              <div><strong class="text-slate-500">Nascimento:</strong> <span x-text="item.dataNasc"></span></div>
               <div><strong class="text-slate-500">Telefone:</strong> <span x-text="item.telefone"></span></div>
               <div><strong class="text-slate-500">E-mail:</strong> <span x-text="item.email"></span></div>
             </div>
 
-            <!-- Minibiografia -->
+            <!-- Apresentação -->
             <div class="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 italic">
-              <strong>Proposta / Minibio:</strong> <span x-text="item.minibio"></span>
+              <strong>Apresentação:</strong> <span x-text="item.minibio"></span>
             </div>
 
             <!-- Links para Documentos Sigilosos no Google Drive -->
@@ -179,7 +179,7 @@
               <template x-if="item.linkResidencia">
                 <a :href="item.linkResidencia" target="_blank" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#015797] text-xs font-semibold flex items-center space-x-1">
                   <i data-lucide="home" class="w-3.5 h-3.5"></i>
-                  <span>2. Residência</span>
+                  <span>2. Residência / Declaração</span>
                 </a>
               </template>
 
