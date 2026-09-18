@@ -1,0 +1,496 @@
+<!-- Componente SPA: Módulo de Votação Popular e Urna Eletrônica -->
+<div x-data="votacaoComponent()" x-init="initVotacao()" class="space-y-6">
+
+  <!-- AVISO DE PERÍODO DE VOTAÇÃO FECHADO CASO APLICÁVEL -->
+  <div x-show="!votacaoAberta && !carregandoStatus" x-cloak class="max-w-3xl mx-auto space-y-6">
+    <div class="pdm-card p-6 sm:p-8 border-l-4 border-l-[#015797] space-y-4 text-center sm:text-left">
+      <div class="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4">
+        <div class="p-3 bg-blue-100 text-[#015797] rounded-2xl">
+          <i data-lucide="calendar-clock" class="w-8 h-8"></i>
+        </div>
+        <div>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold bg-blue-100 text-[#015797] uppercase">
+            Urna Não Disponível
+          </span>
+          <h2 class="text-xl sm:text-2xl font-black text-[#072b4c] mt-1">
+            Votação Fora do Período Oficial
+          </h2>
+        </div>
+      </div>
+      <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+        A urna eletrônica para eleição dos Delegados do Plano Diretor de Sapezal abre de acordo com o cronograma estabelecido pela Comissão Eleitoral após o período de homologação das candidaturas.
+      </p>
+      <div class="pt-2">
+        <button @click="navigate('inscricao')" class="px-5 py-2.5 rounded-xl btn-brand-primary text-xs font-bold flex items-center justify-center space-x-2 mx-auto sm:mx-0">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>
+          <span>Acompanhar Inscrições</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLUXO PRINCIPAL DE VOTAÇÃO -->
+  <div x-show="votacaoAberta && !votoConcluido" class="max-w-4xl mx-auto space-y-6">
+    
+    <!-- ETAPA 1: IDENTIFICAÇÃO CÍVICA DO ELEITOR -->
+    <div x-show="passoVoto === 1" x-transition.opacity.duration.250ms class="max-w-xl mx-auto pdm-card p-6 sm:p-8 space-y-6">
+      <div class="text-center space-y-2">
+        <div class="w-12 h-12 rounded-2xl bg-blue-100 text-[#015797] flex items-center justify-center mx-auto">
+          <i data-lucide="fingerprint" class="w-7 h-7"></i>
+        </div>
+        <h2 class="text-xl font-black text-[#072b4c]">Identificação do Eleitor</h2>
+        <p class="text-xs text-slate-500 max-w-sm mx-auto">
+          Informe seu CPF para validação de elegibilidade e assinatura digital da lista de presença.
+        </p>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Seu Nome Completo *</label>
+          <input type="text" x-model="eleitor.nome" placeholder="Digite seu nome completo"
+                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Seu CPF *</label>
+          <input type="text" x-model="eleitor.cpf" @input="mascararCpfEleitor($event)" placeholder="000.000.000-00" maxlength="14"
+                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Seu Bairro / Região em Sapezal *</label>
+          <select x-model="eleitor.bairro"
+                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
+            <option value="">Selecione o Bairro...</option>
+            <option value="Centro">Centro</option>
+            <option value="Cidezal I">Cidezal I</option>
+            <option value="Cidezal II">Cidezal II</option>
+            <option value="Jardim América">Jardim América</option>
+            <option value="Jardim Ipê">Jardim Ipê</option>
+            <option value="Parque das Nações">Parque das Nações</option>
+            <option value="Água Limpa">Água Limpa</option>
+            <option value="Distrito Industrial">Distrito Industrial</option>
+            <option value="Zona Rural / Comunidades">Zona Rural / Comunidades</option>
+          </select>
+        </div>
+
+        <label class="flex items-start space-x-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer">
+          <input type="checkbox" x-model="eleitor.aceite" class="mt-0.5 w-4 h-4 text-[#015797] rounded border-slate-300">
+          <span class="text-[11px] text-slate-600 leading-relaxed">
+            Declaro residir em Sapezal/MT e autorizo a verificação de meu CPF exclusivamente para registro na lista de eleitores aptos.
+          </span>
+        </label>
+      </div>
+
+      <button @click="entrarCabine()" :disabled="!formEleitorValido"
+              class="w-full py-3 rounded-xl btn-brand-primary font-bold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-md transition-all"
+              :class="!formEleitorValido ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg'">
+        <i data-lucide="check-square" class="w-4 h-4"></i>
+        <span>Entrar na Cabine de Votação</span>
+      </button>
+
+      <!-- Componente Educativo de Sigilo -->
+      <?!= include('Comp_SigiloVoto'); ?>
+    </div>
+
+    <!-- ETAPA 2: CÉDULA DE VOTAÇÃO (ESCOLHA DO CANDIDATO) -->
+    <div x-show="passoVoto === 2" x-transition.opacity.duration.250ms class="space-y-6">
+      
+      <!-- Cabeçalho da Cabine -->
+      <div class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <span class="text-[10px] font-black uppercase tracking-wider text-[#409240] bg-emerald-50 px-2.5 py-0.5 rounded-full">
+            Cabine Eletrônica Ativa
+          </span>
+          <h3 class="text-base sm:text-lg font-black text-[#072b4c] mt-1">
+            Escolha o(a) seu(sua) Delegado(a)
+          </h3>
+          <p class="text-xs text-slate-500">
+            Eleitor: <strong class="text-slate-800" x-text="eleitor.nome"></strong> (Bairro: <span x-text="eleitor.bairro"></span>)
+          </p>
+        </div>
+
+        <!-- Busca de Candidatos -->
+        <div class="w-full sm:w-72">
+          <div class="relative">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+            <input type="text" x-model="termoBusca" placeholder="Buscar por nome ou bairro..."
+                   class="w-full pl-9 pr-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-[#015797] outline-hidden">
+          </div>
+        </div>
+      </div>
+
+      <!-- Estado: Carregando Candidatos -->
+      <div x-show="carregandoCandidatos" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <template x-for="i in 6" :key="i">
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 animate-pulse space-y-3">
+            <div class="w-16 h-16 rounded-full bg-slate-200 mx-auto"></div>
+            <div class="h-4 bg-slate-200 rounded w-3/4 mx-auto"></div>
+            <div class="h-3 bg-slate-100 rounded w-1/2 mx-auto"></div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Lista de Candidatos Homologados -->
+      <div x-show="!carregandoCandidatos" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        
+        <template x-for="cand in candidatosFiltrados" :key="cand.id">
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-xs hover:shadow-lg transition-all p-5 flex flex-col justify-between space-y-4 group">
+            
+            <div class="space-y-3 text-center sm:text-left">
+              <!-- Foto e Badge -->
+              <div class="flex flex-col sm:flex-row items-center sm:items-start gap-3">
+                <div class="w-20 h-20 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center shadow-xs">
+                  <template x-if="cand.fotoUrl">
+                    <img :src="cand.fotoUrl" alt="Foto Candidato" class="w-full h-full object-cover">
+                  </template>
+                  <template x-if="!cand.fotoUrl">
+                    <i data-lucide="user" class="w-10 h-10 text-slate-300"></i>
+                  </template>
+                </div>
+
+                <div class="space-y-1">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-[#015797]"
+                        x-text="cand.bairro"></span>
+                  <h4 class="text-sm sm:text-base font-black text-[#072b4c] leading-tight" x-text="cand.nomeUrna"></h4>
+                  <p class="text-[11px] text-slate-500 font-medium" x-text="cand.segmento"></p>
+                </div>
+              </div>
+
+              <!-- Minibiografia / Proposta -->
+              <p class="text-xs text-slate-600 line-clamp-3 leading-relaxed italic bg-slate-50 p-2.5 rounded-xl border border-slate-100"
+                 x-text="cand.minibio || 'Compromisso com o planejamento sustentável e participativo do município de Sapezal.'"></p>
+            </div>
+
+            <!-- Botão Selecionar para Votação -->
+            <button @click="selecionarCandidato(cand)"
+                    class="w-full py-2.5 rounded-xl btn-brand-primary font-bold text-xs flex items-center justify-center space-x-2 transition-all shadow-xs group-hover:shadow-md">
+              <i data-lucide="check" class="w-4 h-4"></i>
+              <span>Votar Neste Candidato</span>
+            </button>
+          </div>
+        </template>
+
+      </div>
+
+      <!-- Mensagem quando não há candidatos cadastrados ou filtrados -->
+      <div x-show="!carregandoCandidatos && candidatosFiltrados.length === 0" class="text-center py-12 bg-white rounded-2xl border border-slate-200 p-6 space-y-2">
+        <i data-lucide="users" class="w-10 h-10 text-slate-300 mx-auto"></i>
+        <h4 class="text-sm font-bold text-slate-700">Nenhum candidato localizado</h4>
+        <p class="text-xs text-slate-400">Verifique o termo digitado ou aguarde a publicação de novas homologações.</p>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- MODAL ESTILO URNA ELETRÔNICA: CONFIRMAÇÃO DO VOTO -->
+  <div x-show="modalConfirmaAberto" x-cloak class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl border-2 border-[#015797] shadow-2xl max-w-md w-full p-6 sm:p-8 space-y-6 animate-ballot-drop text-center">
+      
+      <div class="space-y-1">
+        <span class="text-[10px] font-black uppercase tracking-wider text-amber-700 bg-amber-100 px-3 py-1 rounded-full">
+          Confirmação de Voto
+        </span>
+        <h3 class="text-xl font-black text-[#072b4c] pt-1">Confira sua Escolha</h3>
+        <p class="text-xs text-slate-500">
+          Você está prestes a registrar seu voto de forma anônima e definitiva.
+        </p>
+      </div>
+
+      <!-- Cartão do Candidato Selecionado -->
+      <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200 space-y-3">
+        <div class="w-24 h-24 rounded-2xl bg-white border-2 border-slate-200 mx-auto overflow-hidden shadow-md flex items-center justify-center">
+          <template x-if="candidatoEscolhido?.fotoUrl">
+            <img :src="candidatoEscolhido.fotoUrl" alt="Foto" class="w-full h-full object-cover">
+          </template>
+          <template x-if="!candidatoEscolhido?.fotoUrl">
+            <i data-lucide="user" class="w-12 h-12 text-slate-300"></i>
+          </template>
+        </div>
+
+        <div class="space-y-0.5">
+          <span class="text-xs font-bold text-[#015797]" x-text="candidatoEscolhido?.bairro"></span>
+          <h4 class="text-lg font-black text-[#072b4c]" x-text="candidatoEscolhido?.nomeUrna"></h4>
+          <p class="text-xs text-slate-500" x-text="candidatoEscolhido?.segmento"></p>
+        </div>
+      </div>
+
+      <!-- Teclas de Ação Estilo Urna -->
+      <div class="grid grid-cols-2 gap-3 pt-2">
+        <button @click="modalConfirmaAberto = false"
+                class="py-3 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-xs uppercase tracking-wider transition-all">
+          Corrigir
+        </button>
+        <button @click="confirmarVotoFinal()" :disabled="gravandoVoto"
+                class="py-3 rounded-xl btn-brand-secondary font-black text-xs uppercase tracking-wider flex items-center justify-center space-x-1.5 shadow-lg transition-all"
+                :class="gravandoVoto ? 'opacity-50 cursor-not-allowed' : ''">
+          <template x-if="!gravandoVoto">
+            <span>CONFIRMA</span>
+          </template>
+          <template x-if="gravandoVoto">
+            <span>GRAVANDO...</span>
+          </template>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- COMPROVANTE ELETRÔNICO DE VOTAÇÃO -->
+  <div x-show="votoConcluido" x-cloak class="max-w-xl mx-auto space-y-6">
+    <div class="bg-white p-6 sm:p-10 rounded-3xl border-2 border-emerald-500 shadow-xl text-center space-y-6 animate-ballot-drop">
+      
+      <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-md">
+        <i data-lucide="check" class="w-10 h-10 stroke-[3]"></i>
+      </div>
+
+      <div class="space-y-1">
+        <span class="text-xs font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full">
+          Voto Computado com Sucesso
+        </span>
+        <h2 class="text-2xl font-black text-[#072b4c] pt-2">Comprovante de Votação Cívica</h2>
+        <p class="text-xs text-slate-500">
+          Obrigado por participar da construção do futuro de Sapezal/MT!
+        </p>
+      </div>
+
+      <!-- Bilhete de Votação com Hash Criptográfico -->
+      <div class="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 text-left font-mono text-xs">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+          <span class="text-slate-500 font-sans">Eleitor(a):</span>
+          <span class="font-bold text-slate-800 font-sans" x-text="eleitor.nome"></span>
+        </div>
+        <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+          <span class="text-slate-500 font-sans">Protocolo de Presença:</span>
+          <span class="font-bold text-[#015797]" x-text="comprovante.protocolo"></span>
+        </div>
+        <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+          <span class="text-slate-500 font-sans">Data e Hora:</span>
+          <span class="text-slate-800" x-text="comprovante.timestamp"></span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-slate-500 font-sans">Autenticidade Criptográfica:</span>
+          <span class="font-bold text-emerald-700" x-text="comprovante.autenticidade"></span>
+        </div>
+      </div>
+
+      <div class="p-3 bg-blue-50 border border-blue-100 rounded-xl text-[11px] text-blue-900 text-left flex items-start space-x-2">
+        <i data-lucide="shield" class="w-4 h-4 text-[#015797] shrink-0 mt-0.5"></i>
+        <span>
+          <strong>Garantia de Sigilo:</strong> Este comprovante atesta sua presença no pleito eleitoral, mas não contém e nunca revelará em qual candidato seu voto foi computado.
+        </span>
+      </div>
+
+      <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <button @click="window.print()" class="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-xs flex items-center justify-center space-x-1.5">
+          <i data-lucide="printer" class="w-4 h-4"></i>
+          <span>Imprimir Comprovante</span>
+        </button>
+        <button @click="reiniciarCabine()" class="w-full sm:w-auto px-6 py-2.5 rounded-xl btn-brand-primary font-bold text-xs flex items-center justify-center space-x-1.5">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          <span>Finalizar e Voltar</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- SCRIPT COMPONENTE ALPINE.JS -->
+<script>
+function votacaoComponent() {
+  return {
+    passoVoto: 1, // 1: Identificação, 2: Cédula
+    votacaoAberta: true,
+    carregandoStatus: true,
+    carregandoCandidatos: true,
+    gravandoVoto: false,
+    modalConfirmaAberto: false,
+    votoConcluido: false,
+    termoBusca: "",
+    candidatos: [],
+    candidatoEscolhido: null,
+
+    eleitor: {
+      nome: "",
+      cpf: "",
+      bairro: "",
+      aceite: false
+    },
+
+    comprovante: {
+      protocolo: "",
+      autenticidade: "",
+      timestamp: ""
+    },
+
+    get formEleitorValido() {
+      return this.eleitor.nome.trim().length >= 3 &&
+             this.eleitor.cpf.replace(/\D/g, "").length === 11 &&
+             this.eleitor.bairro !== "" &&
+             this.eleitor.aceite;
+    },
+
+    get candidatosFiltrados() {
+      if (!this.termoBusca) return this.candidatos;
+      const t = this.termoBusca.toLowerCase();
+      return this.candidatos.filter(c => 
+        (c.nomeUrna && c.nomeUrna.toLowerCase().includes(t)) ||
+        (c.bairro && c.bairro.toLowerCase().includes(t)) ||
+        (c.segmento && c.segmento.toLowerCase().includes(t))
+      );
+    },
+
+    initVotacao() {
+      this.carregarStatusEVotacao();
+      this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+    },
+
+    carregarStatusEVotacao() {
+      this.carregandoStatus = true;
+      this.carregandoCandidatos = true;
+
+      if (window.google && google.script && google.script.run) {
+        // 1. Status
+        google.script.run
+          .withSuccessHandler((res) => {
+            this.carregandoStatus = false;
+            if (res && res.success && res.data && res.data.votacao) {
+              this.votacaoAberta = res.data.votacao.aberta;
+            }
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+          })
+          .obterStatusSistema();
+
+        // 2. Candidatos Deferidos
+        google.script.run
+          .withSuccessHandler((res) => {
+            this.carregandoCandidatos = false;
+            if (res && res.success) {
+              this.candidatos = res.data || [];
+            }
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+          })
+          .obterCandidatosDeferidos();
+      } else {
+        // Fallback para desenvolvimento
+        setTimeout(() => {
+          this.carregandoStatus = false;
+          this.carregandoCandidatos = false;
+          this.candidatos = [
+            {
+              id: "DEL-2026-101",
+              nome: "Maria das Graças Silva",
+              nomeUrna: "Maria do Bairro América",
+              bairro: "Jardim América",
+              segmento: "Movimento Comunitário",
+              minibio: "Lutando por melhorias de iluminação, áreas verdes e praças de convivência para nossas famílias.",
+              fotoUrl: ""
+            },
+            {
+              id: "DEL-2026-102",
+              nome: "Carlos Eduardo Souza",
+              nomeUrna: "Carlos Agronegócio",
+              bairro: "Centro",
+              segmento: "Setor Produtivo",
+              minibio: "Defendendo o equilíbrio entre desenvolvimento industrial, geração de empregos e preservação ambiental.",
+              fotoUrl: ""
+            }
+          ];
+          this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        }, 800);
+      }
+    },
+
+    mascararCpfEleitor(e) {
+      let v = e.target.value.replace(/\D/g, "");
+      if (v.length > 11) v = v.substring(0, 11);
+      v = v.replace(/(\d{3})(\d)/, "$1.$2");
+      v = v.replace(/(\d{3})(\d)/, "$1.$2");
+      v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+      this.eleitor.cpf = v;
+    },
+
+    entrarCabine() {
+      if (!this.formEleitorValido) return;
+      this.passoVoto = 2;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+    },
+
+    selecionarCandidato(cand) {
+      this.candidatoEscolhido = cand;
+      this.modalConfirmaAberto = true;
+      this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+    },
+
+    confirmarVotoFinal() {
+      if (this.gravandoVoto || !this.candidatoEscolhido) return;
+      this.gravandoVoto = true;
+
+      const payload = {
+        eleitor: {
+          nome: this.eleitor.nome,
+          cpf: this.eleitor.cpf,
+          bairro: this.eleitor.bairro
+        },
+        voto: {
+          candidatoId: this.candidatoEscolhido.id,
+          candidatoNome: this.candidatoEscolhido.nomeUrna,
+          candidatoBairro: this.candidatoEscolhido.bairro
+        }
+      };
+
+      if (window.google && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler((res) => {
+            this.gravandoVoto = false;
+            this.modalConfirmaAberto = false;
+            if (res && res.success) {
+              this.votoConcluido = true;
+              this.comprovante = {
+                protocolo: res.protocolo,
+                autenticidade: res.autenticidade,
+                timestamp: res.timestamp
+              };
+              window.scrollTo({ top: 0, behavior: "smooth" });
+              this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            } else {
+              alert(res ? res.message : "Erro ao processar voto.");
+            }
+          })
+          .withFailureHandler((err) => {
+            this.gravandoVoto = false;
+            alert("Erro de comunicação com o servidor: " + err.message);
+          })
+          .registrarVoto(payload);
+      } else {
+        setTimeout(() => {
+          this.gravandoVoto = false;
+          this.modalConfirmaAberto = false;
+          this.votoConcluido = true;
+          this.comprovante = {
+            protocolo: "VOT-2026-887123",
+            autenticidade: "A7F9-82BC-33E1",
+            timestamp: new Date().toLocaleString()
+          };
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        }, 1000);
+      }
+    },
+
+    reiniciarCabine() {
+      this.passoVoto = 1;
+      this.votoConcluido = false;
+      this.candidatoEscolhido = null;
+      this.eleitor = { nome: "", cpf: "", bairro: "", aceite: false };
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+    }
+  };
+}
+</script>
+

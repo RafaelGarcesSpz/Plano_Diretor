@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full bg-slate-50">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Eleição de Delegados - Plano Diretor de Sapezal/MT</title>
+
+  <!-- Componente de Logo Institucional em Base64 -->
+  <?!= include('Logo'); ?>
+
+  <!-- Tailwind CSS via CDN com tokens da Marca Oficial -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              'green-dark': 'var(--brand-green-dark)',
+              'green': 'var(--brand-green)',
+              'green-light': 'var(--brand-green-light)',
+              'yellow': 'var(--brand-yellow)',
+              'yellow-dark': 'var(--brand-yellow-dark)',
+              'gold': 'var(--brand-gold)',
+              'blue-light': 'var(--brand-blue-light)',
+              'blue': 'var(--brand-blue)',
+              'blue-dark': 'var(--brand-blue-dark)',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Alpine.js CDN -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <!-- Estilos Institucionais Personalizados -->
+  <?!= include('Styles'); ?>
+</head>
+
+<body class="h-full w-full overflow-y-auto flex flex-col font-sans text-slate-800 bg-slate-50 antialiased selection:bg-[#015797] selection:text-white"
+      x-data="mainApp()" x-init="initApp()">
+
+  <!-- HEADER INSTITUCIONAL & NAVBAR -->
+  <header class="bg-white text-slate-800 shadow-xs sticky top-0 z-50 border-b-2 border-[#015797]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        
+        <!-- Logo Institucional e Identificação -->
+        <div class="flex items-center space-x-3 cursor-pointer shrink-0" @click="navigate('inscricao')">
+          <div class="flex items-center bg-white p-1 rounded-xl border border-slate-100 shadow-2xs">
+            <template x-if="typeof APP_LOGO !== 'undefined'">
+              <a href="https://script.google.com/macros/s/AKfycbxVbiQ9dvbazPdGedS7nQFdpa90u137zJ9NAnlAM65Gr_G2S-3Wjps0P-2DJkji6XYj2Q/exec" target="_blank" rel="noopener noreferrer">
+                <img :src="APP_LOGO" alt="Plano Diretor Sapezal" class="h-10 sm:h-12 w-auto object-contain">
+              </a>
+            </template>
+          </div>
+          <div class="hidden sm:block">
+            <span class="text-[10px] font-black uppercase tracking-wider text-[#015797] bg-blue-50 px-2 py-0.5 rounded">
+              Votação 2026
+            </span>
+            <h1 class="text-sm font-black text-[#072b4c] leading-tight">Eleição de Delegados</h1>
+            <p class="text-[11px] text-slate-500 font-medium">Revisão do Plano Diretor de Sapezal</p>
+          </div>
+        </div>
+
+        <!-- Navegação Principal Desktop -->
+        <nav class="hidden md:flex items-center space-x-1.5 py-1">
+          <button @click="navigate('inscricao')"
+                  :class="currentTab === 'inscricao' ? 'bg-[#015797] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-slate-100 hover:text-[#072b4c]'"
+                  class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 shrink-0">
+            <i data-lucide="user-plus" class="w-4 h-4 text-[#ffd200]"></i>
+            <span>Inscrição de Delegados</span>
+          </button>
+
+          <button @click="navigate('votacao')"
+                  :class="currentTab === 'votacao' ? 'bg-[#015797] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-slate-100 hover:text-[#072b4c]'"
+                  class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 shrink-0">
+            <i data-lucide="vote" class="w-4 h-4 text-[#409240]"></i>
+            <span>Cédula de Votação</span>
+          </button>
+
+          <button @click="navigate('sigilo')"
+                  :class="currentTab === 'sigilo' ? 'bg-[#015797] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-slate-100 hover:text-[#072b4c]'"
+                  class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 shrink-0">
+            <i data-lucide="shield-check" class="w-4 h-4 text-[#0385d0]"></i>
+            <span>Sigilo do Voto</span>
+          </button>
+
+          <button @click="navigate('admin')"
+                  :class="currentTab === 'admin' ? 'bg-[#072b4c] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-slate-100 hover:text-[#072b4c]'"
+                  class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 shrink-0">
+            <i data-lucide="lock" class="w-4 h-4 text-amber-400"></i>
+            <span>Comissão (Admin)</span>
+          </button>
+        </nav>
+
+        <!-- Botão Hamburger Mobile -->
+        <div class="md:hidden flex items-center">
+          <button @click="mobileMenuOpen = !mobileMenuOpen"
+                  type="button"
+                  class="p-2.5 rounded-xl text-slate-700 hover:text-[#015797] hover:bg-slate-100 transition-colors flex items-center space-x-1.5 border border-slate-200">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-600" x-text="mobileMenuOpen ? 'Fechar' : 'Menu'"></span>
+            <i data-lucide="menu" class="w-5 h-5" x-show="!mobileMenuOpen"></i>
+            <i data-lucide="x" class="w-5 h-5 text-red-600" x-show="mobileMenuOpen" x-cloak></i>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Menu Mobile Dropdown -->
+    <div x-show="mobileMenuOpen" x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 -translate-y-2"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         class="md:hidden bg-white border-b border-slate-200 px-4 pt-3 pb-5 space-y-1.5 shadow-md">
+      
+      <button @click="navigate('inscricao')"
+              :class="currentTab === 'inscricao' ? 'bg-slate-100 text-[#015797] font-bold border-l-4 border-[#015797]' : 'text-slate-700 hover:bg-slate-50'"
+              class="w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-3 transition-colors">
+        <i data-lucide="user-plus" class="w-4 h-4 text-[#ffd200]"></i>
+        <span>Inscrição de Delegados</span>
+      </button>
+
+      <button @click="navigate('votacao')"
+              :class="currentTab === 'votacao' ? 'bg-slate-100 text-[#015797] font-bold border-l-4 border-[#015797]' : 'text-slate-700 hover:bg-slate-50'"
+              class="w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-3 transition-colors">
+        <i data-lucide="vote" class="w-4 h-4 text-[#409240]"></i>
+        <span>Cédula de Votação</span>
+      </button>
+
+      <button @click="navigate('sigilo')"
+              :class="currentTab === 'sigilo' ? 'bg-slate-100 text-[#015797] font-bold border-l-4 border-[#015797]' : 'text-slate-700 hover:bg-slate-50'"
+              class="w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-3 transition-colors">
+        <i data-lucide="shield-check" class="w-4 h-4 text-[#0385d0]"></i>
+        <span>Sigilo do Voto</span>
+      </button>
+
+      <button @click="navigate('admin')"
+              :class="currentTab === 'admin' ? 'bg-slate-100 text-[#072b4c] font-bold border-l-4 border-[#072b4c]' : 'text-slate-700 hover:bg-slate-50'"
+              class="w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-3 transition-colors">
+        <i data-lucide="lock" class="w-4 h-4 text-amber-500"></i>
+        <span>Comissão (Admin)</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 focus:outline-hidden">
+    
+    <!-- ROTA 1: INSCRIÇÃO DE DELEGADOS -->
+    <div x-show="currentTab === 'inscricao'" x-transition.opacity.duration.250ms>
+      <?!= include('App_Inscricao'); ?>
+    </div>
+
+    <!-- ROTA 2: VOTAÇÃO POPULAR -->
+    <div x-show="currentTab === 'votacao'" x-transition.opacity.duration.250ms>
+      <?!= include('App_Votacao'); ?>
+    </div>
+
+    <!-- ROTA 3: EXPLICAÇÃO DO SIGILO -->
+    <div x-show="currentTab === 'sigilo'" x-transition.opacity.duration.250ms class="max-w-4xl mx-auto space-y-6">
+      <div class="text-center space-y-2 mb-4">
+        <h2 class="text-2xl font-black text-[#072b4c]">Transparência e Inviolabilidade do Voto</h2>
+        <p class="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto">
+          Conheça as garantias técnicas e legais que asseguram que a sua escolha democrática seja 100% anônima e inviolável.
+        </p>
+      </div>
+      <?!= include('Comp_SigiloVoto'); ?>
+    </div>
+
+    <!-- ROTA 4: COMISSÃO ELEITORAL (ADMIN) -->
+    <div x-show="currentTab === 'admin'" x-transition.opacity.duration.250ms>
+      <?!= include('App_Admin'); ?>
+    </div>
+
+  </main>
+
+  <!-- RODAPÉ INSTITUCIONAL -->
+  <footer class="bg-white border-t border-slate-200 mt-auto py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+      <div class="space-y-1">
+        <h4 class="text-xs font-bold text-[#072b4c]">Prefeitura Municipal de Sapezal/MT</h4>
+        <p class="text-[11px] text-slate-500">Revisão do Plano Diretor Municipal • Comissão de Delegados</p>
+      </div>
+      <div class="text-[11px] text-slate-500 font-medium">
+        Sistema desenvolvido no Âmbito da Ouvidoria Municipal (versão teste)
+      </div>
+    </div>
+  </footer>
+
+  <!-- TOAST NOTIFICATION FLUTUANTE REATIVO -->
+  <div x-show="toast.show" x-cloak
+       x-transition:enter="transition ease-out duration-300"
+       x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:translate-x-4"
+       x-transition:enter-end="opacity-100 translate-y-0 sm:translate-x-0"
+       x-transition:leave="transition ease-in duration-200"
+       x-transition:leave-start="opacity-100 translate-y-0 sm:translate-x-0"
+       x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:translate-x-4"
+       class="fixed bottom-6 right-4 sm:right-6 z-50 max-w-sm w-full p-4 rounded-2xl shadow-2xl border flex items-start space-x-3 bg-white"
+       :class="{
+         'border-red-500 text-red-900 ring-2 ring-red-100': toast.tipo === 'error',
+         'border-emerald-500 text-emerald-900 ring-2 ring-emerald-100': toast.tipo === 'success',
+         'border-amber-500 text-amber-900 ring-2 ring-amber-100': toast.tipo === 'warning',
+         'border-[#015797] text-blue-900 ring-2 ring-blue-100': toast.tipo === 'info'
+       }">
+    <div class="p-2 rounded-xl shrink-0"
+         :class="{
+           'bg-red-100 text-red-600': toast.tipo === 'error',
+           'bg-emerald-100 text-emerald-600': toast.tipo === 'success',
+           'bg-amber-100 text-amber-600': toast.tipo === 'warning',
+           'bg-blue-100 text-[#015797]': toast.tipo === 'info'
+         }">
+      <i :data-lucide="toast.tipo === 'error' ? 'alert-triangle' : (toast.tipo === 'success' ? 'check-circle-2' : (toast.tipo === 'warning' ? 'alert-circle' : 'info'))" class="w-5 h-5"></i>
+    </div>
+    <div class="flex-1 pr-2">
+      <h4 class="text-xs font-black" x-text="toast.titulo || (toast.tipo === 'error' ? 'Atenção' : (toast.tipo === 'success' ? 'Sucesso' : 'Informação'))"></h4>
+      <p class="text-xs text-slate-600 mt-0.5 leading-relaxed" x-text="toast.mensagem"></p>
+    </div>
+    <button @click="toast.show = false" class="text-slate-400 hover:text-slate-600 p-1">
+      <i data-lucide="x" class="w-4 h-4"></i>
+    </button>
+  </div>
+
+  <!-- VALIDADOR MATEMÁTICO OFICIAL DE CPF (RECEITA FEDERAL) -->
+  <script>
+    window.validarCPF = function(cpf) {
+      if (!cpf) return false;
+      cpf = String(cpf).replace(/[^\d]+/g, '');
+      if (cpf.length !== 11) return false;
+      if (/^(\d)\1{10}$/.test(cpf)) return false;
+
+      // 1º Dígito Verificador
+      let soma = 0;
+      for (let i = 0; i < 9; i++) {
+        soma += parseInt(cpf.charAt(i), 10) * (10 - i);
+      }
+      let resto = (soma * 10) % 11;
+      if (resto === 10 || resto === 11) resto = 0;
+      if (resto !== parseInt(cpf.charAt(9), 10)) return false;
+
+      // 2º Dígito Verificador
+      soma = 0;
+      for (let i = 0; i < 10; i++) {
+        soma += parseInt(cpf.charAt(i), 10) * (11 - i);
+      }
+      resto = (soma * 10) % 11;
+      if (resto === 10 || resto === 11) resto = 0;
+      if (resto !== parseInt(cpf.charAt(10), 10)) return false;
+
+      return true;
+    };
+  </script>
+
+  <!-- SCRIPT GLOBAL DE ESTADO -->
+  <script>
+    function mainApp() {
+      return {
+        currentTab: '<?= initialPage ?>' || 'inscricao',
+        mobileMenuOpen: false,
+
+        toast: {
+          show: false,
+          tipo: 'info',
+          titulo: '',
+          mensagem: '',
+          timer: null
+        },
+
+        initApp() {
+          if (!this.currentTab || this.currentTab === 'home') {
+            this.currentTab = 'inscricao';
+          }
+          
+          window.showToast = (mensagem, tipo = 'info', titulo = '') => {
+            if (this.toast.timer) clearTimeout(this.toast.timer);
+            this.toast.tipo = tipo;
+            this.toast.titulo = titulo;
+            this.toast.mensagem = mensagem;
+            this.toast.show = true;
+            this.$nextTick(() => {
+              if (window.lucide) lucide.createIcons();
+            });
+            this.toast.timer = setTimeout(() => {
+              this.toast.show = false;
+            }, 4500);
+          };
+
+          this.$nextTick(() => {
+            if (window.lucide) {
+              lucide.createIcons();
+            }
+          });
+        },
+
+        navigate(tab) {
+          this.currentTab = tab;
+          this.mobileMenuOpen = false;
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          this.$nextTick(() => {
+            if (window.lucide) {
+              lucide.createIcons();
+            }
+          });
+        }
+      };
+    }
+  </script>
+</body>
+</html>
+

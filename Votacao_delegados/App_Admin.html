@@ -1,0 +1,538 @@
+<!-- Componente SPA: Painel Administrativo da Comissão Eleitoral -->
+<div x-data="adminComponent()" x-init="initAdmin()" class="space-y-6">
+
+  <!-- TELA DE LOGIN POR PIN DA COMISSÃO -->
+  <div x-show="!autenticado" class="max-w-md mx-auto pdm-card p-6 sm:p-8 space-y-6">
+    <div class="text-center space-y-2">
+      <div class="w-12 h-12 rounded-2xl bg-blue-100 text-[#015797] flex items-center justify-center mx-auto">
+        <i data-lucide="shield-alert" class="w-7 h-7"></i>
+      </div>
+      <h2 class="text-xl font-black text-[#072b4c]">Acesso Restrito da Comissão</h2>
+      <p class="text-xs text-slate-500">
+        Área exclusiva para os membros da Comissão de Acompanhamento e Eleição de Delegados do Plano Diretor de Sapezal.
+      </p>
+    </div>
+
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Código PIN de Acesso *</label>
+        <input type="password" x-model="pinInput" placeholder="Digite o PIN (Padrão: 2026)" maxlength="10"
+               @keyup.enter="fazerLogin()"
+               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-center text-lg font-mono tracking-widest focus:ring-2 focus:ring-[#015797] outline-hidden">
+      </div>
+
+      <button @click="fazerLogin()" :disabled="validandoPin"
+              class="w-full py-3 rounded-xl btn-brand-primary font-bold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-md">
+        <template x-if="!validandoPin">
+          <span>Acessar Painel da Comissão</span>
+        </template>
+        <template x-if="validandoPin">
+          <span>Verificando credencial...</span>
+        </template>
+      </button>
+    </div>
+  </div>
+
+  <!-- PAINEL DA COMISSÃO (PÓS-AUTENTICAÇÃO) -->
+  <div x-show="autenticado" x-cloak class="space-y-6">
+
+    <!-- CABEÇALHO DO PAINEL ADMIN -->
+    <div class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div>
+        <span class="text-[10px] font-black uppercase tracking-wider text-[#015797] bg-blue-100 px-2.5 py-0.5 rounded-full">
+          Comissão Eleitoral • Sapezal/MT
+        </span>
+        <h2 class="text-xl font-black text-[#072b4c] mt-1">Homologação e Gestão Eleitoral</h2>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <button @click="recarregarDados()" class="p-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700" title="Atualizar Dados">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+        </button>
+        <button @click="abaAdmin = 'candidaturas'" :class="abaAdmin === 'candidaturas' ? 'btn-brand-primary' : 'bg-slate-100 text-slate-700'" class="px-3 py-2 rounded-xl text-xs font-bold transition-all">
+          Candidaturas
+        </button>
+        <button @click="abaAdmin = 'prazos'" :class="abaAdmin === 'prazos' ? 'btn-brand-primary' : 'bg-slate-100 text-slate-700'" class="px-3 py-2 rounded-xl text-xs font-bold transition-all">
+          Prazos
+        </button>
+        <button @click="abaAdmin = 'apuracao'" :class="abaAdmin === 'apuracao' ? 'btn-brand-primary' : 'bg-slate-100 text-slate-700'" class="px-3 py-2 rounded-xl text-xs font-bold transition-all">
+          Apuração
+        </button>
+        <button @click="sairAdmin()" class="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-colors" title="Sair do Modo Comissão">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- CARDS DE ESTATÍSTICAS RÁPIDAS -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
+        <span class="text-[10px] font-bold text-slate-400 uppercase">Total Inscritos</span>
+        <div class="text-xl sm:text-2xl font-black text-[#072b4c] mt-1" x-text="stats.totalInscritos"></div>
+      </div>
+      <div class="bg-white p-4 rounded-2xl border border-amber-200 bg-amber-50/20 shadow-2xs">
+        <span class="text-[10px] font-bold text-amber-700 uppercase">Pendentes</span>
+        <div class="text-xl sm:text-2xl font-black text-amber-700 mt-1" x-text="stats.pendentes"></div>
+      </div>
+      <div class="bg-white p-4 rounded-2xl border border-orange-200 bg-orange-50/20 shadow-2xs">
+        <span class="text-[10px] font-bold text-orange-700 uppercase">Diligências</span>
+        <div class="text-xl sm:text-2xl font-black text-orange-700 mt-1" x-text="stats.diligencias"></div>
+      </div>
+      <div class="bg-white p-4 rounded-2xl border border-emerald-200 bg-emerald-50/20 shadow-2xs">
+        <span class="text-[10px] font-bold text-emerald-700 uppercase">Deferidos</span>
+        <div class="text-xl sm:text-2xl font-black text-emerald-700 mt-1" x-text="stats.deferidos"></div>
+      </div>
+      <div class="bg-white p-4 rounded-2xl border border-red-200 bg-red-50/20 shadow-2xs">
+        <span class="text-[10px] font-bold text-red-700 uppercase">Indeferidos</span>
+        <div class="text-xl sm:text-2xl font-black text-red-700 mt-1" x-text="stats.indeferidos"></div>
+      </div>
+      <div class="bg-white p-4 rounded-2xl border border-blue-200 bg-blue-50/20 shadow-2xs">
+        <span class="text-[10px] font-bold text-[#015797] uppercase">Votos na Urna</span>
+        <div class="text-xl sm:text-2xl font-black text-[#015797] mt-1" x-text="stats.totalVotosUrna"></div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO 1: GESTÃO E HOMOLOGAÇÃO DE CANDIDATURAS -->
+    <div x-show="abaAdmin === 'candidaturas'" class="space-y-4">
+      
+      <!-- Barra de Filtro de Status -->
+      <div class="flex items-center space-x-2 overflow-x-auto pb-1">
+        <button @click="filtroStatus = 'todos'; filtrarInscricoes()"
+                :class="filtroStatus === 'todos' ? 'bg-[#015797] text-white' : 'bg-white text-slate-700 hover:bg-slate-50'"
+                class="px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold transition-colors shrink-0">
+          Todos (<span x-text="inscricoes.length"></span>)
+        </button>
+        <button @click="filtroStatus = 'Pendente'; filtrarInscricoes()"
+                :class="filtroStatus === 'Pendente' ? 'bg-amber-600 text-white' : 'bg-white text-slate-700 hover:bg-slate-50'"
+                class="px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold transition-colors shrink-0">
+          Pendentes
+        </button>
+        <button @click="filtroStatus = 'Diligência'; filtrarInscricoes()"
+                :class="filtroStatus === 'Diligência' ? 'bg-orange-600 text-white' : 'bg-white text-slate-700 hover:bg-slate-50'"
+                class="px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold transition-colors shrink-0">
+          Diligência
+        </button>
+        <button @click="filtroStatus = 'Deferida'; filtrarInscricoes()"
+                :class="filtroStatus === 'Deferida' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700 hover:bg-slate-50'"
+                class="px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold transition-colors shrink-0">
+          Deferidas
+        </button>
+        <button @click="filtroStatus = 'Indeferida'; filtrarInscricoes()"
+                :class="filtroStatus === 'Indeferida' ? 'bg-red-600 text-white' : 'bg-white text-slate-700 hover:bg-slate-50'"
+                class="px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold transition-colors shrink-0">
+          Indeferidas
+        </button>
+      </div>
+
+      <!-- Lista de Inscrições -->
+      <div class="space-y-4">
+        <template x-for="item in inscricoesFiltradas" :key="item.protocolo">
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+              <div>
+                <div class="flex items-center space-x-2">
+                  <span class="font-mono text-xs font-black text-[#015797]" x-text="item.protocolo"></span>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase"
+                        :class="{
+                          'bg-amber-100 text-amber-800': item.status === 'Pendente',
+                          'bg-orange-100 text-orange-800': item.status === 'Diligência',
+                          'bg-emerald-100 text-emerald-800': item.status === 'Deferida',
+                          'bg-red-100 text-red-800': item.status === 'Indeferida'
+                        }"
+                        x-text="item.status"></span>
+                </div>
+                <h4 class="text-base font-black text-[#072b4c] mt-0.5" x-text="item.nomeCompleto"></h4>
+                <p class="text-xs text-slate-500">
+                  Nome de Urna: <strong class="text-slate-700" x-text="item.nomeUrna"></strong> • Bairro: <strong class="text-slate-700" x-text="item.bairro"></strong> • Segmento: <span x-text="item.segmento"></span>
+                </p>
+              </div>
+
+              <div class="text-xs text-slate-400">
+                Inscrito em: <span x-text="item.timestamp"></span>
+              </div>
+            </div>
+
+            <!-- Dados Detalhados -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs bg-slate-50 p-3 rounded-xl border border-slate-100">
+              <div><strong class="text-slate-500">CPF:</strong> <span class="font-mono" x-text="item.cpf"></span></div>
+              <div><strong class="text-slate-500">RG:</strong> <span x-text="item.rg"></span></div>
+              <div><strong class="text-slate-500">Telefone:</strong> <span x-text="item.telefone"></span></div>
+              <div><strong class="text-slate-500">E-mail:</strong> <span x-text="item.email"></span></div>
+            </div>
+
+            <!-- Minibiografia -->
+            <div class="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 italic">
+              <strong>Proposta / Minibio:</strong> <span x-text="item.minibio"></span>
+            </div>
+
+            <!-- Links para Documentos Sigilosos no Google Drive -->
+            <div class="flex flex-wrap items-center gap-2 pt-1">
+              <span class="text-[11px] font-bold text-slate-500 mr-1">Documentação:</span>
+              
+              <template x-if="item.linkIdentidade">
+                <a :href="item.linkIdentidade" target="_blank" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#015797] text-xs font-semibold flex items-center space-x-1">
+                  <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                  <span>1. RG/CNH</span>
+                </a>
+              </template>
+              
+              <template x-if="item.linkResidencia">
+                <a :href="item.linkResidencia" target="_blank" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#015797] text-xs font-semibold flex items-center space-x-1">
+                  <i data-lucide="home" class="w-3.5 h-3.5"></i>
+                  <span>2. Residência</span>
+                </a>
+              </template>
+
+              <template x-if="item.linkQuitacao">
+                <a :href="item.linkQuitacao" target="_blank" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#015797] text-xs font-semibold flex items-center space-x-1">
+                  <i data-lucide="award" class="w-3.5 h-3.5"></i>
+                  <span>3. Quitação</span>
+                </a>
+              </template>
+
+              <template x-if="item.linkFoto">
+                <a :href="item.linkFoto" target="_blank" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold flex items-center space-x-1">
+                  <i data-lucide="image" class="w-3.5 h-3.5"></i>
+                  <span>4. Foto Divulgação</span>
+                </a>
+              </template>
+            </div>
+
+            <!-- Parecer Atual -->
+            <div x-show="item.parecer" class="p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-900">
+              <strong>Parecer da Comissão:</strong> <span x-text="item.parecer"></span>
+            </div>
+
+            <!-- BOTÕES DE AÇÃO DA COMISSÃO -->
+            <div class="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button @click="abrirModalParecer(item, 'Diligência')" class="px-3 py-1.5 rounded-lg bg-orange-100 hover:bg-orange-200 text-orange-800 text-xs font-bold flex items-center space-x-1 transition-colors">
+                <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
+                <span>Colocar em Diligência</span>
+              </button>
+
+              <button @click="abrirModalParecer(item, 'Indeferida')" class="px-3 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-800 text-xs font-bold flex items-center space-x-1 transition-colors">
+                <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
+                <span>Indeferir</span>
+              </button>
+
+              <button @click="atualizarStatusDireto(item.protocolo, 'Deferida')" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center space-x-1 transition-colors">
+                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                <span>Deferir Candidatura</span>
+              </button>
+            </div>
+          </div>
+        </template>
+      </div>
+
+    </div>
+
+    <!-- SEÇÃO 2: CONFIGURAÇÃO DE PRAZOS DO SISTEMA -->
+    <div x-show="abaAdmin === 'prazos'" class="max-w-xl mx-auto pdm-card p-6 sm:p-8 space-y-5">
+      <div class="border-b border-slate-100 pb-3">
+        <h3 class="text-base sm:text-lg font-black text-[#072b4c] flex items-center space-x-2">
+          <i data-lucide="calendar" class="w-5 h-5 text-[#015797]"></i>
+          <span>Controle Oficial do Cronograma</span>
+        </h3>
+        <p class="text-xs text-slate-500 mt-1">Configure o período exato de abertura e encerramento das inscrições e votação.</p>
+      </div>
+
+      <div class="space-y-4">
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+          <h4 class="text-xs font-extrabold uppercase text-[#015797]">1. Período de Inscrição de Delegados</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Abertura:</label>
+              <input type="datetime-local" x-model="configPrazos.DATA_INICIO_INSCRICAO" class="w-full p-2 rounded-lg border border-slate-300 text-xs">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Encerramento:</label>
+              <input type="datetime-local" x-model="configPrazos.DATA_FIM_INSCRICAO" class="w-full p-2 rounded-lg border border-slate-300 text-xs">
+            </div>
+          </div>
+        </div>
+
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+          <h4 class="text-xs font-extrabold uppercase text-[#409240]">2. Período de Votação Popular (Urna)</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Abertura:</label>
+              <input type="datetime-local" x-model="configPrazos.DATA_INICIO_VOTACAO" class="w-full p-2 rounded-lg border border-slate-300 text-xs">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Encerramento:</label>
+              <input type="datetime-local" x-model="configPrazos.DATA_FIM_VOTACAO" class="w-full p-2 rounded-lg border border-slate-300 text-xs">
+            </div>
+          </div>
+        </div>
+
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+          <label class="block text-xs font-bold text-slate-700">Alterar Senha / PIN da Comissão:</label>
+          <input type="password" x-model="configPrazos.ADMIN_PIN" placeholder="Novo PIN" class="w-full p-2 rounded-lg border border-slate-300 text-xs font-mono">
+        </div>
+
+        <button @click="salvarPrazos()" class="w-full py-2.5 rounded-xl btn-brand-primary font-bold text-xs flex items-center justify-center space-x-2">
+          <i data-lucide="save" class="w-4 h-4"></i>
+          <span>Salvar Configurações de Prazo</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- SEÇÃO 3: APURAÇÃO DA URNA ELETRÔNICA -->
+    <div x-show="abaAdmin === 'apuracao'" class="max-w-2xl mx-auto pdm-card p-6 sm:p-8 space-y-5">
+      <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+        <div>
+          <h3 class="text-base sm:text-lg font-black text-[#072b4c]">Apuração de Votos da Urna</h3>
+          <p class="text-xs text-slate-500">Total de votos computados anonimamente na urna eletrônica.</p>
+        </div>
+        <span class="text-xs font-black px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full" x-text="stats.totalVotosUrna + ' Votos Registrados'"></span>
+      </div>
+
+      <div class="space-y-3">
+        <template x-for="(votos, candChave) in stats.apuracaoVotos" :key="candChave">
+          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-800" x-text="candChave"></span>
+            <div class="flex items-center space-x-2">
+              <span class="text-sm font-black text-[#015797]" x-text="votos + ' votos'"></span>
+              <span class="text-[10px] text-slate-400" x-text="'(' + (stats.totalVotosUrna > 0 ? Math.round((votos / stats.totalVotosUrna) * 100) : 0) + '%)'"></span>
+            </div>
+          </div>
+        </template>
+        <div x-show="Object.keys(stats.apuracaoVotos).length === 0" class="text-center py-6 text-xs text-slate-400">
+          Nenhum voto depositado na urna até o momento.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MODAL DE PARECER DA COMISSÃO (DILIGÊNCIA / INDEFERIMENTO) -->
+  <div x-show="modalParecerAberto" x-cloak class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4 animate-ballot-drop">
+      <h3 class="text-base font-black text-[#072b4c]">
+        Atualizar Candidatura: <span x-text="parecerModal.status"></span>
+      </h3>
+      <p class="text-xs text-slate-500">
+        Informe a justificativa técnica para o candidato <strong class="text-slate-700" x-text="parecerModal.protocolo"></strong>.
+      </p>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Motivação / Diligência Solicitada *</label>
+        <textarea x-model="parecerModal.texto" rows="3" placeholder="Ex: A foto do documento de residência está ilegível. Por favor, reapresente..."
+                  class="w-full p-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-[#015797] outline-hidden resize-none"></textarea>
+      </div>
+
+      <div class="flex items-center justify-end space-x-2 pt-2">
+        <button @click="modalParecerAberto = false" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-600">
+          Cancelar
+        </button>
+        <button @click="confirmarParecer()" class="px-4 py-2 rounded-xl btn-brand-primary text-xs font-bold">
+          Confirmar Decisão
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- SCRIPT COMPONENTE ALPINE.JS -->
+<script>
+function adminComponent() {
+  return {
+    autenticado: false,
+    validandoPin: false,
+    pinInput: "",
+    abaAdmin: "candidaturas",
+    filtroStatus: "todos",
+    modalParecerAberto: false,
+
+    stats: {
+      totalInscritos: 0,
+      pendentes: 0,
+      diligencias: 0,
+      deferidos: 0,
+      indeferidos: 0,
+      totalVotosUrna: 0,
+      apuracaoVotos: {}
+    },
+
+    configPrazos: {
+      DATA_INICIO_INSCRICAO: "",
+      DATA_FIM_INSCRICAO: "",
+      DATA_INICIO_VOTACAO: "",
+      DATA_FIM_VOTACAO: "",
+      ADMIN_PIN: ""
+    },
+
+    parecerModal: {
+      protocolo: "",
+      status: "",
+      texto: ""
+    },
+
+    inscricoes: [],
+    inscricoesFiltradas: [],
+
+    initAdmin() {
+      this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+    },
+
+    fazerLogin() {
+      if (!this.pinInput) return;
+      this.validandoPin = true;
+
+      if (window.google && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler((res) => {
+            this.validandoPin = false;
+            if (res && res.success) {
+              this.autenticado = true;
+              this.recarregarDados();
+            } else {
+              alert(res ? res.message : "PIN Inválido.");
+            }
+          })
+          .withFailureHandler((err) => {
+            this.validandoPin = false;
+            alert("Erro de autenticação: " + err.message);
+          })
+          .adminLogin(this.pinInput);
+      } else {
+        // Simulação local
+        setTimeout(() => {
+          this.validandoPin = false;
+          this.autenticado = true;
+          this.recarregarDados();
+        }, 500);
+      }
+    },
+
+    recarregarDados() {
+      if (window.google && google.script && google.script.run) {
+        // Estatísticas
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res && res.success) this.stats = res.data;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+          })
+          .adminObterEstatisticas();
+
+        // Inscrições
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res && res.success) {
+              this.inscricoes = res.data || [];
+              this.filtrarInscricoes();
+            }
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+          })
+          .adminListarInscricoes("todos");
+      } else {
+        // Mock local
+        this.stats = {
+          totalInscritos: 4,
+          pendentes: 1,
+          diligencias: 1,
+          deferidos: 2,
+          indeferidos: 0,
+          totalVotosUrna: 28,
+          apuracaoVotos: { "Maria do Bairro América (DEL-2026-101)": 18, "Carlos Agronegócio (DEL-2026-102)": 10 }
+        };
+        this.inscricoes = [
+          {
+            protocolo: "DEL-2026-101",
+            timestamp: "10/02/2026 14:30",
+            nomeCompleto: "Maria das Graças Silva",
+            nomeUrna: "Maria do Bairro América",
+            cpf: "123.456.789-00",
+            rg: "123456 SSP/MT",
+            telefone: "(65) 99999-1111",
+            email: "maria@exemplo.com",
+            bairro: "Jardim América",
+            segmento: "Movimento Comunitário",
+            minibio: "Lutando por melhorias para nosso bairro.",
+            status: "Deferida",
+            linkIdentidade: "#",
+            linkResidencia: "#",
+            linkQuitacao: "#",
+            linkFoto: "#",
+            parecer: "Documentação homologada com êxito."
+          }
+        ];
+        this.filtrarInscricoes();
+        this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+      }
+    },
+
+    filtrarInscricoes() {
+      if (this.filtroStatus === "todos") {
+        this.inscricoesFiltradas = this.inscricoes;
+      } else {
+        this.inscricoesFiltradas = this.inscricoes.filter(i => i.status.toLowerCase() === this.filtroStatus.toLowerCase());
+      }
+      this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+    },
+
+    atualizarStatusDireto(protocolo, novoStatus) {
+      if (!confirm(`Deseja alterar a candidatura ${protocolo} para ${novoStatus}?`)) return;
+
+      if (window.google && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler((res) => {
+            alert(res.message);
+            this.recarregarDados();
+          })
+          .adminAtualizarStatus(protocolo, novoStatus, "Homologado pela Comissão.");
+      } else {
+        alert(`Status de ${protocolo} atualizado para ${novoStatus}!`);
+        this.recarregarDados();
+      }
+    },
+
+    abrirModalParecer(item, statusAlvo) {
+      this.parecerModal.protocolo = item.protocolo;
+      this.parecerModal.status = statusAlvo;
+      this.parecerModal.texto = item.parecer || "";
+      this.modalParecerAberto = true;
+    },
+
+    confirmarParecer() {
+      if (!this.parecerModal.texto) {
+        alert("Por favor, informe a justificativa.");
+        return;
+      }
+
+      if (window.google && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler((res) => {
+            this.modalParecerAberto = false;
+            alert(res.message);
+            this.recarregarDados();
+          })
+          .adminAtualizarStatus(this.parecerModal.protocolo, this.parecerModal.status, this.parecerModal.texto);
+      } else {
+        this.modalParecerAberto = false;
+        alert("Decisão confirmada com sucesso.");
+        this.recarregarDados();
+      }
+    },
+
+    salvarPrazos() {
+      if (window.google && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler((res) => {
+            alert(res.message);
+          })
+          .adminSalvarConfiguracoes(this.configPrazos);
+      } else {
+        alert("Prazos atualizados com sucesso!");
+      }
+    },
+
+    sairAdmin() {
+      this.autenticado = false;
+      this.pinInput = "";
+    }
+  };
+}
+</script>
+

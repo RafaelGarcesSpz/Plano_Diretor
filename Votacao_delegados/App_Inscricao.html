@@ -1,0 +1,719 @@
+<!-- Componente SPA: Módulo de Inscrição de Delegados -->
+<div x-data="inscricaoComponent()" x-init="initInscricao()" class="space-y-6">
+
+  <!-- AVISO INSTITUCIONAL CASO AS INSCRIÇÕES ESTEJAM ENCERRADAS OU FORA DO PRAZO -->
+  <div x-show="!prazoAberto && !loadingStatus" x-cloak class="max-w-3xl mx-auto space-y-6">
+    <div class="bg-white rounded-2xl border-l-4 border-l-[#e2bd1e] border border-slate-200 p-6 sm:p-8 shadow-md space-y-4">
+      <div class="flex items-center space-x-4">
+        <div class="p-3 bg-amber-100 text-amber-800 rounded-xl">
+          <i data-lucide="clock" class="w-8 h-8"></i>
+        </div>
+        <div>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-900 uppercase">
+            Inscrições Encerradas
+          </span>
+          <h2 class="text-xl sm:text-2xl font-black text-[#072b4c] mt-1">
+            Período Oficial de Inscrições Finalizado
+          </h2>
+        </div>
+      </div>
+
+      <p class="text-sm text-slate-600 leading-relaxed">
+        O prazo para registro de candidaturas para a Comissão de Delegados do Plano Diretor de Sapezal/MT foi encerrado. Todas as candidaturas submetidas encontram-se em fase de análise e homologação documental pela Comissão Eleitoral.
+      </p>
+
+      <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs text-slate-700 space-y-2">
+        <div class="font-bold text-[#015797] flex items-center space-x-1.5">
+          <i data-lucide="calendar-days" class="w-4 h-4"></i>
+          <span>Próximas Etapas do Cronograma:</span>
+        </div>
+        <ul class="list-disc list-inside space-y-1 pl-1">
+          <li><strong>Publicação da Lista de Candidaturas Deferidas:</strong> Acompanhe no portal.</li>
+          <li><strong>Período de Votação Popular:</strong> Todos os moradores poderão votar nos delegados do seu bairro.</li>
+          <li><strong>Posse dos Delegados Eleitos:</strong> Conferência Municipal do Plano Diretor.</li>
+        </ul>
+      </div>
+
+      <div class="pt-2 flex flex-wrap gap-3">
+        <button @click="navigate('votacao')" class="px-5 py-2.5 rounded-xl btn-brand-primary text-xs sm:text-sm font-bold flex items-center space-x-2">
+          <i data-lucide="vote" class="w-4 h-4"></i>
+          <span>Acessar Cédula de Votação</span>
+        </button>
+        <button @click="explicarSigilo = true" class="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-semibold flex items-center space-x-1.5">
+          <i data-lucide="shield-check" class="w-4 h-4 text-[#015797]"></i>
+          <span>Como funciona o sigilo</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Componente de Sigilo Expansível -->
+    <?!= include('Comp_SigiloVoto'); ?>
+  </div>
+
+  <!-- FLUXO ATIVO DE INSCRIÇÃO EM 5 ETAPAS -->
+  <div x-show="prazoAberto && !sucessoEnvio" class="max-w-3xl mx-auto space-y-6 has-fixed-bottom">
+    
+    <!-- BARRA DE PROGRESSO STICKY NO TOPO -->
+    <header class="sticky top-20 z-40 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200 shadow-xs p-4 transition-all">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center space-x-2">
+          <span class="w-7 h-7 rounded-full bg-[#015797] text-white text-xs font-black flex items-center justify-center shadow-xs" x-text="step"></span>
+          <div>
+            <h2 class="text-xs sm:text-sm font-black text-[#072b4c]" x-text="nomesEtapas[step - 1]"></h2>
+            <p class="text-[10px] text-slate-500">Etapa <span x-text="step"></span> de 5</p>
+          </div>
+        </div>
+        <span class="text-xs font-extrabold text-[#015797]" x-text="Math.round((step / 5) * 100) + '% Concluído'"></span>
+      </div>
+      <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+        <div class="bg-gradient-to-r from-[#015797] to-[#409240] h-full transition-all duration-300 rounded-full"
+             :style="'width: ' + ((step / 5) * 100) + '%'"></div>
+      </div>
+    </header>
+
+    <!-- TELA 1: DADOS PESSOAIS -->
+    <section x-show="step === 1" x-transition.opacity.duration.250ms class="pdm-card p-6 sm:p-8 space-y-5">
+      <div class="border-b border-slate-100 pb-3">
+        <h3 class="text-lg font-black text-[#072b4c] flex items-center space-x-2">
+          <i data-lucide="user" class="w-5 h-5 text-[#015797]"></i>
+          <span>Identificação do Candidato a Delegado</span>
+        </h3>
+        <p class="text-xs text-slate-500 mt-1">Preencha seus dados conforme constam em seus documentos oficiais.</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Nome Completo -->
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold text-slate-700 mb-1">Nome Completo *</label>
+          <input type="text" x-model="form.dadosPessoais.nomeCompleto" placeholder="Ex: João da Silva Santos"
+                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
+        </div>
+
+        <!-- CPF -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">CPF (apenas números ou formatado) *</label>
+          <input type="text" x-model="form.dadosPessoais.cpf" @input="mascararCpfInput($event)" placeholder="000.000.000-00" maxlength="14"
+                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
+        </div>
+
+        <!-- RG -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">RG / Órgão Expedidor *</label>
+          <input type="text" x-model="form.dadosPessoais.rg" placeholder="Ex: 1234567 SSP/MT"
+                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
+        </div>
+
+        <!-- Data de Nascimento -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Data de Nascimento *</label>
+          <input type="date" x-model="form.dadosPessoais.dataNasc"
+                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
+        </div>
+
+        <!-- Telefone / WhatsApp -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Telefone / WhatsApp *</label>
+          <input type="text" x-model="form.dadosPessoais.telefone" @input="mascararTelefoneInput($event)" placeholder="(65) 90000-0000" maxlength="15"
+                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
+        </div>
+
+        <!-- E-mail -->
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold text-slate-700 mb-1">E-mail para Contato *</label>
+          <input type="email" x-model="form.dadosPessoais.email" placeholder="seu.email@exemplo.com"
+                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
+        </div>
+
+        <!-- Bairro / Comunidade -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Bairro / Região em Sapezal *</label>
+          <select x-model="form.dadosPessoais.bairro"
+                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
+            <option value="">Selecione o Bairro...</option>
+            <option value="Centro">Centro</option>
+            <option value="Cidezal I">Cidezal I</option>
+            <option value="Cidezal II">Cidezal II</option>
+            <option value="Jardim América">Jardim América</option>
+            <option value="Jardim Ipê">Jardim Ipê</option>
+            <option value="Parque das Nações">Parque das Nações</option>
+            <option value="Água Limpa">Água Limpa</option>
+            <option value="Distrito Industrial">Distrito Industrial</option>
+            <option value="Zona Rural / Comunidades">Zona Rural / Comunidades</option>
+          </select>
+        </div>
+
+        <!-- Segmento Representado -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Segmento Representativo *</label>
+          <select x-model="form.dadosPessoais.segmento"
+                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
+            <option value="Sociedade Civil">Sociedade Civil / Morador</option>
+            <option value="Movimento Comunitário">Movimento Comunitário / Associação</option>
+            <option value="Setor Produtivo / Empresarial">Setor Produtivo / Comercial / Agronegócio</option>
+            <option value="Trabalhadores e Sindicatos">Trabalhadores e Entidades Sindicais</option>
+            <option value="Profissional / Acadêmico">Setor Técnico / Acadêmico</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- TELA 2: PROPOSTA & PREVIEW REATIVO DO CARTÃO -->
+    <section x-show="step === 2" x-transition.opacity.duration.250ms class="pdm-card p-6 sm:p-8 space-y-6">
+      <div class="border-b border-slate-100 pb-3">
+        <h3 class="text-lg font-black text-[#072b4c] flex items-center space-x-2">
+          <i data-lucide="sparkles" class="w-5 h-5 text-[#ffd200]"></i>
+          <span>Apresentação e Proposta para Sapezal</span>
+        </h3>
+        <p class="text-xs text-slate-500 mt-1">Estes dados ficarão visíveis para os eleitores votarem em você na cédula eletrônica.</p>
+      </div>
+
+      <div class="space-y-4">
+        <!-- Nome de Urna -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Nome de Urna / Como quer ser chamado *</label>
+          <input type="text" x-model="form.dadosDivulgacao.nomeUrna" placeholder="Ex: Professor João da Educação" maxlength="40"
+                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
+          <span class="text-[10px] text-slate-400">Máximo 40 caracteres.</span>
+        </div>
+
+        <!-- Minibiografia / Proposta -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-xs font-bold text-slate-700">Por que você quer ser Delegado do Plano Diretor? *</label>
+            <span class="text-[11px] font-mono font-bold" 
+                  :class="500 - (form.dadosDivulgacao.minibio ? form.dadosDivulgacao.minibio.length : 0) < 30 ? 'text-red-500' : 'text-slate-400'"
+                  x-text="(500 - (form.dadosDivulgacao.minibio ? form.dadosDivulgacao.minibio.length : 0)) + ' caracteres restantes'"></span>
+          </div>
+          <textarea x-model="form.dadosDivulgacao.minibio" rows="4" maxlength="500"
+                    placeholder="Conte sua trajetória em Sapezal e quais melhorias você defenderá para seu bairro e cidade (habitação, saneamento, meio ambiente, transporte, lazer)..."
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all resize-none"></textarea>
+        </div>
+
+        <!-- CARTÃO PREVIEW REATIVO (O "CARTÃO DO CANDIDATO") -->
+        <div class="mt-4 p-4 rounded-2xl bg-gradient-to-br from-slate-50 to-blue-50/50 border-2 border-dashed border-[#015797]/30 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-black uppercase text-[#015797] tracking-wider flex items-center space-x-1">
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+              <span>Prévia ao Vivo na Cédula de Votação</span>
+            </span>
+            <span class="text-[10px] bg-[#ffd200] text-[#072b4c] font-black px-2 py-0.5 rounded-full">Exibição Pública</span>
+          </div>
+
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center sm:items-start gap-4">
+            <!-- Foto de Preview -->
+            <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center">
+              <template x-if="fotoPreviewUrl">
+                <img :src="fotoPreviewUrl" alt="Foto Candidato" class="w-full h-full object-cover">
+              </template>
+              <template x-if="!fotoPreviewUrl">
+                <i data-lucide="user" class="w-10 h-10 text-slate-300"></i>
+              </template>
+            </div>
+
+            <!-- Dados no Cartão -->
+            <div class="flex-1 text-center sm:text-left space-y-1">
+              <div class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-[#015797]"
+                    x-text="form.dadosPessoais.bairro || 'Bairro Não Selecionado'"></div>
+              <h4 class="text-base font-black text-[#072b4c]" 
+                  x-text="form.dadosDivulgacao.nomeUrna || form.dadosPessoais.nomeCompleto || 'Nome de Urna do Candidato'"></h4>
+              <p class="text-xs text-slate-500 font-medium" 
+                 x-text="form.dadosPessoais.segmento || 'Segmento Representativo'"></p>
+              <p class="text-xs text-slate-700 line-clamp-3 italic pt-1" 
+                 x-text="form.dadosDivulgacao.minibio || 'Sua mensagem e propostas de atuação aparecerão aqui para os cidadãos de Sapezal.'"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TELA 3: UPLOAD DOS 4 ARQUIVOS COM CONVERSÃO ASSÍNCRONA EM BASE64 -->
+    <section x-show="step === 3" x-transition.opacity.duration.250ms class="pdm-card p-6 sm:p-8 space-y-5">
+      <div class="border-b border-slate-100 pb-3">
+        <h3 class="text-lg font-black text-[#072b4c] flex items-center space-x-2">
+          <i data-lucide="upload-cloud" class="w-5 h-5 text-[#409240]"></i>
+          <span>Documentação Obrigatória (Upload Digital)</span>
+        </h3>
+        <p class="text-xs text-slate-500 mt-1">Anexe fotos nítidas ou arquivos PDF (máximo 4MB por documento). Os documentos pessoais são de acesso estritamente restrito à Comissão.</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        
+        <!-- 1. Documento de Identidade -->
+        <div class="p-4 rounded-xl border-2 border-dashed transition-all"
+             :class="form.arquivosUpload.docIdentidade ? 'border-emerald-500 bg-emerald-50/40' : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'">
+          <div class="flex items-center space-x-2.5 mb-2">
+            <i data-lucide="id-card" class="w-5 h-5 text-[#015797]"></i>
+            <span class="text-xs font-bold text-slate-800">1. RG ou CNH (Frente e Verso) *</span>
+          </div>
+          <input type="file" accept="image/*,.pdf" @change="processarUploadArquivo($event, 'docIdentidade', 'docIdentidadeName', 'docIdentidadeType')"
+                 class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-[#015797] hover:file:bg-blue-200 cursor-pointer">
+          <div x-show="form.arquivosUpload.docIdentidade" class="mt-2 text-[11px] text-emerald-700 font-bold flex items-center space-x-1">
+            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+            <span x-text="form.arquivosUpload.docIdentidadeName"></span>
+          </div>
+        </div>
+
+        <!-- 2. Comprovante de Residência -->
+        <div class="p-4 rounded-xl border-2 border-dashed transition-all"
+             :class="form.arquivosUpload.compResidencia ? 'border-emerald-500 bg-emerald-50/40' : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'">
+          <div class="flex items-center space-x-2.5 mb-2">
+            <i data-lucide="home" class="w-5 h-5 text-[#015797]"></i>
+            <span class="text-xs font-bold text-slate-800">2. Comprovante de Residência *</span>
+          </div>
+          <input type="file" accept="image/*,.pdf" @change="processarUploadArquivo($event, 'compResidencia', 'compResidenciaName', 'compResidenciaType')"
+                 class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-[#015797] hover:file:bg-blue-200 cursor-pointer">
+          <div x-show="form.arquivosUpload.compResidencia" class="mt-2 text-[11px] text-emerald-700 font-bold flex items-center space-x-1">
+            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+            <span x-text="form.arquivosUpload.compResidenciaName"></span>
+          </div>
+        </div>
+
+        <!-- 3. Certidão de Quitação Eleitoral -->
+        <div class="p-4 rounded-xl border-2 border-dashed transition-all"
+             :class="form.arquivosUpload.certQuitacao ? 'border-emerald-500 bg-emerald-50/40' : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'">
+          <div class="flex items-center space-x-2.5 mb-2">
+            <i data-lucide="file-check" class="w-5 h-5 text-[#015797]"></i>
+            <span class="text-xs font-bold text-slate-800">3. Certidão de Quitação Eleitoral *</span>
+          </div>
+          <input type="file" accept="image/*,.pdf" @change="processarUploadArquivo($event, 'certQuitacao', 'certQuitacaoName', 'certQuitacaoType')"
+                 class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-[#015797] hover:file:bg-blue-200 cursor-pointer">
+          <div x-show="form.arquivosUpload.certQuitacao" class="mt-2 text-[11px] text-emerald-700 font-bold flex items-center space-x-1">
+            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+            <span x-text="form.arquivosUpload.certQuitacaoName"></span>
+          </div>
+        </div>
+
+        <!-- 4. Foto de Rosto para Divulgação -->
+        <div class="p-4 rounded-xl border-2 border-dashed transition-all"
+             :class="form.arquivosUpload.fotoRosto ? 'border-emerald-500 bg-emerald-50/40' : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'">
+          <div class="flex items-center space-x-2.5 mb-2">
+            <i data-lucide="camera" class="w-5 h-5 text-[#409240]"></i>
+            <span class="text-xs font-bold text-slate-800">4. Foto de Rosto (Divulgação Pública) *</span>
+          </div>
+          <input type="file" accept="image/*" @change="processarFotoPreview($event)"
+                 class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200 cursor-pointer">
+          <div x-show="form.arquivosUpload.fotoRosto" class="mt-2 text-[11px] text-emerald-700 font-bold flex items-center space-x-1">
+            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+            <span x-text="form.arquivosUpload.fotoRostoName"></span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TELA 4: DECLARAÇÕES OBRIGATÓRIAS -->
+    <section x-show="step === 4" x-transition.opacity.duration.250ms class="pdm-card p-6 sm:p-8 space-y-5">
+      <div class="border-b border-slate-100 pb-3">
+        <h3 class="text-lg font-black text-[#072b4c] flex items-center space-x-2">
+          <i data-lucide="check-square" class="w-5 h-5 text-[#015797]"></i>
+          <span>Declarações e Termos Legais</span>
+        </h3>
+        <p class="text-xs text-slate-500 mt-1">Para homologação da candidatura, assinale todas as declarações de conformidade jurídica.</p>
+      </div>
+
+      <div class="space-y-3.5">
+        <label class="flex items-start space-x-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+          <input type="checkbox" x-model="form.declaracoes.residencia" class="mt-1 w-4 h-4 text-[#015797] rounded border-slate-300 focus:ring-[#015797]">
+          <span class="text-xs text-slate-700 leading-relaxed">
+            <strong>Residência Comprovada:</strong> Declaro que resido no Município de Sapezal/MT há mais de 1 (um) ano ininterrupto no bairro indicado nesta inscrição.
+          </span>
+        </label>
+
+        <label class="flex items-start space-x-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+          <input type="checkbox" x-model="form.declaracoes.maioridade" class="mt-1 w-4 h-4 text-[#015797] rounded border-slate-300 focus:ring-[#015797]">
+          <span class="text-xs text-slate-700 leading-relaxed">
+            <strong>Maioridade e Pleno Exercício Cívico:</strong> Declaro ser maior de 18 anos de idade e estar em pleno gozo de meus direitos políticos e civis.
+          </span>
+        </label>
+
+        <label class="flex items-start space-x-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+          <input type="checkbox" x-model="form.declaracoes.veracidade" class="mt-1 w-4 h-4 text-[#015797] rounded border-slate-300 focus:ring-[#015797]">
+          <span class="text-xs text-slate-700 leading-relaxed">
+            <strong>Veracidade Documental:</strong> Declaro sob as penas da lei penal brasileira que todas as informações e documentos enviados são autênticos e verídicos.
+          </span>
+        </label>
+
+        <label class="flex items-start space-x-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+          <input type="checkbox" x-model="form.declaracoes.lgpd" class="mt-1 w-4 h-4 text-[#015797] rounded border-slate-300 focus:ring-[#015797]">
+          <span class="text-xs text-slate-700 leading-relaxed">
+            <strong>Consentimento LGPD & Divulgação Pública:</strong> Autorizo a publicação do meu nome de urna, bairro e foto no portal do Plano Diretor para fins eleitorais, mantendo os documentos pessoais protegidos em sigilo institucional.
+          </span>
+        </label>
+      </div>
+
+      <div x-show="!declaracoesCompletas" class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center space-x-2">
+        <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+        <span>É obrigatório assinalar todas as 4 declarações acima para avançar à tela final.</span>
+      </div>
+    </section>
+
+    <!-- TELA 5: RESUMO GERAL & SUBMISSÃO -->
+    <section x-show="step === 5" x-transition.opacity.duration.250ms class="pdm-card p-6 sm:p-8 space-y-6">
+      <div class="border-b border-slate-100 pb-3">
+        <h3 class="text-lg font-black text-[#072b4c] flex items-center space-x-2">
+          <i data-lucide="check-circle-2" class="w-5 h-5 text-[#409240]"></i>
+          <span>Revisão Final dos Dados</span>
+        </h3>
+        <p class="text-xs text-slate-500 mt-1">Confira cuidadosamente as informações antes de transmitir sua candidatura.</p>
+      </div>
+
+      <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div><strong class="text-slate-500">Nome Completo:</strong> <span class="text-slate-800 font-bold block" x-text="form.dadosPessoais.nomeCompleto"></span></div>
+          <div><strong class="text-slate-500">Nome de Urna:</strong> <span class="text-slate-800 font-bold block" x-text="form.dadosDivulgacao.nomeUrna || form.dadosPessoais.nomeCompleto"></span></div>
+          <div><strong class="text-slate-500">CPF:</strong> <span class="text-slate-800 font-mono block" x-text="form.dadosPessoais.cpf"></span></div>
+          <div><strong class="text-slate-500">Telefone:</strong> <span class="text-slate-800 font-mono block" x-text="form.dadosPessoais.telefone"></span></div>
+          <div><strong class="text-slate-500">Bairro:</strong> <span class="text-slate-800 font-bold block" x-text="form.dadosPessoais.bairro"></span></div>
+          <div><strong class="text-slate-500">Segmento:</strong> <span class="text-slate-800 block" x-text="form.dadosPessoais.segmento"></span></div>
+        </div>
+
+        <div class="pt-2 border-t border-slate-200">
+          <strong class="text-slate-500">Proposta / Minibiografia:</strong>
+          <p class="text-slate-700 italic mt-1" x-text="form.dadosDivulgacao.minibio"></p>
+        </div>
+
+        <div class="pt-2 border-t border-slate-200 flex flex-wrap gap-2">
+          <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-md font-semibold text-[11px] flex items-center space-x-1">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span>4 Documentos Anexados</span>
+          </span>
+          <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-md font-semibold text-[11px] flex items-center space-x-1">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span>Termos e Declarações Aceitos</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Componente Educativo de Sigilo -->
+      <?!= include('Comp_SigiloVoto'); ?>
+    </section>
+
+    <!-- NAVEGAÇÃO ERGONÔMICA FIXADA NO RODAPÉ (FIXED BOTTOM) -->
+    <nav class="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3 sm:p-4 shadow-lg">
+      <div class="max-w-3xl mx-auto flex items-center justify-between gap-3">
+        <!-- Botão Voltar -->
+        <button x-show="step > 1" @click="voltarEtapa()"
+                class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-xs sm:text-sm flex items-center space-x-1.5 transition-all">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          <span>Voltar</span>
+        </button>
+        <div x-show="step === 1"></div> <!-- Espaçador quando não há botão voltar -->
+
+        <!-- Botão Avançar / Concluir -->
+        <div>
+          <button x-show="step < 5" @click="avancarEtapa()"
+                  class="px-6 py-2.5 rounded-xl btn-brand-primary font-bold text-xs sm:text-sm flex items-center space-x-2 shadow-md hover:shadow-lg transition-all">
+            <span>Avançar</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+
+          <button x-show="step === 5" @click="submeterInscricao()" :disabled="enviando"
+                  class="px-6 py-3 rounded-xl btn-brand-secondary font-black text-xs sm:text-sm flex items-center space-x-2 shadow-lg transition-all"
+                  :class="enviando ? 'opacity-50 cursor-not-allowed' : ''">
+            <template x-if="!enviando">
+              <span class="flex items-center space-x-1.5">
+                <i data-lucide="send" class="w-4 h-4"></i>
+                <span>Confirmar e Enviar Inscrição</span>
+              </span>
+            </template>
+            <template x-if="enviando">
+              <span class="flex items-center space-x-2">
+                <svg class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
+                <span>Enviando dados...</span>
+              </span>
+            </template>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+  </div>
+
+  <!-- TELA DE SUCESSO E EMISSÃO DE PROTOCOLO -->
+  <div x-show="sucessoEnvio" x-cloak class="max-w-2xl mx-auto space-y-6">
+    <div class="bg-white p-6 sm:p-10 rounded-2xl border-2 border-emerald-500 shadow-xl text-center space-y-5 animate-ballot-drop">
+      <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-md">
+        <i data-lucide="check-check" class="w-8 h-8"></i>
+      </div>
+
+      <div class="space-y-1">
+        <span class="text-xs font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full">
+          Inscrição Transmitida com Sucesso
+        </span>
+        <h2 class="text-2xl font-black text-[#072b4c] pt-2">Parabéns, Candidatura Registrada!</h2>
+        <p class="text-xs text-slate-600 max-w-md mx-auto">
+          Sua inscrição para Delegado do Plano Diretor de Sapezal foi recebida pela Comissão e já está na fila de homologação.
+        </p>
+      </div>
+
+      <!-- CARD DO PROTOCOLO -->
+      <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 max-w-md mx-auto">
+        <span class="text-[11px] font-bold text-slate-500 uppercase">Seu Protocolo Oficial de Rastreio:</span>
+        <div class="flex items-center justify-center space-x-3">
+          <span class="text-xl sm:text-2xl font-mono font-black text-[#015797] tracking-wider" x-text="protocoloGerado"></span>
+          <button @click="copiarProtocolo()" class="p-2 rounded-lg bg-blue-50 text-[#015797] hover:bg-blue-100 transition-colors" title="Copiar Protocolo">
+            <i data-lucide="copy" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <p class="text-[10px] text-slate-400">Guarde este número para consultas futuras e envio de recursos.</p>
+      </div>
+
+      <div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <button @click="window.print()" class="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-xs flex items-center justify-center space-x-1.5">
+          <i data-lucide="printer" class="w-4 h-4"></i>
+          <span>Imprimir Comprovante</span>
+        </button>
+        <button @click="navigate('votacao')" class="w-full sm:w-auto px-6 py-2.5 rounded-xl btn-brand-primary font-bold text-xs flex items-center justify-center space-x-1.5">
+          <i data-lucide="external-link" class="w-4 h-4"></i>
+          <span>Conhecer a Urna de Votação</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- SCRIPT COMPONENTE ALPINE.JS -->
+<script>
+function inscricaoComponent() {
+  return {
+    step: 1,
+    nomesEtapas: [
+      "Dados Pessoais",
+      "Proposta e Apresentação",
+      "Upload de Documentos",
+      "Declarações Obrigatórias",
+      "Revisão e Envio"
+    ],
+    prazoAberto: true,
+    loadingStatus: true,
+    enviando: false,
+    sucessoEnvio: false,
+    protocoloGerado: "",
+    fotoPreviewUrl: "",
+    explicarSigilo: false,
+
+    form: {
+      dadosPessoais: {
+        nomeCompleto: "",
+        cpf: "",
+        rg: "",
+        dataNasc: "",
+        telefone: "",
+        email: "",
+        bairro: "",
+        segmento: "Sociedade Civil"
+      },
+      dadosDivulgacao: {
+        nomeUrna: "",
+        minibio: ""
+      },
+      arquivosUpload: {
+        docIdentidade: "",
+        docIdentidadeName: "",
+        docIdentidadeType: "",
+        compResidencia: "",
+        compResidenciaName: "",
+        compResidenciaType: "",
+        certQuitacao: "",
+        certQuitacaoName: "",
+        certQuitacaoType: "",
+        fotoRosto: "",
+        fotoRostoName: "",
+        fotoRostoType: ""
+      },
+      declaracoes: {
+        residencia: false,
+        maioridade: false,
+        veracidade: false,
+        lgpd: false
+      }
+    },
+
+    get declaracoesCompletas() {
+      return this.form.declaracoes.residencia &&
+             this.form.declaracoes.maioridade &&
+             this.form.declaracoes.veracidade &&
+             this.form.declaracoes.lgpd;
+    },
+
+    initInscricao() {
+      this.consultarPrazo();
+      this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+    },
+
+    consultarPrazo() {
+      this.loadingStatus = true;
+      if (window.google && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler((res) => {
+            this.loadingStatus = false;
+            if (res && res.success && res.data && res.data.inscricao) {
+              this.prazoAberto = res.data.inscricao.aberta;
+            }
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+          })
+          .withFailureHandler(() => {
+            this.loadingStatus = false;
+          })
+          .obterStatusSistema();
+      } else {
+        // Fallback para desenvolvimento local
+        this.loadingStatus = false;
+        this.prazoAberto = true;
+      }
+    },
+
+    mascararCpfInput(e) {
+      let v = e.target.value.replace(/\D/g, "");
+      if (v.length > 11) v = v.substring(0, 11);
+      v = v.replace(/(\d{3})(\d)/, "$1.$2");
+      v = v.replace(/(\d{3})(\d)/, "$1.$2");
+      v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+      this.form.dadosPessoais.cpf = v;
+    },
+
+    mascararTelefoneInput(e) {
+      let v = e.target.value.replace(/\D/g, "");
+      if (v.length > 11) v = v.substring(0, 11);
+      v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
+      v = v.replace(/(\d)(\d{4})$/, "$1-$2");
+      this.form.dadosPessoais.telefone = v;
+    },
+
+    processarUploadArquivo(event, fieldKey, nameKey, typeKey) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (file.size > 4 * 1024 * 1024) {
+        alert("O arquivo selecionado é maior que 4MB. Por favor escolha um arquivo menor.");
+        event.target.value = "";
+        return;
+      }
+
+      this.form.arquivosUpload[nameKey] = file.name;
+      this.form.arquivosUpload[typeKey] = file.type;
+
+      // Conversão Assíncrona em Base64
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.form.arquivosUpload[fieldKey] = e.target.result;
+        this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+      };
+      reader.readAsDataURL(file);
+    },
+
+    processarFotoPreview(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (file.size > 4 * 1024 * 1024) {
+        alert("A foto selecionada é maior que 4MB.");
+        event.target.value = "";
+        return;
+      }
+
+      this.form.arquivosUpload.fotoRostoName = file.name;
+      this.form.arquivosUpload.fotoRostoType = file.type;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.form.arquivosUpload.fotoRosto = e.target.result;
+        this.fotoPreviewUrl = e.target.result;
+        this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+      };
+      reader.readAsDataURL(file);
+    },
+
+    avancarEtapa() {
+      // Validações por etapa
+      if (this.step === 1) {
+        const dp = this.form.dadosPessoais;
+        if (!dp.nomeCompleto || !dp.cpf || !dp.bairro || !dp.telefone) {
+          alert("Por favor, preencha os campos obrigatórios da Identificação (Nome, CPF, Bairro e Telefone).");
+          return;
+        }
+      }
+
+      if (this.step === 2) {
+        if (!this.form.dadosDivulgacao.minibio || this.form.dadosDivulgacao.minibio.trim().length < 10) {
+          alert("Por favor, escreva uma breve proposta ou motivação (mínimo 10 caracteres).");
+          return;
+        }
+      }
+
+      if (this.step === 3) {
+        const arq = this.form.arquivosUpload;
+        if (!arq.docIdentidade || !arq.compResidencia || !arq.certQuitacao || !arq.fotoRosto) {
+          alert("Por favor, faça o upload de todos os 4 documentos obrigatórios.");
+          return;
+        }
+      }
+
+      if (this.step === 4) {
+        if (!this.declaracoesCompletas) {
+          alert("É obrigatório concordar e assinalar todas as 4 declarações para continuar.");
+          return;
+        }
+      }
+
+      this.step++;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+    },
+
+    voltarEtapa() {
+      if (this.step > 1) {
+        this.step--;
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+      }
+    },
+
+    submeterInscricao() {
+      if (this.enviando) return;
+      this.enviando = true;
+
+      const payload = JSON.parse(JSON.stringify(this.form));
+
+      if (window.google && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler((res) => {
+            this.enviando = false;
+            if (res && res.success) {
+              this.sucessoEnvio = true;
+              this.protocoloGerado = res.protocolo;
+              window.scrollTo({ top: 0, behavior: "smooth" });
+              this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            } else {
+              alert(res ? res.message : "Erro ao registrar inscrição.");
+            }
+          })
+          .withFailureHandler((err) => {
+            this.enviando = false;
+            alert("Erro de comunicação com o servidor: " + err.message);
+          })
+          .salvarInscricao(payload);
+      } else {
+        // Simulação em ambiente local
+        setTimeout(() => {
+          this.enviando = false;
+          this.sucessoEnvio = true;
+          this.protocoloGerado = "DEL-2026-98765";
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        }, 1200);
+      }
+    },
+
+    copiarProtocolo() {
+      navigator.clipboard.writeText(this.protocoloGerado);
+      alert("Número do protocolo copiado com sucesso!");
+    }
+  };
+}
+</script>
+

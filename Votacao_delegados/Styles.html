@@ -1,0 +1,130 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* Identidade Visual Institucional - Sapezal/MT */
+:root {
+  --brand-green-dark: #0f560f;
+  --brand-green: #409240;
+  --brand-green-light: #839f21;
+  --brand-yellow: #ffd200;
+  --brand-yellow-dark: #e2bd1e;
+  --brand-gold: #cea20a;
+  --brand-blue-light: #0385d0;
+  --brand-blue: #015797;
+  --brand-blue-dark: #072b4c;
+}
+
+[x-cloak] { display: none !important; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+/* Espaçamento para telas com barra inferior fixa */
+.has-fixed-bottom {
+  padding-bottom: 5.5rem !important;
+}
+
+/* Scrollbar suave */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 #ffffff;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+html { scroll-behavior: smooth; }
+
+/* Botões Institucionais */
+.btn-brand-primary {
+  background-color: var(--brand-blue);
+  color: #ffffff;
+  transition: all 0.2s ease;
+}
+.btn-brand-primary:hover {
+  background-color: var(--brand-blue-dark);
+}
+
+.btn-brand-secondary {
+  background-color: var(--brand-green);
+  color: #ffffff;
+  transition: all 0.2s ease;
+}
+.btn-brand-secondary:hover {
+  background-color: var(--brand-green-dark);
+}
+
+.btn-brand-highlight {
+  background-color: var(--brand-yellow);
+  color: var(--brand-blue-dark);
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+.btn-brand-highlight:hover {
+  background-color: var(--brand-gold);
+  color: #ffffff;
+}
+
+/* Gradientes Institucionais */
+.bg-gradient-pdm-hero {
+  background: linear-gradient(135deg, #072b4c 0%, #015797 45%, #0385d0 70%, #409240 100%);
+}
+
+.bg-gradient-pdm-card {
+  background: linear-gradient(135deg, #015797 0%, #072b4c 100%);
+}
+
+.bg-gradient-pdm-green {
+  background: linear-gradient(135deg, #0f560f 0%, #409240 100%);
+}
+
+/* Cartões com elevação suave */
+.pdm-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.02);
+  border-radius: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pdm-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 8px 16px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+}
+
+/* Animações para Demonstração de Sigilo */
+@keyframes flowArrow {
+  0% { transform: translateX(-6px); opacity: 0.3; }
+  50% { transform: translateX(6px); opacity: 1; }
+  100% { transform: translateX(-6px); opacity: 0.3; }
+}
+
+.animate-flow-arrow {
+  animation: flowArrow 1.6s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(1, 87, 151, 0.3); }
+  50% { box-shadow: 0 0 0 10px rgba(1, 87, 151, 0); }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s infinite;
+}
+
+@keyframes ballotDrop {
+  0% { transform: translateY(-16px); opacity: 0; }
+  60% { transform: translateY(4px); opacity: 1; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.animate-ballot-drop {
+  animation: ballotDrop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+</style>
+
