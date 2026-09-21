@@ -83,8 +83,8 @@ function initDatabase(ssInstance) {
     sheetConfig.appendRow(["Chave", "Valor", "Descricao"]);
     sheetConfig.appendRow(["DATA_INICIO_INSCRICAO", "2026-01-01T00:00", "Data e hora de abertura das inscrições"]);
     sheetConfig.appendRow(["DATA_FIM_INSCRICAO", "2026-12-31T23:59", "Data e hora de encerramento das inscrições"]);
-    sheetConfig.appendRow(["DATA_INICIO_VOTACAO", "2026-01-01T00:00", "Data e hora de abertura da votação"]);
-    sheetConfig.appendRow(["DATA_FIM_VOTACAO", "2026-12-31T23:59", "Data e hora de encerramento da votação"]);
+    sheetConfig.appendRow(["DATA_INICIO_VOTACAO", "2026-10-15T08:00", "Data e hora de abertura da votação"]);
+    sheetConfig.appendRow(["DATA_FIM_VOTACAO", "2026-10-21T17:00", "Data e hora de encerramento da votação"]);
     sheetConfig.appendRow(["ADMIN_PIN", APP_CONFIG.DEFAULT_ADMIN_PIN, "Senha/PIN para acesso da Comissão"]);
     sheetConfig.getRange("A1:C1").setFontWeight("bold").setBackground("#015797").setFontColor("#ffffff");
   }
@@ -107,7 +107,7 @@ function initDatabase(ssInstance) {
       "Apresentacao Minibiografia",
       "Link Doc Identidade",
       "Link Comprovante Residencia",
-      "Link Certidao Quitacao",
+      "Link Declaracao Nao Cargo",
       "Link Foto Divulgacao",
       "Status", // Pendente, Diligência, Deferida, Indeferida
       "Parecer Comissao",

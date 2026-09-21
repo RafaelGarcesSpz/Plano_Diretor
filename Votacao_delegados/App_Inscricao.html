@@ -235,7 +235,7 @@
                   x-text="(500 - (form.dadosDivulgacao.minibio ? form.dadosDivulgacao.minibio.length : 0)) + ' caracteres restantes'"></span>
           </div>
           <textarea x-model="form.dadosDivulgacao.minibio" rows="4" maxlength="500"
-                    placeholder="Conte sua trajetória em Sapezal, sua experiência comunitária e sua motivação para representar seu bairro na revisão do Plano Diretor..."
+                    placeholder="Faça uma breve apresentação, conte sua relação com Sapezal e explique por que você deseja participar como Delegado do Plano Diretor."
                     class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all resize-none"></textarea>
         </div>
 
@@ -300,124 +300,283 @@
     </section>
 
     <!-- TELA 3: UPLOAD DOS DOCUMENTOS COM CONVERSÃO ASSÍNCRONA EM BASE64 -->
-    <section x-show="step === 3" x-transition.opacity.duration.250ms class="pdm-card p-6 sm:p-8 space-y-5">
+    <section x-show="step === 3" x-transition.opacity.duration.250ms class="pdm-card p-6 sm:p-8 space-y-6">
       <div class="border-b border-slate-100 pb-3">
         <h3 class="text-lg font-black text-[#072b4c] flex items-center space-x-2">
           <i data-lucide="upload-cloud" class="w-5 h-5 text-[#409240]"></i>
           <span>Documentação Obrigatória (Upload Digital)</span>
         </h3>
-        <p class="text-xs text-slate-500 mt-1">Anexe fotos nítidas ou arquivos PDF (máximo 4MB por documento). Os documentos pessoais são de acesso estritamente restrito à Comissão.</p>
+        <p class="text-xs text-slate-500 mt-1">Anexe fotos nítidas ou arquivos PDF (máximo 4MB por arquivo). Os documentos pessoais são protegidos por sigilo institucional estrito da Comissão.</p>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="space-y-5">
         
         <!-- 1. Documento de Identidade -->
-        <div class="p-4 rounded-xl border-2 border-dashed transition-all"
+        <div class="p-4 rounded-2xl border-2 border-dashed transition-all"
              :class="form.arquivosUpload.docIdentidade ? 'border-emerald-500 bg-emerald-50/40' : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'">
           <div class="flex items-center space-x-2.5 mb-2">
-            <i data-lucide="id-card" class="w-5 h-5 text-[#015797]"></i>
-            <span class="text-xs font-bold text-slate-800">1. RG ou CNH (Frente e Verso) *</span>
+            <div class="p-2 bg-blue-100 text-[#015797] rounded-xl">
+              <i data-lucide="id-card" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <span class="text-xs font-bold text-slate-800">1. Documento Oficial de Identidade (Frente e Verso) *</span>
+              <p class="text-[11px] text-slate-500">RG ou CNH legível.</p>
+            </div>
           </div>
           <input type="file" accept="image/*,.pdf" @change="processarUploadArquivo($event, 'docIdentidade', 'docIdentidadeName', 'docIdentidadeType')"
-                 class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-[#015797] hover:file:bg-blue-200 cursor-pointer">
+                 class="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-[#015797] hover:file:bg-blue-200 cursor-pointer">
           <div x-show="form.arquivosUpload.docIdentidade" class="mt-2 text-[11px] text-emerald-700 font-bold flex items-center space-x-1">
             <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
             <span x-text="form.arquivosUpload.docIdentidadeName"></span>
           </div>
         </div>
 
-        <!-- 2. Comprovante de Residência ou Declaração de Residência -->
-        <div class="p-4 rounded-xl border-2 border-dashed transition-all sm:col-span-2"
-             :class="form.arquivosUpload.compResidencia ? 'border-emerald-500 bg-emerald-50/40' : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-            <div class="flex items-center space-x-2.5">
-              <i data-lucide="home" class="w-5 h-5 text-[#015797]"></i>
-              <span class="text-xs font-bold text-slate-800">2. Comprovante de Residência ou Declaração de Residência *</span>
+        <!-- DIVISOR INSTITUCIONAL: COMPROVAÇÃO DE RESIDÊNCIA EM 2 BLOCOS -->
+        <div class="pt-2">
+          <div class="flex items-center space-x-2 mb-3">
+            <div class="p-2 bg-emerald-100 text-[#409240] rounded-xl">
+              <i data-lucide="home" class="w-5 h-5"></i>
             </div>
-            <button type="button" @click="abrirModalDeclaracao = true" 
-                    class="inline-flex items-center space-x-1.5 text-xs font-bold text-[#015797] bg-blue-50 hover:bg-blue-100 border border-blue-200 px-3 py-1.5 rounded-lg transition-colors self-start sm:self-auto shadow-2xs">
-              <i data-lucide="file-down" class="w-3.5 h-3.5 text-[#015797]"></i>
-              <span>Baixar Modelo de Declaração de Residência</span>
-            </button>
-          </div>
-          
-          <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-            <div class="flex-1">
-              <input type="file" accept="image/*,.pdf" @change="processarUploadArquivo($event, 'compResidencia', 'compResidenciaName', 'compResidenciaType')"
-                     class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-[#015797] hover:file:bg-blue-200 cursor-pointer">
+            <div>
+              <h4 class="text-xs font-black text-[#072b4c] uppercase tracking-wider">2. Comprovação de Residência em Sapezal/MT *</h4>
+              <p class="text-[11px] text-slate-500">Escolha <strong>uma</strong> das duas opções abaixo para comprovar sua moradia:</p>
             </div>
           </div>
-          
-          <div x-show="form.arquivosUpload.compResidencia" class="mt-2 text-[11px] text-emerald-700 font-bold flex items-center space-x-1">
-            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
-            <span x-text="form.arquivosUpload.compResidenciaName"></span>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <!-- BLOCO A: UPLOAD DE COMPROVANTE DE RESIDÊNCIA TRADICIONAL -->
+            <div class="p-4 rounded-2xl border-2 transition-all flex flex-col justify-between space-y-3"
+                 :class="form.arquivosUpload.compResidencia ? 'border-emerald-500 bg-emerald-50/40' : 'border-slate-200 hover:border-slate-300 bg-white'">
+              <div class="space-y-1">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-[#015797]">
+                  Opção A
+                </span>
+                <h5 class="text-xs font-bold text-slate-800">Comprovante de Residência</h5>
+                <p class="text-[11px] text-slate-500 leading-relaxed">
+                  Conta de energia, água, telefone/internet ou contrato de locação em seu nome.
+                </p>
+              </div>
+
+              <div>
+                <input type="file" accept="image/*,.pdf" @change="processarUploadArquivo($event, 'compResidencia', 'compResidenciaName', 'compResidenciaType')"
+                       class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-[#015797] hover:file:bg-blue-200 cursor-pointer">
+                <div x-show="form.arquivosUpload.compResidencia" class="mt-2 text-[11px] text-emerald-700 font-bold flex items-center space-x-1">
+                  <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                  <span x-text="form.arquivosUpload.compResidenciaName"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- BLOCO B: DECLARAÇÃO DE RESIDÊNCIA COM GERADOR INTEGRADO -->
+            <div class="p-4 rounded-2xl border-2 transition-all flex flex-col justify-between space-y-3"
+                 :class="form.arquivosUpload.declaracaoResidencia ? 'border-emerald-500 bg-emerald-50/40' : 'border-slate-200 hover:border-slate-300 bg-white'">
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900">
+                    Opção B
+                  </span>
+                  <span class="text-[10px] text-slate-400 font-medium">Sem comprovante no nome</span>
+                </div>
+                <h5 class="text-xs font-bold text-slate-800">Declaração de Residência</h5>
+                <p class="text-[11px] text-slate-500 leading-relaxed">
+                  Gere o modelo oficial com CEP, assine (à caneta ou pelo GOV.BR) e faça o upload.
+                </p>
+
+                <button type="button" @click="abrirGeradorDeclaracao()" 
+                        class="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-[#015797] to-[#0385d0] text-white text-xs font-bold flex items-center justify-center space-x-1.5 shadow-2xs hover:shadow-md transition-all">
+                  <i data-lucide="file-signature" class="w-3.5 h-3.5 text-[#ffd200]"></i>
+                  <span>Preencher e Baixar Declaração</span>
+                </button>
+              </div>
+
+              <div>
+                <input type="file" accept="image/*,.pdf" @change="processarUploadArquivo($event, 'declaracaoResidencia', 'declaracaoResidenciaName', 'declaracaoResidenciaType')"
+                       class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-100 file:text-amber-900 hover:file:bg-amber-200 cursor-pointer">
+                <div x-show="form.arquivosUpload.declaracaoResidencia" class="mt-2 text-[11px] text-emerald-700 font-bold flex items-center space-x-1">
+                  <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                  <span x-text="form.arquivosUpload.declaracaoResidenciaName"></span>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
-        <!-- 3. Foto de Rosto para Divulgação -->
-        <div class="p-4 rounded-xl border-2 border-dashed transition-all sm:col-span-2"
-             :class="form.arquivosUpload.fotoRosto ? 'border-emerald-500 bg-emerald-50/40' : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'">
-          <div class="flex items-center justify-between mb-2">
+        <!-- 3. DECLARAÇÃO DE NÃO OCUPAÇÃO DE CARGO ELETIVO OU COMISSIONADO -->
+        <div class="p-4 rounded-2xl border-2 transition-all space-y-3"
+             :class="form.arquivosUpload.declaracaoCargo ? 'border-emerald-500 bg-emerald-50/40' : 'border-slate-200 hover:border-slate-300 bg-white'">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div class="flex items-center space-x-2.5">
-              <i data-lucide="camera" class="w-5 h-5 text-[#409240]"></i>
-              <span class="text-xs font-bold text-slate-800">3. Foto de Rosto (Divulgação Pública) *</span>
+              <div class="p-2 bg-blue-100 text-[#015797] rounded-xl">
+                <i data-lucide="shield-alert" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <span class="text-xs font-bold text-slate-800">3. Declaração de Não Ocupação de Cargo Eletivo ou Comissionado *</span>
+                <p class="text-[11px] text-slate-500">Declaração de não impedimento (não ocupar mandato eletivo, cargo em comissão ou membro do Núcleo Gestor).</p>
+              </div>
             </div>
-            <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">Visível na Cédula</span>
+            
+            <button type="button" @click="abrirGeradorDeclaracaoCargo()" 
+                    class="py-2 px-3.5 rounded-xl bg-gradient-to-r from-[#015797] to-[#0385d0] text-white text-xs font-bold flex items-center justify-center space-x-1.5 shadow-2xs hover:shadow-md transition-all shrink-0">
+              <i data-lucide="file-signature" class="w-3.5 h-3.5 text-[#ffd200]"></i>
+              <span>Gerar Declaração Preenchida</span>
+            </button>
           </div>
-          <input type="file" accept="image/*" @change="processarFotoPreview($event)"
-                 class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200 cursor-pointer">
-          <div x-show="form.arquivosUpload.fotoRosto" class="mt-2 text-[11px] text-emerald-700 font-bold flex items-center space-x-1">
-            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
-            <span x-text="form.arquivosUpload.fotoRostoName"></span>
+
+          <div>
+            <input type="file" accept="image/*,.pdf" @change="processarUploadArquivo($event, 'declaracaoCargo', 'declaracaoCargoName', 'declaracaoCargoType')"
+                   class="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-[#015797] hover:file:bg-blue-200 cursor-pointer">
+            <div x-show="form.arquivosUpload.declaracaoCargo" class="mt-2 text-[11px] text-emerald-700 font-bold flex items-center space-x-1">
+              <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+              <span x-text="form.arquivosUpload.declaracaoCargoName"></span>
+            </div>
           </div>
         </div>
 
       </div>
     </section>
 
-    <!-- TELA 4: DECLARAÇÕES OBRIGATÓRIAS -->
-    <section x-show="step === 4" x-transition.opacity.duration.250ms class="pdm-card p-6 sm:p-8 space-y-5">
+    <!-- TELA 4: DECLARAÇÕES OBRIGATÓRIAS E AVISO DE PRIVACIDADE -->
+    <section x-show="step === 4" x-transition.opacity.duration.250ms class="pdm-card p-6 sm:p-8 space-y-6">
       <div class="border-b border-slate-100 pb-3">
         <h3 class="text-lg font-black text-[#072b4c] flex items-center space-x-2">
-          <i data-lucide="check-square" class="w-5 h-5 text-[#015797]"></i>
-          <span>Declarações e Termos Legais</span>
+          <i data-lucide="shield-check" class="w-5 h-5 text-[#015797]"></i>
+          <span>Declarações e Aviso de Privacidade (LGPD)</span>
         </h3>
-        <p class="text-xs text-slate-500 mt-1">Para homologação da candidatura, assinale todas as declarações de conformidade jurídica.</p>
+        <p class="text-xs text-slate-500 mt-1">Conheça as regras de tratamento de dados e assinale as declarações obrigatórias para homologação da candidatura.</p>
       </div>
 
-      <div class="space-y-3.5">
-        <label class="flex items-start space-x-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
-          <input type="checkbox" x-model="form.declaracoes.residencia" class="mt-1 w-4 h-4 text-[#015797] rounded border-slate-300 focus:ring-[#015797]">
-          <span class="text-xs text-slate-700 leading-relaxed">
-            <strong>Residência Comprovada:</strong> Declaro que resido no Município de Sapezal/MT há mais de 1 (um) ano ininterrupto no bairro indicado nesta inscrição.
-          </span>
-        </label>
+      <!-- ACCORDION: AVISO DE PRIVACIDADE COMPLETO DO CANDIDATO (12 SEÇÕES) -->
+      <div class="rounded-2xl border border-slate-200 overflow-hidden bg-slate-50/60 transition-all">
+        <button type="button" @click="mostrarAvisoPrivacidade = !mostrarAvisoPrivacidade"
+                class="w-full p-4 text-left flex items-center justify-between bg-white hover:bg-slate-50 transition-colors border-b border-slate-200/80 cursor-pointer">
+          <div class="flex items-center space-x-3">
+            <div class="p-2 bg-blue-50 text-[#015797] rounded-xl shrink-0">
+              <i data-lucide="file-text" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <span class="text-xs font-black text-[#072b4c] block">Aviso de Privacidade da Inscrição de Candidatos</span>
+              <span class="text-[11px] text-slate-500">Lei Federal nº 13.709/2018 (LGPD) • Clique para expandir e ler o texto integral</span>
+            </div>
+          </div>
+          <div class="flex items-center space-x-1.5 text-xs font-bold text-[#015797] shrink-0">
+            <span x-text="mostrarAvisoPrivacidade ? 'Ocultar' : 'Ler Completo'"></span>
+            <svg class="w-4 h-4 transform transition-transform duration-200" :class="mostrarAvisoPrivacidade ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+        </button>
 
-        <label class="flex items-start space-x-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
-          <input type="checkbox" x-model="form.declaracoes.maioridade" class="mt-1 w-4 h-4 text-[#015797] rounded border-slate-300 focus:ring-[#015797]">
-          <span class="text-xs text-slate-700 leading-relaxed">
-            <strong>Maioridade e Pleno Exercício Cívico:</strong> Declaro ser maior de 18 anos de idade e estar em pleno gozo de meus direitos políticos e civis.
-          </span>
-        </label>
+        <div x-show="mostrarAvisoPrivacidade" x-cloak x-transition.opacity.duration.200ms
+             class="p-5 max-h-80 overflow-y-auto text-xs text-slate-700 space-y-3.5 leading-relaxed bg-white border-t border-slate-100 font-sans">
+          
+          <div class="p-3 bg-blue-50 rounded-xl border border-blue-100 text-[11px] text-blue-900 leading-relaxed font-medium">
+            A Prefeitura Municipal de Sapezal respeita a privacidade dos participantes e realiza o tratamento dos dados pessoais deste processo em conformidade com a Lei Federal nº 13.709/2018 — Lei Geral de Proteção de Dados Pessoais — LGPD. Este Aviso de Privacidade aplica-se às pessoas que solicitarem inscrição como candidatas a delegadas representantes da sociedade civil na Conferência Final da Revisão do Plano Diretor Participativo de Sapezal.
+          </div>
 
-        <label class="flex items-start space-x-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+          <div class="space-y-2.5">
+            <div>
+              <h5 class="font-bold text-[#072b4c]">1. Responsável pelo tratamento</h5>
+              <p class="text-slate-600">O controlador dos dados pessoais é o Município de Sapezal–MT. Os dados serão tratados somente por agentes públicos, membros autorizados da Comissão responsável e profissionais técnicos que necessitem acessá-los para analisar as inscrições, organizar as candidaturas, realizar a votação e acompanhar as demais etapas do processo.</p>
+            </div>
+
+            <div>
+              <h5 class="font-bold text-[#072b4c]">2. Dados coletados</h5>
+              <p class="text-slate-600">Para a inscrição da candidatura serão coletados: I – nome completo; II – nome pelo qual o candidato deseja ser identificado na votação; III – CPF; IV – data de nascimento; V – telefone celular ou WhatsApp; VI – endereço de e-mail, quando informado; VII – endereço residencial completo e bairro; VIII – documento oficial com fotografia; IX – comprovante ou declaração de residência em Sapezal; X – fotografia para divulgação da candidatura; XI – breve apresentação da candidatura; XII – declarações relativas à idade, residência, impedimentos, veracidade das informações, aceitação das regras e ciência deste Aviso de Privacidade; XIII – autorização para divulgação dos dados da candidatura; XIV – número de protocolo; e XV – registros técnicos necessários à segurança e à auditoria do sistema de inscrição.</p>
+            </div>
+
+            <div>
+              <h5 class="font-bold text-[#072b4c]">3. Finalidades do tratamento</h5>
+              <p class="text-slate-600">Os dados serão utilizados para: I – identificar o candidato; II – verificar o atendimento aos requisitos de idade e residência; III – conferir os documentos apresentados; IV – verificar a existência de impedimentos; V – analisar, deferir ou indeferir a inscrição; VI – solicitar esclarecimentos, correções ou complementação de documentos; VII – apresentar a candidatura aos eleitores; VIII – organizar e realizar a votação; IX – divulgar resultados preliminares e definitivos; X – convocar os candidatos eleitos para as oficinas e para a Conferência; XI – processar recursos, impugnações e demais ocorrências; XII – permitir a auditoria e a prestação de contas; e XIII – atender às obrigações legais, administrativas e de controle. Os dados não serão utilizados para publicidade comercial ou para finalidade incompatível com o processo de escolha dos delegados.</p>
+            </div>
+
+            <div>
+              <h5 class="font-bold text-[#072b4c]">4. Fundamento do tratamento</h5>
+              <p class="text-slate-600">O tratamento será realizado para atender ao interesse público e viabilizar o processo de participação social relacionado à revisão do Plano Diretor Participativo de Sapezal, conforme as competências legais do Município e as regras estabelecidas no Decreto, no Regimento Interno e no Edital. A divulgação da fotografia, do nome, do bairro e da apresentação da candidatura dependerá de autorização específica do candidato.</p>
+            </div>
+
+            <div>
+              <h5 class="font-bold text-[#072b4c]">5. Dados que poderão ser divulgados</h5>
+              <p class="text-slate-600">Mediante autorização expressa, poderão ser divulgados no site da Prefeitura, na página da votação e nos demais canais oficiais: I – nome do candidato; II – nome escolhido para identificação na votação; III – fotografia; IV – bairro de residência; V – breve apresentação da candidatura; VI – situação da inscrição, indicando deferimento ou indeferimento; VII – quantidade de votos recebidos; VIII – classificação; e IX – condição de titular ou suplente, quando eleito. A divulgação desses dados é necessária para que os eleitores conheçam os candidatos e para assegurar transparência ao processo.</p>
+            </div>
+
+            <div>
+              <h5 class="font-bold text-[#072b4c]">6. Dados que não serão divulgados</h5>
+              <p class="text-slate-600">Não serão divulgados ao público: I – CPF; II – data de nascimento completa; III – telefone; IV – e-mail; V – endereço residencial completo; VI – cópia do documento de identificação; VII – comprovante ou declaração de residência; VIII – documentos apresentados em diligências ou recursos; e IX – demais registros técnicos ou administrativos de acesso restrito. Esses dados ficarão restritos à Comissão responsável, à equipe técnica autorizada e, quando necessário, aos órgãos de controle e às autoridades legalmente competentes.</p>
+            </div>
+
+            <div>
+              <h5 class="font-bold text-[#072b4c]">7. Contato com o candidato</h5>
+              <p class="text-slate-600">O telefone e o e-mail serão utilizados exclusivamente para comunicações relacionadas ao processo, como: I – confirmação do recebimento da inscrição; II – solicitação de correção ou complementação de documentos; III – comunicação sobre deferimento, indeferimento, recursos e resultados; IV – convocação para reuniões, oficinas e Conferência; e V – esclarecimento de ocorrências relacionadas à candidatura.</p>
+            </div>
+
+            <div>
+              <h5 class="font-bold text-[#072b4c]">8. Compartilhamento e acesso</h5>
+              <p class="text-slate-600">Os documentos e dados de acesso restrito não serão disponibilizados ao público. O acesso será limitado à Comissão responsável, à equipe técnica autorizada, aos órgãos de controle e às autoridades legalmente competentes, quando necessário. Caso seja utilizado serviço tecnológico de terceiro, seu acesso será limitado ao estritamente necessário para o funcionamento, a manutenção e a segurança do sistema, sob responsabilidade e orientação do Município.</p>
+            </div>
+
+            <div>
+              <h5 class="font-bold text-[#072b4c]">9. Armazenamento e eliminação</h5>
+              <p class="text-slate-600">Os dados serão mantidos pelo período necessário à análise das inscrições, realização da votação, publicação dos resultados, julgamento de recursos, realização da Conferência, auditoria e cumprimento das obrigações administrativas, legais e de controle. Após o encerramento dessas finalidades, os dados serão eliminados, anonimizados ou arquivados conforme as normas aplicáveis à Administração Pública e à gestão dos documentos municipais. As informações publicadas como parte do registro oficial do processo participativo poderão permanecer nos editais, resultados, atas, relatórios e anais da Conferência.</p>
+            </div>
+
+            <div>
+              <h5 class="font-bold text-[#072b4c]">10. Segurança</h5>
+              <p class="text-slate-600">O Município adotará medidas técnicas e administrativas para proteger os dados contra acesso não autorizado, perda, alteração, divulgação indevida, fraude e outras formas de tratamento inadequado. Eventuais incidentes envolvendo dados pessoais serão tratados conforme a legislação e os procedimentos administrativos aplicáveis.</p>
+            </div>
+
+            <div>
+              <h5 class="font-bold text-[#072b4c]">11. Direitos do titular</h5>
+              <p class="text-slate-600">Nos termos da LGPD, o candidato poderá solicitar confirmação do tratamento, acesso, correção e informações sobre a utilização de seus dados pessoais, além dos demais direitos previstos na legislação, por meio do canal oficial: <strong class="text-[#015797]">Ouvidoria@sapezal.mt.gov.br</strong>. A correção dos dados da candidatura observará os prazos e as regras estabelecidas no Edital. A eventual desistência ou retirada da candidatura não implicará necessariamente a exclusão de registros que devam ser preservados para cumprimento de obrigações legais, administrativas, de controle ou de transparência.</p>
+            </div>
+
+            <div>
+              <h5 class="font-bold text-[#072b4c]">12. Ciência e autorização</h5>
+              <p class="text-slate-600">Ao concluir a inscrição, o candidato declara que leu e está ciente deste Aviso de Privacidade. A ciência deste Aviso não autoriza o Município a utilizar os dados pessoais para finalidades diferentes das aqui informadas.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHECKBOXES DE DECLARAÇÃO E ACEITE OBRIGATÓRIOS -->
+      <div class="space-y-3 pt-1">
+        <label class="flex items-start space-x-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors"
+               :class="form.declaracoes.veracidade ? 'border-emerald-300 bg-emerald-50/30' : ''">
           <input type="checkbox" x-model="form.declaracoes.veracidade" class="mt-1 w-4 h-4 text-[#015797] rounded border-slate-300 focus:ring-[#015797]">
           <span class="text-xs text-slate-700 leading-relaxed">
-            <strong>Veracidade Documental:</strong> Declaro sob as penas da lei penal brasileira que todas as informações e documentos enviados são autênticos e verídicos.
+            <strong>Requisitos e Veracidade Documental:</strong> Declaro que resido no Município de Sapezal, sou maior de 18 anos de idade, estou em pleno gozo de meus direitos políticos e civis e que todas as informações e documentos enviados são autênticos e verdadeiros, sob as penas da lei penal brasileira.
           </span>
         </label>
 
-        <label class="flex items-start space-x-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
-          <input type="checkbox" x-model="form.declaracoes.lgpd" class="mt-1 w-4 h-4 text-[#015797] rounded border-slate-300 focus:ring-[#015797]">
+        <label class="flex items-start space-x-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors"
+               :class="form.declaracoes.naoImpedimento ? 'border-emerald-300 bg-emerald-50/30' : ''">
+          <input type="checkbox" x-model="form.declaracoes.naoImpedimento" class="mt-1 w-4 h-4 text-[#015797] rounded border-slate-300 focus:ring-[#015797]">
           <span class="text-xs text-slate-700 leading-relaxed">
-            <strong>Consentimento LGPD & Divulgação Pública:</strong> Autorizo a publicação do meu nome de urna, bairro e foto no portal do Plano Diretor para fins eleitorais, mantendo os documentos pessoais protegidos em sigilo institucional.
+            <strong>Declaração de Não Impedimento:</strong> Declaro que não exerço mandato eletivo, não sou membro do Núcleo Gestor e não me enquadro nas demais hipóteses de impedimento previstas no Edital.
+          </span>
+        </label>
+
+        <label class="flex items-start space-x-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors"
+               :class="form.declaracoes.avisoPrivacidade ? 'border-emerald-300 bg-emerald-50/30' : ''">
+          <input type="checkbox" x-model="form.declaracoes.avisoPrivacidade" class="mt-1 w-4 h-4 text-[#015797] rounded border-slate-300 focus:ring-[#015797]">
+          <span class="text-xs text-slate-700 leading-relaxed">
+            <strong>Ciência do Aviso de Privacidade:</strong> Declaro que li e estou ciente do Aviso de Privacidade da inscrição de candidatos da Revisão do Plano Diretor de Sapezal/MT.
+          </span>
+        </label>
+
+        <label class="flex items-start space-x-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors"
+               :class="form.declaracoes.autorizacaoDivulgacao ? 'border-emerald-300 bg-emerald-50/30' : ''">
+          <input type="checkbox" x-model="form.declaracoes.autorizacaoDivulgacao" class="mt-1 w-4 h-4 text-[#015797] rounded border-slate-300 focus:ring-[#015797]">
+          <span class="text-xs text-slate-700 leading-relaxed">
+            <strong>Autorização de Divulgação Pública:</strong> Autorizo a divulgação do meu nome, nome de candidatura, fotografia, bairro de residência e apresentação nos canais oficiais da Prefeitura e na página da votação, exclusivamente para divulgação da candidatura e transparência do processo eleitoral.
           </span>
         </label>
       </div>
 
       <div x-show="!declaracoesCompletas" class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center space-x-2">
         <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
-        <span>É obrigatório assinalar todas as 4 declarações acima para avançar à tela final.</span>
+        <span>É obrigatório assinalar todos os 4 termos e aceites acima para avançar à tela final.</span>
       </div>
     </section>
 
@@ -506,19 +665,19 @@
 
   </div>
 
-  <!-- MODAL DE MODELO DE DECLARAÇÃO DE RESIDÊNCIA -->
+  <!-- MODAL DE PREENCHIMENTO E GERADOR DA DECLARAÇÃO DE RESIDÊNCIA COM API DE CEP -->
   <div x-show="abrirModalDeclaracao" x-cloak class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full p-6 sm:p-8 space-y-5 animate-ballot-drop max-h-[90vh] flex flex-col">
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full p-6 sm:p-8 space-y-5 animate-ballot-drop max-h-[92vh] flex flex-col">
       
       <!-- Cabeçalho do Modal -->
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
         <div class="flex items-center space-x-2.5">
           <div class="p-2 bg-blue-50 text-[#015797] rounded-xl">
-            <i data-lucide="file-text" class="w-5 h-5"></i>
+            <i data-lucide="file-signature" class="w-5 h-5"></i>
           </div>
           <div>
-            <h3 class="text-base sm:text-lg font-black text-[#072b4c]">Modelo de Declaração de Residência</h3>
-            <p class="text-xs text-slate-500">Documento oficial para quem não possui comprovante de endereço em nome próprio.</p>
+            <h3 class="text-base sm:text-lg font-black text-[#072b4c]">Gerador da Declaração de Residência</h3>
+            <p class="text-xs text-slate-500">Preencha o CEP para autocompletar seu endereço em Sapezal/MT.</p>
           </div>
         </div>
         <button @click="abrirModalDeclaracao = false" class="p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors">
@@ -526,46 +685,141 @@
         </button>
       </div>
 
-      <!-- Corpo do Modelo Imprimível -->
-      <div id="areaDeclaracaoResidencia" class="flex-1 overflow-y-auto bg-slate-50 p-5 rounded-2xl border border-slate-200 text-xs text-slate-800 space-y-4 font-serif leading-relaxed">
-        <div class="text-center space-y-1 pb-3 border-b border-slate-200">
-          <p class="font-bold text-[11px] text-[#072b4c] uppercase tracking-wider">MUNICÍPIO DE SAPEZAL - ESTADO DE MATO GROSSO</p>
-          <p class="text-[10px] text-slate-500 font-sans">COMISSÃO ELEITORAL DE REVISÃO DO PLANO DIRETOR MUNICIPAL</p>
-          <h4 class="font-black text-sm font-sans text-[#072b4c] pt-2 uppercase">DECLARAÇÃO DE RESIDÊNCIA E DOMICÍLIO</h4>
-        </div>
+      <!-- Conteúdo com Scroll: Formulário de Endereço + Prévia da Minuta -->
+      <div class="flex-1 overflow-y-auto space-y-4 pr-1">
+        
+        <!-- Bloco de Preenchimento do Endereço com Busca de CEP -->
+        <div class="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-black text-[#015797] uppercase tracking-wider flex items-center space-x-1.5">
+              <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+              <span>Endereço de Residência</span>
+            </span>
+            <span class="text-[11px] font-bold" 
+                  :class="cepStatus === 'sucesso' ? 'text-emerald-700' : (cepStatus === 'erro' ? 'text-amber-700' : 'text-slate-500')"
+                  x-text="cepStatusMensagem"></span>
+          </div>
 
-        <p class="text-justify">
-          Eu, <strong class="font-sans text-[#015797]" x-text="form.dadosPessoais.nomeCompleto || '____________________________________________________'"></strong>, 
-          inscrito(a) no CPF sob o nº <strong class="font-sans font-mono text-[#015797]" x-text="form.dadosPessoais.cpf || '_____________________'"></strong>, 
-          residente no Município de Sapezal/MT, no Bairro <strong class="font-sans text-[#015797]" x-text="form.dadosPessoais.bairro || '_____________________'"></strong>,
-        </p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <!-- CEP com Botão Estático Sem Duplicação de Ícones -->
+            <div class="sm:col-span-1">
+              <label class="block text-[11px] font-bold text-slate-700 mb-1">CEP *</label>
+              <div class="relative flex items-center">
+                <input type="text" x-model="dadosDeclaracao.cep" 
+                       @input="mascararCepInput($event)"
+                       @blur="buscarCep()"
+                       placeholder="78365-000" maxlength="9"
+                       class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-mono bg-white focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden pr-9">
+                <button type="button" @click="buscarCep()" :disabled="dadosDeclaracao.buscandoCep"
+                        class="absolute right-1.5 p-1.5 bg-blue-100 hover:bg-blue-200 text-[#015797] rounded-lg transition-colors flex items-center justify-center cursor-pointer" title="Buscar CEP">
+                  <!-- Ícone SVG Estático para evitar duplicações -->
+                  <svg x-show="!dadosDeclaracao.buscandoCep" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  <svg x-show="dadosDeclaracao.buscandoCep" x-cloak class="animate-spin h-3.5 w-3.5 text-[#015797]" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
 
-        <p class="text-justify">
-          <strong>DECLARO</strong> para os devidos fins de comprovação e registro de candidatura à <strong>Comissão de Delegados do Plano Diretor Municipal de Sapezal/MT (Votação 2026)</strong>, sob as penas da lei (em especial o Artigo 299 do Código Penal Brasileiro referente à falsidade ideológica), que <strong>resido de forma habitual, contínua e ininterrupta no Município de Sapezal/MT</strong> há mais de 1 (um) ano.
-        </p>
+            <!-- Logradouro -->
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-bold text-slate-700 mb-1">Logradouro (Rua / Avenida) *</label>
+              <input type="text" x-model="dadosDeclaracao.logradouro" 
+                     placeholder="Ex: Av. das Flores"
+                     class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden">
+            </div>
 
-        <p class="text-justify">
-          Declaro ainda que todas as informações prestadas são a expressão da verdade e que estou ciente de que a falsidade desta declaração ensejará a imediata anulação da candidatura ou mandato eletivo como delegado, sem prejuízo das sanções civis e criminais cabíveis.
-        </p>
+            <!-- Número -->
+            <div class="sm:col-span-1">
+              <label class="block text-[11px] font-bold text-slate-700 mb-1">Número *</label>
+              <input type="text" x-model="dadosDeclaracao.numero" 
+                     placeholder="Ex: 123 ou S/N"
+                     class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden">
+            </div>
 
-        <div class="pt-6 space-y-8 text-center font-sans">
-          <p class="text-xs text-slate-600">Sapezal/MT, _____ de ____________________ de 2026.</p>
-          <div class="pt-6 border-t border-slate-300 max-w-xs mx-auto">
-            <p class="font-bold text-xs text-slate-800" x-text="form.dadosPessoais.nomeCompleto || 'Assinatura do(a) Declarante'"></p>
-            <p class="text-[10px] text-slate-500">Assinatura do(a) Candidato(a)</p>
+            <!-- Complemento -->
+            <div class="sm:col-span-1">
+              <label class="block text-[11px] font-bold text-slate-700 mb-1">Complemento</label>
+              <input type="text" x-model="dadosDeclaracao.complemento" 
+                     placeholder="Ex: Apto 102, Casa B"
+                     class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden">
+            </div>
+
+            <!-- Bairro -->
+            <div class="sm:col-span-1">
+              <label class="block text-[11px] font-bold text-slate-700 mb-1">Bairro *</label>
+              <input type="text" x-model="dadosDeclaracao.bairro" 
+                     placeholder="Ex: Centro"
+                     class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden">
+            </div>
           </div>
         </div>
+
+        <!-- Alerta Didático sobre Assinatura Eletrônica GOV.BR / ICP-Brasil ou Manual -->
+        <div class="p-3.5 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900 space-y-1.5">
+          <div class="font-bold flex items-center space-x-1.5 text-amber-950">
+            <i data-lucide="shield-check" class="w-4 h-4 text-amber-700"></i>
+            <span>Instruções para Assinatura Válida:</span>
+          </div>
+          <ul class="list-disc list-inside space-y-1 pl-1 text-[11px]">
+            <li><strong>Opção 1 (100% Digital e Gratuito):</strong> Baixe a declaração e assine com sua <strong>Conta GOV.BR</strong> (pelo portal <a href="https://validar.iti.gov.br/" target="_blank" class="underline font-bold text-amber-950">gov.br/assinador</a>) ou Certificado Digital ICP-Brasil. Depois, faça o upload do PDF assinado.</li>
+            <li><strong>Opção 2 (Manual):</strong> Imprima a declaração, assine à caneta de próprio punho, tire uma foto legível ou digitalize e faça o upload.</li>
+          </ul>
+        </div>
+
+        <!-- Área de Impressão e Visualização da Declaração Exata -->
+        <div class="p-4 bg-white rounded-2xl border border-slate-300 shadow-inner">
+          <span class="text-[10px] font-bold text-slate-400 uppercase block mb-2">Visualização da Minuta Oficial:</span>
+          
+          <div id="areaDeclaracaoResidencia" class="bg-slate-50 p-6 rounded-xl border border-slate-200 text-xs text-slate-900 space-y-4 font-serif leading-relaxed">
+            <div class="text-center pb-2">
+              <h4 class="font-bold text-sm tracking-wider uppercase">DECLARAÇÃO DE RESIDÊNCIA</h4>
+            </div>
+
+            <p class="text-justify">
+              Eu, <strong class="font-sans text-[#015797]" x-text="form.dadosPessoais.nomeCompleto || '___________________________________________________________________'"></strong> inscrito(a) no CPF nº <strong class="font-sans font-mono text-[#015797]" x-text="form.dadosPessoais.cpf || '__________________________________'"></strong>, DECLARO, sob as penas da lei e sob minha responsabilidade, para fins de inscrição como candidato(a) a delegado(a) representante da sociedade civil na Conferência Final da Revisão do Plano Diretor Participativo do município de Sapezal, que resido no Município de Sapezal–MT, no seguinte endereço:
+            </p>
+
+            <div class="space-y-1 pl-2 font-sans text-xs">
+              <p><strong>Logradouro:</strong> <span class="font-serif" x-text="dadosDeclaracao.logradouro || '_______________________________________________________________'"></span></p>
+              <p><strong>Número:</strong> <span class="font-serif" x-text="dadosDeclaracao.numero || '_____________' "></span></p>
+              <p><strong>Complemento:</strong> <span class="font-serif" x-text="dadosDeclaracao.complemento || '____________________________________________________________'"></span></p>
+              <p><strong>Bairro:</strong> <span class="font-serif" x-text="dadosDeclaracao.bairro || form.dadosPessoais.bairro || '_______________________________'"></span></p>
+              <p><strong>CEP:</strong> <span class="font-serif font-mono" x-text="dadosDeclaracao.cep || '_________________________________'"></span></p>
+            </div>
+
+            <p class="text-justify pt-1">
+              Declaro que as informações prestadas são verdadeiras e estou ciente de que a falsidade desta declaração poderá resultar no indeferimento ou cancelamento da inscrição, conforme as regras do edital, sem prejuízo das responsabilidades administrativa, civil e criminal cabíveis, nos termos da Lei Federal nº 7.115, de 29 de agosto de 1983, e da legislação aplicável.
+            </p>
+
+            <p class="text-left pt-2">
+              Sapezal–MT, _____ de ____________________ de ________.
+            </p>
+
+            <div class="pt-8 text-center font-sans space-y-1">
+              <div class="border-t border-slate-400 max-w-sm mx-auto pt-2">
+                <p class="font-bold text-xs" x-text="form.dadosPessoais.nomeCompleto || 'Assinatura do(a) declarante'"></p>
+                <p class="text-[10px] text-slate-500">Assinatura do(a) declarante</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- Rodapé do Modal com Ações -->
       <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
-        <span class="text-[11px] text-slate-500">Imprima, assine, tire uma foto ou digitalize e envie no campo 2.</span>
+        <span class="text-[11px] text-slate-500">Após baixar e assinar, feche este modal e envie o arquivo na Opção B.</span>
         <div class="flex items-center space-x-2">
-          <button type="button" @click="imprimirModeloDeclaracao()" class="px-4 py-2 rounded-xl btn-brand-primary text-xs font-bold flex items-center space-x-1.5 shadow-xs">
-            <i data-lucide="printer" class="w-4 h-4"></i>
-            <span>Imprimir / Salvar PDF</span>
+          <button type="button" @click="imprimirModeloDeclaracao()" class="px-5 py-2.5 rounded-xl btn-brand-primary text-xs font-bold flex items-center space-x-2 shadow-md hover:shadow-lg transition-all">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span>Baixar / Imprimir Declaração</span>
           </button>
-          <button type="button" @click="abrirModalDeclaracao = false" class="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-bold transition-colors">
+          <button type="button" @click="abrirModalDeclaracao = false" class="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-bold transition-colors">
             Fechar
           </button>
         </div>
@@ -638,6 +892,18 @@ function inscricaoComponent() {
     fotoPreviewUrl: "",
     explicarSigilo: false,
     abrirModalDeclaracao: false,
+    mostrarAvisoPrivacidade: false,
+    cepStatus: '',
+    cepStatusMensagem: '',
+
+    dadosDeclaracao: {
+      cep: "",
+      logradouro: "",
+      numero: "",
+      complemento: "",
+      bairro: "",
+      buscandoCep: false
+    },
 
     cpfStatus: 'empty', // 'empty' | 'typing' | 'valid' | 'invalid'
     cpfErroMsg: '',
@@ -670,6 +936,9 @@ function inscricaoComponent() {
         compResidencia: "",
         compResidenciaName: "",
         compResidenciaType: "",
+        declaracaoResidencia: "",
+        declaracaoResidenciaName: "",
+        declaracaoResidenciaType: "",
         certQuitacao: "",
         certQuitacaoName: "",
         certQuitacaoType: "",
@@ -678,18 +947,16 @@ function inscricaoComponent() {
         fotoRostoType: ""
       },
       declaracoes: {
-        residencia: false,
-        maioridade: false,
         veracidade: false,
-        lgpd: false
+        avisoPrivacidade: false,
+        autorizacaoDivulgacao: false
       }
     },
 
     get declaracoesCompletas() {
-      return this.form.declaracoes.residencia &&
-             this.form.declaracoes.maioridade &&
-             this.form.declaracoes.veracidade &&
-             this.form.declaracoes.lgpd;
+      return this.form.declaracoes.veracidade &&
+             this.form.declaracoes.avisoPrivacidade &&
+             this.form.declaracoes.autorizacaoDivulgacao;
     },
 
     initInscricao() {
@@ -794,6 +1061,90 @@ function inscricaoComponent() {
       this.validarCampo('telefone');
     },
 
+    abrirGeradorDeclaracao() {
+      if (!this.dadosDeclaracao.bairro && this.form.dadosPessoais.bairro) {
+        this.dadosDeclaracao.bairro = this.form.dadosPessoais.bairro;
+      }
+      this.abrirModalDeclaracao = true;
+      this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+    },
+
+    mascararCepInput(e) {
+      let v = e.target.value.replace(/\D/g, "");
+      if (v.length > 8) v = v.substring(0, 8);
+      const raw = v;
+      v = v.replace(/^(\d{5})(\d)/, "$1-$2");
+      this.dadosDeclaracao.cep = v;
+
+      if (raw.length === 8) {
+        this.buscarCep();
+      }
+    },
+
+    buscarCep() {
+      const cepLimpo = (this.dadosDeclaracao.cep || "").replace(/\D/g, "");
+      if (cepLimpo.length !== 8) {
+        this.cepStatus = '';
+        this.cepStatusMensagem = '';
+        return;
+      }
+
+      this.dadosDeclaracao.buscandoCep = true;
+      this.cepStatus = '';
+      this.cepStatusMensagem = 'Buscando endereço...';
+
+      fetch("https://viacep.com.br/ws/" + cepLimpo + "/json/")
+        .then(res => res.json())
+        .then(data => {
+          if (data && !data.erro) {
+            this.dadosDeclaracao.buscandoCep = false;
+            if (data.logradouro) this.dadosDeclaracao.logradouro = data.logradouro;
+            if (data.bairro) this.dadosDeclaracao.bairro = data.bairro;
+            this.cepStatus = 'sucesso';
+            this.cepStatusMensagem = 'CEP localizado com sucesso!';
+            if (window.showToast) {
+              window.showToast("Endereço preenchido automaticamente!", "success", "CEP Localizado");
+            }
+          } else {
+            this.buscarCepFallback(cepLimpo);
+          }
+        })
+        .catch(() => {
+          this.buscarCepFallback(cepLimpo);
+        });
+    },
+
+    buscarCepFallback(cepLimpo) {
+      fetch("https://brasilapi.com.br/api/cep/v1/" + cepLimpo)
+        .then(res => res.json())
+        .then(data => {
+          this.dadosDeclaracao.buscandoCep = false;
+          if (data && (data.street || data.neighborhood)) {
+            if (data.street) this.dadosDeclaracao.logradouro = data.street;
+            if (data.neighborhood) this.dadosDeclaracao.bairro = data.neighborhood;
+            this.cepStatus = 'sucesso';
+            this.cepStatusMensagem = 'CEP localizado com sucesso!';
+            if (window.showToast) {
+              window.showToast("Endereço preenchido automaticamente!", "success", "CEP Localizado");
+            }
+          } else {
+            this.cepStatus = 'erro';
+            this.cepStatusMensagem = 'CEP não localizado. Preencha manualmente.';
+            if (window.showToast) {
+              window.showToast("CEP não encontrado. Preencha seu endereço manualmente.", "warning", "CEP Não Encontrado");
+            }
+          }
+        })
+        .catch(() => {
+          this.dadosDeclaracao.buscandoCep = false;
+          this.cepStatus = 'erro';
+          this.cepStatusMensagem = 'CEP não localizado. Preencha manualmente.';
+          if (window.showToast) {
+            window.showToast("CEP não encontrado. Preencha seu endereço manualmente.", "warning", "CEP Não Encontrado");
+          }
+        });
+    },
+
     processarUploadArquivo(event, fieldKey, nameKey, typeKey) {
       const file = event.target.files[0];
       if (!file) return;
@@ -861,13 +1212,12 @@ function inscricaoComponent() {
         <head>
           <title>Declaração de Residência - Sapezal/MT</title>
           <style>
-            body { font-family: 'Times New Roman', Times, serif; padding: 40px; color: #111; line-height: 1.6; }
-            h4 { text-align: center; margin-top: 20px; font-size: 16px; }
+            body { font-family: 'Times New Roman', Times, serif; padding: 40px 60px; color: #111; line-height: 1.6; }
+            h4 { text-align: center; margin-top: 10px; font-size: 16px; letter-spacing: 1px; }
             p { text-align: justify; font-size: 14px; margin-bottom: 16px; }
             .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 30px; font-family: sans-serif; }
-            .header p { text-align: center; margin: 2px 0; font-size: 12px; }
             .signature { margin-top: 60px; text-align: center; font-family: sans-serif; }
-            .line { border-top: 1px solid #333; width: 300px; margin: 40px auto 10px auto; }
+            .line { border-top: 1px solid #333; width: 320px; margin: 40px auto 10px auto; }
           </style>
         </head>
         <body>
@@ -920,15 +1270,34 @@ function inscricaoComponent() {
           }
           return;
         }
+
+        if (!this.form.arquivosUpload.fotoRosto) {
+          if (window.showToast) {
+            window.showToast("Por favor, clique no cartão de prévia e anexe sua foto de rosto para a cédula de votação.", "warning", "Foto Obrigatória");
+          } else {
+            alert("Anexe sua foto de rosto na prévia do cartão.");
+          }
+          return;
+        }
       }
 
       if (this.step === 3) {
         const arq = this.form.arquivosUpload;
-        if (!arq.docIdentidade || !arq.compResidencia || !arq.fotoRosto) {
+        if (!arq.docIdentidade) {
           if (window.showToast) {
-            window.showToast("É obrigatório anexar o Documento de Identidade, Comprovante/Declaração de Residência e a Foto de Rosto.", "warning", "Documentação Pendente");
+            window.showToast("É obrigatório fazer o upload do Documento de Identidade (RG ou CNH).", "warning", "Documento Pendente");
           } else {
-            alert("Anexe o Documento de Identidade, Comprovante/Declaração de Residência e a Foto de Rosto.");
+            alert("Anexe seu Documento de Identidade.");
+          }
+          return;
+        }
+
+        const temComprovante = !!(arq.compResidencia || arq.declaracaoResidencia);
+        if (!temComprovante) {
+          if (window.showToast) {
+            window.showToast("É obrigatório anexar um Comprovante de Residência (Opção A) OU a Declaração de Residência assinada (Opção B).", "warning", "Comprovação Pendente");
+          } else {
+            alert("Anexe o Comprovante de Residência ou a Declaração de Residência.");
           }
           return;
         }
@@ -937,7 +1306,7 @@ function inscricaoComponent() {
       if (this.step === 4) {
         if (!this.declaracoesCompletas) {
           if (window.showToast) {
-            window.showToast("Você deve assinalar todas as 4 declarações e termos para poder finalizar.", "warning", "Declarações Obrigatórias");
+            window.showToast("Você deve assinalar os 3 termos e declarações obrigatórias para poder finalizar.", "warning", "Declarações Obrigatórias");
           } else {
             alert("Assinale todas as declarações.");
           }

@@ -163,6 +163,30 @@
 
       showAlert(title, message, type = 'info') {
         this.alertModal = { show: true, title, message, type };
+      },
+
+      focarEleicaoDelegados() {
+        if (this.currentTab !== 'inicio') {
+          this.navigate('inicio');
+        }
+        this.mobileMenuOpen = false;
+        setTimeout(() => {
+          const el = document.getElementById('bloco-eleicao-delegados');
+          const btn = document.getElementById('btn-acessar-eleicao');
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.add('ring-4', 'ring-[#ffd200]', 'scale-[1.02]');
+            if (btn) {
+              btn.classList.add('animate-bounce');
+              setTimeout(() => {
+                btn.classList.remove('animate-bounce');
+              }, 3000);
+            }
+            setTimeout(() => {
+              el.classList.remove('ring-4', 'ring-[#ffd200]', 'scale-[1.02]');
+            }, 3000);
+          }
+        }, 150);
       }
     };
   }

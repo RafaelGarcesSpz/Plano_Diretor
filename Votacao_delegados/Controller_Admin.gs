@@ -63,6 +63,7 @@ function adminListarInscricoes(filtroStatus) {
           minibio: row[10],
           linkIdentidade: row[11],
           linkResidencia: row[12],
+          linkDeclaracaoCargo: row[13],
           linkQuitacao: row[13],
           linkFoto: row[14],
           status: status,

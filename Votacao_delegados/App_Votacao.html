@@ -100,12 +100,223 @@
             </select>
           </div>
 
-          <label class="flex items-start space-x-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer">
-            <input type="checkbox" x-model="eleitor.aceite" class="mt-0.5 w-4 h-4 text-[#015797] rounded border-slate-300">
-            <span class="text-[11px] text-slate-600 leading-relaxed">
-              Declaro residir em Sapezal/MT e autorizo a verificação de meu CPF exclusivamente para registro na lista de eleitores aptos.
-            </span>
-          </label>
+          <!-- ACCORDION 1: REGRAS DA VOTAÇÃO ELETRÔNICA (14 SEÇÕES) -->
+          <div class="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs">
+            <button type="button" @click="mostrarRegrasVotacao = !mostrarRegrasVotacao"
+                    class="w-full p-3.5 bg-gradient-to-r from-slate-50 to-blue-50/40 flex items-center justify-between text-left hover:bg-slate-100/70 transition-colors">
+              <div class="flex items-center space-x-2.5">
+                <div class="p-1.5 bg-[#072b4c] text-white rounded-lg">
+                  <i data-lucide="file-text" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <h4 class="text-xs font-black text-[#072b4c]">Regras da Votação Eletrônica (Edital Oficial)</h4>
+                  <p class="text-[10px] text-slate-500">Período: 15/10/2026 (08h) a 21/10/2026 (17h) • 10 Titulares e 10 Suplentes</p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-1 text-xs font-bold text-[#015797] shrink-0">
+                <span x-text="mostrarRegrasVotacao ? 'Ocultar' : 'Ler Regras (14 Itens)'"></span>
+                <svg class="w-4 h-4 transform transition-transform duration-200" :class="mostrarRegrasVotacao ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+            </button>
+
+            <div x-show="mostrarRegrasVotacao" x-cloak x-transition.opacity.duration.200ms
+                 class="p-4 max-h-72 overflow-y-auto text-xs text-slate-700 space-y-3 leading-relaxed bg-white border-t border-slate-100">
+              
+              <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-800 leading-relaxed font-medium">
+                Regras oficiais para a escolha dos delegados representantes da sociedade civil na Conferência Final da Revisão do Plano Diretor Participativo do Município de Sapezal–MT.
+              </div>
+
+              <div class="space-y-2.5">
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">1. Finalidade</h5>
+                  <p class="text-slate-600">A votação eletrônica tem por finalidade escolher 10 (dez) delegados titulares representantes da sociedade civil para a Conferência Final da Revisão do Plano Diretor Participativo de Sapezal. Os candidatos classificados da 11ª à 20ª posição serão considerados suplentes, observada a ordem decrescente de votação e a quantidade de candidatos habilitados. Estas regras apresentam, de forma resumida, as condições da votação. O processo também observará o Regimento Interno da Conferência e o respectivo Edital de Chamamento Público.</p>
+                </div>
+
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">2. Período da votação</h5>
+                  <p class="text-slate-600">A votação permanecerá disponível no site oficial da Prefeitura Municipal de Sapezal:</p>
+                  <ul class="list-disc list-inside mt-1 pl-1 text-slate-600 space-y-0.5">
+                    <li><strong>Início:</strong> 15/10/2026, às 8h00min;</li>
+                    <li><strong>Encerramento:</strong> 21/10/2026, às 17h00min.</li>
+                  </ul>
+                  <p class="text-slate-600 mt-1">Após o encerramento, o sistema não aceitará novos votos.</p>
+                </div>
+
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">3. Quem poderá votar</h5>
+                  <p class="text-slate-600">Poderá votar qualquer pessoa que: I – possua 18 (dezoito) anos completos ou mais na data da votação; II – resida no Município de Sapezal–MT; III – informe corretamente seus próprios dados pessoais; IV – ainda não tenha participado da votação; V – declare que leu e aceita as regras da votação; e VI – declare que leu e está ciente do Aviso de Privacidade. Não será exigida vinculação do eleitor a bairro, território, entidade ou organização específica.</p>
+                </div>
+
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">4. Identificação do eleitor</h5>
+                  <p class="text-slate-600">Para acessar a votação, o eleitor deverá informar: I – nome completo; II – CPF; e III – as declarações solicitadas pelo sistema. O sistema verificará a validade do CPF informado e se ele já foi utilizado na votação. Cada CPF poderá registrar apenas um voto. O eleitor deverá utilizar exclusivamente seus próprios dados pessoais. É proibida a utilização do nome ou CPF de terceiros. A prestação de informação falsa, o uso indevido de dados de terceiros ou qualquer tentativa de fraude poderá resultar na invalidação da participação e na adoção das providências administrativas, civis ou criminais cabíveis.</p>
+                </div>
+
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">5. Declarações obrigatórias</h5>
+                  <p class="text-slate-600">Para prosseguir, o eleitor deverá declarar: I – que possui 18 (dezoito) anos completos ou mais; II – que reside no Município de Sapezal–MT; III – que está utilizando seus próprios dados pessoais; IV – que as informações prestadas são verdadeiras; V – que leu e aceita as regras da votação; e VI – que leu e está ciente do Aviso de Privacidade. O eleitor será responsável pela veracidade das declarações prestadas.</p>
+                </div>
+
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">6. Forma de votação</h5>
+                  <p class="text-slate-600">Após a identificação, o eleitor terá acesso à relação dos candidatos habilitados, contendo: I – fotografia; II – nome; III – bairro de residência; e IV – breve apresentação da candidatura. Cada eleitor poderá votar em apenas um candidato. Após selecionar o candidato, o sistema apresentará uma tela de confirmação. O voto somente será concluído depois que o eleitor clicar em “Confirmar meu voto”. Após a confirmação definitiva, o voto não poderá ser alterado ou substituído.</p>
+                </div>
+
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">7. Sigilo e proteção do voto</h5>
+                  <p class="text-slate-600">O voto será secreto. O nome e o CPF serão utilizados exclusivamente para identificar o eleitor, verificar os requisitos de participação e impedir a realização de mais de um voto pela mesma pessoa. Após a validação da participação, o sistema registrará apenas que o respectivo CPF já votou, sem armazenar, nesse registro, o nome do candidato escolhido. A escolha do candidato será armazenada separadamente, sem nome, CPF, número de protocolo ou qualquer outro dado que permita relacionar o voto ao eleitor. A Comissão responsável e a equipe técnica autorizada poderão acessar os dados necessários à administração e à auditoria do processo, mas não poderão identificar em qual candidato determinada pessoa votou. O resultado público apresentará somente os totais de votos recebidos pelos candidatos e as informações gerais da votação, sem divulgar a identidade dos eleitores.</p>
+                </div>
+
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">8. Comprovante</h5>
+                  <p class="text-slate-600">Após a conclusão, o sistema apresentará número de protocolo ou confirmação de que o voto foi registrado. O comprovante não informará o candidato escolhido e não permitirá relacionar o eleitor à escolha realizada.</p>
+                </div>
+
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">9. Condutas proibidas</h5>
+                  <p class="text-slate-600">São proibidas: I – a utilização de dados pessoais de terceiros para votar; II – a realização de mais de um voto pela mesma pessoa; III – a utilização de programas, robôs ou meios automatizados; IV – a tentativa de alterar, interromper ou manipular o sistema; V – a prestação de declaração falsa sobre idade ou residência; e VI – qualquer forma de fraude, coação ou obtenção indevida de votos.</p>
+                </div>
+
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">10. Instabilidade do sistema</h5>
+                  <p class="text-slate-600">Em caso de indisponibilidade relevante do sistema, a Comissão responsável poderá prorrogar o período de votação pelo tempo necessário para restabelecer a igualdade de participação. A eventual prorrogação será divulgada nos canais oficiais da Prefeitura Municipal de Sapezal. Problemas individuais de conexão, aparelho ou acesso à internet não implicarão automaticamente a prorrogação do prazo. Durante o período da votação, será disponibilizado atendimento presencial na Prefeitura para auxiliar os eleitores que tenham dificuldade de acesso, sem interferência na escolha do candidato.</p>
+                </div>
+
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">11. Apuração e classificação</h5>
+                  <p class="text-slate-600">Encerrada a votação, os candidatos serão classificados de acordo com o número de votos válidos recebidos. Serão considerados: I – titulares: os 10 (dez) candidatos mais votados; II – suplentes: os candidatos classificados da 11ª à 20ª posição, observada a quantidade de candidatos habilitados. Em caso de empate que interfira na definição das vagas, será realizado sorteio público pela Comissão responsável, com convocação dos candidatos empatados e registro em ata.</p>
+                </div>
+
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">12. Divulgação e recursos</h5>
+                  <p class="text-slate-600">O resultado preliminar será publicado no site oficial da Prefeitura Municipal de Sapezal em 22/10/2026. Eventuais recursos deverão ser apresentados no período de 23/10/2026 a 26/10/2026, pelo canal oficial: <strong class="text-[#015797]">Ouvidoria@sapezal.mt.gov.br</strong>. Após o julgamento dos recursos, serão publicados o resultado definitivo e a homologação dos delegados titulares e suplentes.</p>
+                </div>
+
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">13. Fiscalização e apuração de irregularidades</h5>
+                  <p class="text-slate-600">A Comissão responsável poderá analisar registros técnicos e demais informações necessárias à verificação da regularidade do processo, sem acesso à escolha individual realizada por cada eleitor. A constatação de fraude, duplicidade, uso de dados de terceiros ou manipulação do sistema poderá resultar na invalidação dos registros irregulares e na adoção das providências cabíveis, mediante decisão fundamentada e registrada no processo. As informações pessoais utilizadas na apuração permanecerão protegidas e não serão divulgadas ao público.</p>
+                </div>
+
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">14. Disposições finais</h5>
+                  <p class="text-slate-600">Os casos omissos e as ocorrências relacionadas ao funcionamento da votação serão analisados pela Comissão responsável, com registro das decisões e observância do Regimento Interno e do Edital. Ao prosseguir, o eleitor declara que as informações prestadas são verdadeiras e que leu e aceitou estas regras.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ACCORDION 2: AVISO DE PRIVACIDADE DA VOTAÇÃO ELETRÔNICA (11 SEÇÕES) -->
+          <div class="border border-blue-200 rounded-2xl overflow-hidden bg-white shadow-xs">
+            <button type="button" @click="mostrarAvisoPrivacidadeVotacao = !mostrarAvisoPrivacidadeVotacao"
+                    class="w-full p-3.5 bg-gradient-to-r from-blue-50/80 to-slate-50 flex items-center justify-between text-left hover:bg-blue-100/50 transition-colors">
+              <div class="flex items-center space-x-2.5">
+                <div class="p-1.5 bg-[#015797] text-white rounded-lg">
+                  <i data-lucide="shield-check" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <h4 class="text-xs font-black text-[#072b4c]">Aviso de Privacidade da Votação Eletrônica (LGPD)</h4>
+                  <p class="text-[10px] text-slate-500">Garantia legal de sigilo do voto, desvinculação e proteção de dados (Lei 13.709/2018)</p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-1 text-xs font-bold text-[#015797] shrink-0">
+                <span x-text="mostrarAvisoPrivacidadeVotacao ? 'Ocultar' : 'Ler Completo'"></span>
+                <svg class="w-4 h-4 transform transition-transform duration-200" :class="mostrarAvisoPrivacidadeVotacao ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+            </button>
+
+            <div x-show="mostrarAvisoPrivacidadeVotacao" x-cloak x-transition.opacity.duration.200ms
+                 class="p-4 max-h-64 overflow-y-auto text-xs text-slate-700 space-y-3 leading-relaxed bg-white border-t border-slate-100">
+              
+              <div class="p-2.5 bg-blue-50 rounded-xl border border-blue-100 text-[11px] text-blue-900 leading-relaxed font-medium">
+                A Prefeitura Municipal de Sapezal respeita a privacidade dos cidadãos e realiza o tratamento dos dados pessoais deste processo eleitoral em total conformidade com a Lei Federal nº 13.709/2018 (LGPD). Este documento informa como seus dados são protegidos e como o sigilo do seu voto é assegurado.
+              </div>
+
+              <div class="space-y-2.5">
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">1. Responsável pelo tratamento</h5>
+                  <p class="text-slate-600">O controlador dos dados pessoais é o Município de Sapezal–MT. Os dados serão tratados exclusivamente por agentes públicos, membros autorizados da Comissão responsável e equipe técnica encarregada da infraestrutura do sistema de votação eletrônica.</p>
+                </div>
+
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">2. Dados coletados</h5>
+                  <p class="text-slate-600">Para a participação na votação eletrônica serão coletados: I – nome completo; II – CPF; III – bairro ou região de residência em Sapezal; IV – declaração de residência, idade e veracidade das informações; V – confirmação de leitura deste Aviso de Privacidade; VI – registro do voto no candidato escolhido; VII – número de protocolo e autenticação eletrônica do comprovante de presença; e VIII – registros técnicos de segurança (horário e dados estritamente necessários à auditoria).</p>
+                </div>
+
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">3. Finalidades do tratamento</h5>
+                  <p class="text-slate-600">Os dados serão tratados para: I – identificar o eleitor; II – conferir os requisitos de idade e residência; III – garantir que cada cidadão vote apenas uma vez; IV – registrar a presença do eleitor; V – computar os votos de forma isolada e anônima; VI – apurar o resultado da votação dos delegados; VII – emitir o comprovante de votação; VIII – prevenir fraudes e inconsistências; e IX – permitir a auditoria do processo de votação.</p>
+                </div>
+
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">4. Fundamento do tratamento</h5>
+                  <p class="text-slate-600">O tratamento dos dados apoia-se no interesse público de viabilizar a participação da sociedade civil no processo democrático de escolha de delegados para a Revisão do Plano Diretor Participativo de Sapezal, em observância ao Decreto e ao Edital regulamentadores.</p>
+                </div>
+
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">5. Sigilo absoluto e desvinculação do voto (Anonimização)</h5>
+                  <p class="text-slate-600">O sistema é estruturado para garantir o sigilo do voto. Os dados de identificação do eleitor (nome, CPF, bairro) são registrados exclusivamente para controle de presença e unicidade do voto (impedir duplicidade). O registro do voto no candidato é gravado de forma desvinculada dos dados pessoais, não sendo possível associar publicamente nem internamente o eleitor ao voto emitido.</p>
+                </div>
+
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">6. Dados que não serão divulgados</h5>
+                  <p class="text-slate-600">Em nenhuma hipótese haverá divulgação pública de qual eleitor votou em determinado candidato. Também não serão divulgados publicamente o CPF e o endereço dos eleitores.</p>
+                </div>
+
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">7. Divulgação restrita</h5>
+                  <p class="text-slate-600">Poderão ser publicados apenas a lista de participantes que votaram (registro cívico de presença), a quantidade total de votantes por bairro/região e o total de votos recebidos por cada candidato.</p>
+                </div>
+
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">8. Compartilhamento de dados</h5>
+                  <p class="text-slate-600">Os dados dos eleitores não serão comercializados, repassados a terceiros para fins de marketing ou utilizados para finalidades incompatíveis com o processo eleitoral. O acesso a dados de auditoria é restrito à Comissão e aos órgãos de controle.</p>
+                </div>
+
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">9. Armazenamento e descarte</h5>
+                  <p class="text-slate-600">Os dados serão mantidos pelo período estritamente necessário à homologação dos resultados, prazo de recursos e auditoria do pleito, sendo arquivados ou eliminados conforme a legislação pública aplicável.</p>
+                </div>
+
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">10. Segurança da informação</h5>
+                  <p class="text-slate-600">São empregadas medidas técnicas como validação de integridade por hash criptográfico, bloqueio de votos duplicados por CPF e salvaguardas de banco de dados para proteção contra vazamentos ou acessos não autorizados.</p>
+                </div>
+
+                <div>
+                  <h5 class="font-bold text-[#072b4c]">11. Canal de atendimento e direitos do titular</h5>
+                  <p class="text-slate-600">Para exercer seus direitos previstos na LGPD ou esclarecer dúvidas, o titular poderá entrar em contato pelo e-mail oficial: <strong class="text-[#015797]">Ouvidoria@sapezal.mt.gov.br</strong>.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CHECKBOXES DE DECLARAÇÃO E ACEITE OBRIGATÓRIOS DO ELEITOR -->
+          <div class="space-y-2.5 pt-1">
+            <label class="flex items-start space-x-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors"
+                   :class="eleitor.declaracaoVeracidade ? 'border-emerald-300 bg-emerald-50/30' : ''">
+              <input type="checkbox" x-model="eleitor.declaracaoVeracidade" class="mt-0.5 w-4 h-4 text-[#015797] rounded border-slate-300 focus:ring-[#015797]">
+              <span class="text-[11px] text-slate-700 leading-relaxed">
+                <strong>Declaração de Residência e Pleno Gozo Cívico:</strong> Declaro que resido no Município de Sapezal/MT, sou maior de 18 anos de idade, estou em pleno gozo dos meus direitos políticos e civis e que os dados informados são autênticos e verdadeiros, sob as penas da lei penal brasileira.
+              </span>
+            </label>
+
+            <label class="flex items-start space-x-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors"
+                   :class="eleitor.avisoPrivacidade ? 'border-emerald-300 bg-emerald-50/30' : ''">
+              <input type="checkbox" x-model="eleitor.avisoPrivacidade" class="mt-0.5 w-4 h-4 text-[#015797] rounded border-slate-300 focus:ring-[#015797]">
+              <span class="text-[11px] text-slate-700 leading-relaxed">
+                <strong>Ciência do Aviso de Privacidade e Regras de Votação:</strong> Declaro que li e estou ciente do Aviso de Privacidade da votação eletrônica e concordo com as regras de participação do processo eleitoral dos delegados do Plano Diretor de Sapezal/MT.
+              </span>
+            </label>
+          </div>
+
+          <div x-show="!formEleitorValido && (eleitor.nome.length > 0 || eleitor.cpf.length > 0)" x-cloak class="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-800 flex items-center space-x-2">
+            <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+            <span>Preencha todos os campos e marque as 2 declarações acima para habilitar o acesso à cabine.</span>
+          </div>
         </div>
 
         <button @click="entrarCabine()" :disabled="!formEleitorValido"
@@ -352,12 +563,15 @@ function votacaoComponent() {
 
     cpfStatusEleitor: 'empty', // 'empty' | 'typing' | 'valid' | 'invalid'
     cpfErroMsgEleitor: '',
+    mostrarRegrasVotacao: false,
+    mostrarAvisoPrivacidadeVotacao: false,
 
     eleitor: {
       nome: "",
       cpf: "",
       bairro: "",
-      aceite: false
+      declaracaoVeracidade: false,
+      avisoPrivacidade: false
     },
 
     comprovante: {
@@ -370,7 +584,8 @@ function votacaoComponent() {
       return this.eleitor.nome.trim().length >= 3 &&
              this.cpfStatusEleitor === 'valid' &&
              this.eleitor.bairro !== "" &&
-             this.eleitor.aceite;
+             this.eleitor.declaracaoVeracidade &&
+             this.eleitor.avisoPrivacidade;
     },
 
     get candidatosFiltrados() {
@@ -497,15 +712,21 @@ function votacaoComponent() {
       if (!this.formEleitorValido) {
         if (this.cpfStatusEleitor !== 'valid') {
           if (window.showToast) {
-            window.showToast("Informe um CPF válido pela Receita Federal para prosseguir.", "error", "CPF Inválido");
+            window.showToast("Informe um CPF válido pela fórmula da Receita Federal para prosseguir.", "error", "CPF Inválido");
           } else {
             alert("CPF inválido.");
           }
-        } else {
+        } else if (!this.eleitor.nome || this.eleitor.nome.trim().length < 3 || !this.eleitor.bairro) {
           if (window.showToast) {
-            window.showToast("Preencha todos os dados e marque o termo de residência.", "warning", "Dados Incompletos");
+            window.showToast("Preencha todos os campos obrigatórios (Nome e Bairro).", "warning", "Campos Pendentes");
           } else {
             alert("Preencha todos os campos obrigatórios.");
+          }
+        } else {
+          if (window.showToast) {
+            window.showToast("É obrigatório assinalar os 2 termos de aceite e declarações para votar.", "warning", "Declarações Obrigatórias");
+          } else {
+            alert("Assinale todas as declarações.");
           }
         }
         return;
@@ -595,7 +816,7 @@ function votacaoComponent() {
       this.passoVoto = 1;
       this.votoConcluido = false;
       this.candidatoEscolhido = null;
-      this.eleitor = { nome: "", cpf: "", bairro: "", aceite: false };
+      this.eleitor = { nome: "", cpf: "", bairro: "", declaracaoVeracidade: false, avisoPrivacidade: false };
       this.cpfStatusEleitor = 'empty';
       this.cpfErroMsgEleitor = '';
       window.scrollTo({ top: 0, behavior: "smooth" });

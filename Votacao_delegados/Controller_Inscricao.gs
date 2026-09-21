@@ -107,11 +107,11 @@ function salvarInscricao(payload) {
       };
     }
 
-    // Verifica declarações obrigatórias
-    if (!dec.residencia || !dec.maioridade || !dec.veracidade || !dec.lgpd) {
+    // Verifica declarações obrigatórias (4 declarações)
+    if (!dec.veracidade || !dec.naoImpedimento || !dec.avisoPrivacidade || !dec.autorizacaoDivulgacao) {
       return {
         success: false,
-        message: "Todas as declarações de compromisso e termos da Lei do Plano Diretor devem ser aceitas."
+        message: "Todas as 4 declarações obrigatórias e o Aviso de Privacidade devem ser aceitos para concluir a inscrição."
       };
     }
 
@@ -142,7 +142,7 @@ function salvarInscricao(payload) {
 
     let urlIdentidade = "";
     let urlResidencia = "";
-    let urlCertidao = "";
+    let urlDeclaracaoCargo = "";
     let urlFoto = "";
 
     if (arq.docIdentidade) {
@@ -158,13 +158,27 @@ function salvarInscricao(payload) {
       urlResidencia = salvarArquivoDrive(
         pastas.documentos,
         arq.compResidencia,
-        nomePrefixo + "_Residencia",
+        nomePrefixo + "_ComprovanteResidencia",
         arq.compResidenciaType
+      );
+    } else if (arq.declaracaoResidencia) {
+      urlResidencia = salvarArquivoDrive(
+        pastas.documentos,
+        arq.declaracaoResidencia,
+        nomePrefixo + "_DeclaracaoResidencia",
+        arq.declaracaoResidenciaType
       );
     }
 
-    if (arq.certQuitacao) {
-      urlCertidao = salvarArquivoDrive(
+    if (arq.declaracaoCargo) {
+      urlDeclaracaoCargo = salvarArquivoDrive(
+        pastas.documentos,
+        arq.declaracaoCargo,
+        nomePrefixo + "_DeclaracaoNaoCargo",
+        arq.declaracaoCargoType
+      );
+    } else if (arq.certQuitacao) {
+      urlDeclaracaoCargo = salvarArquivoDrive(
         pastas.documentos,
         arq.certQuitacao,
         nomePrefixo + "_Quitacao",
@@ -198,7 +212,7 @@ function salvarInscricao(payload) {
       dd.minibio ? dd.minibio.trim() : "",
       urlIdentidade,
       urlResidencia,
-      urlCertidao,
+      urlDeclaracaoCargo,
       urlFoto,
       "Pendente", // Status inicial
       "", // Parecer comissão vazio
