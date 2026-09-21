@@ -303,6 +303,7 @@
           this.currentTab = tab;
           this.mobileMenuOpen = false;
           window.scrollTo({ top: 0, behavior: 'smooth' });
+          window.dispatchEvent(new CustomEvent('tab-changed', { detail: { tab: tab } }));
           this.$nextTick(() => {
             if (window.lucide) {
               lucide.createIcons();

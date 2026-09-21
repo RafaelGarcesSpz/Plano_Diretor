@@ -204,45 +204,126 @@ function getDriveFolders() {
 }
 
 /**
+ * Converte com segurança qualquer valor de data/hora (Date, string ISO, string BR) para timestamp em ms
+ */
+function parseDateToTimestamp(val) {
+  if (!val) return null;
+  if (val instanceof Date) return val.getTime();
+  if (typeof val === 'number') return val;
+  const s = String(val).trim();
+  if (!s) return null;
+
+  // Formato ISO: YYYY-MM-DDTHH:mm ou YYYY-MM-DDTHH:mm:ss ou YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) return d.getTime();
+  }
+
+  // Formato Brasileiro: DD/MM/YYYY HH:mm:ss ou DD/MM/YYYY HH:mm ou DD/MM/YYYY
+  const brMatch = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+  if (brMatch) {
+    const day = parseInt(brMatch[1], 10);
+    const month = parseInt(brMatch[2], 10) - 1;
+    const year = parseInt(brMatch[3], 10);
+    const hour = brMatch[4] ? parseInt(brMatch[4], 10) : 0;
+    const min = brMatch[5] ? parseInt(brMatch[5], 10) : 0;
+    const sec = brMatch[6] ? parseInt(brMatch[6], 10) : 0;
+    const d = new Date(year, month, day, hour, min, sec);
+    if (!isNaN(d.getTime())) return d.getTime();
+  }
+
+  const fallback = new Date(s);
+  return isNaN(fallback.getTime()) ? null : fallback.getTime();
+}
+
+/**
+ * Converte qualquer valor de data para string no formato datetime-local (YYYY-MM-DDTHH:mm)
+ */
+function formatDateToInput(val) {
+  if (!val) return "";
+  let d;
+  if (val instanceof Date) {
+    d = val;
+  } else {
+    const ts = parseDateToTimestamp(val);
+    if (!ts) return String(val || "");
+    d = new Date(ts);
+  }
+  try {
+    return Utilities.formatDate(d, "America/Cuiaba", "yyyy-MM-dd'T'HH:mm");
+  } catch (e) {
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+}
+
+/**
+ * Converte qualquer valor de data para exibição amigável em pt-BR (DD/MM/YYYY HH:mm)
+ */
+function formatDateToDisplay(val, includeTime) {
+  if (!val) return "";
+  let d;
+  if (val instanceof Date) {
+    d = val;
+  } else {
+    const ts = parseDateToTimestamp(val);
+    if (!ts) return String(val || "");
+    d = new Date(ts);
+  }
+  try {
+    return Utilities.formatDate(d, "America/Cuiaba", includeTime !== false ? "dd/MM/yyyy HH:mm" : "dd/MM/yyyy");
+  } catch (e) {
+    return String(val);
+  }
+}
+
+/**
  * Consulta status e prazos do sistema
  */
 function obterStatusSistema() {
   try {
     const ss = getSpreadsheet();
-    const sheet = ss.getSheetByName(APP_CONFIG.SHEET_CONFIG);
+    let sheet = ss.getSheetByName(APP_CONFIG.SHEET_CONFIG);
     if (!sheet) {
       initDatabase(ss);
-      return obterStatusSistema();
+      sheet = ss.getSheetByName(APP_CONFIG.SHEET_CONFIG);
     }
 
     const data = sheet.getDataRange().getValues();
     const config = {};
     for (let i = 1; i < data.length; i++) {
-      config[data[i][0]] = data[i][1];
+      if (data[i][0]) {
+        config[String(data[i][0]).trim()] = data[i][1];
+      }
     }
 
     const now = new Date().getTime();
-    const inicioInsc = new Date(config.DATA_INICIO_INSCRICAO || 0).getTime();
-    const fimInsc = new Date(config.DATA_FIM_INSCRICAO || 0).getTime();
-    const inicioVot = new Date(config.DATA_INICIO_VOTACAO || 0).getTime();
-    const fimVot = new Date(config.DATA_FIM_VOTACAO || 0).getTime();
+    const inicioInsc = parseDateToTimestamp(config.DATA_INICIO_INSCRICAO);
+    const fimInsc = parseDateToTimestamp(config.DATA_FIM_INSCRICAO);
+    const inicioVot = parseDateToTimestamp(config.DATA_INICIO_VOTACAO);
+    const fimVot = parseDateToTimestamp(config.DATA_FIM_VOTACAO);
 
-    const inscricaoAberta = (now >= inicioInsc && now <= fimInsc);
-    const votacaoAberta = (now >= inicioVot && now <= fimVot);
+    // Se a data de início foi configurada, valida; senão, default aberto
+    const inscricaoAberta = (inicioInsc === null || now >= inicioInsc) && (fimInsc === null || now <= fimInsc);
+    const votacaoAberta = (inicioVot === null || now >= inicioVot) && (fimVot === null || now <= fimVot);
 
     return {
       success: true,
       data: {
-        now: new Date().toISOString(),
+        now: formatDateToDisplay(new Date(), true),
         inscricao: {
-          aberta: inscricaoAberta,
-          inicio: config.DATA_INICIO_INSCRICAO,
-          fim: config.DATA_FIM_INSCRICAO
+          aberta: Boolean(inscricaoAberta),
+          inicio: formatDateToDisplay(config.DATA_INICIO_INSCRICAO, true),
+          fim: formatDateToDisplay(config.DATA_FIM_INSCRICAO, true),
+          inicioRaw: formatDateToInput(config.DATA_INICIO_INSCRICAO),
+          fimRaw: formatDateToInput(config.DATA_FIM_INSCRICAO)
         },
         votacao: {
-          aberta: votacaoAberta,
-          inicio: config.DATA_INICIO_VOTACAO,
-          fim: config.DATA_FIM_VOTACAO
+          aberta: Boolean(votacaoAberta),
+          inicio: formatDateToDisplay(config.DATA_INICIO_VOTACAO, true),
+          fim: formatDateToDisplay(config.DATA_FIM_VOTACAO, true),
+          inicioRaw: formatDateToInput(config.DATA_INICIO_VOTACAO),
+          fimRaw: formatDateToInput(config.DATA_FIM_VOTACAO)
         }
       }
     };
@@ -251,10 +332,11 @@ function obterStatusSistema() {
       success: false,
       message: "Erro ao consultar status: " + e.message,
       data: {
-        inscricao: { aberta: true },
-        votacao: { aberta: true }
+        inscricao: { aberta: true, inicio: "", fim: "" },
+        votacao: { aberta: true, inicio: "", fim: "" }
       }
     };
   }
 }
+
 

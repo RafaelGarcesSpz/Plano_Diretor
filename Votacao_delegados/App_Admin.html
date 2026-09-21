@@ -128,26 +128,38 @@
       <div class="space-y-4">
         <template x-for="item in inscricoesFiltradas" :key="item.protocolo">
           <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
-              <div>
-                <div class="flex items-center space-x-2">
-                  <span class="font-mono text-xs font-black text-[#015797]" x-text="item.protocolo"></span>
-                  <span class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase"
-                        :class="{
-                          'bg-amber-100 text-amber-800': item.status === 'Pendente',
-                          'bg-orange-100 text-orange-800': item.status === 'Diligência',
-                          'bg-emerald-100 text-emerald-800': item.status === 'Deferida',
-                          'bg-red-100 text-red-800': item.status === 'Indeferida'
-                        }"
-                        x-text="item.status"></span>
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+              <div class="flex items-start space-x-3">
+                <!-- Foto Miniatura do Candidato no Admin -->
+                <div class="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center shadow-2xs">
+                  <template x-if="item.fotoThumbnail">
+                    <img :src="item.fotoThumbnail" alt="Foto" class="w-full h-full object-cover">
+                  </template>
+                  <template x-if="!item.fotoThumbnail">
+                    <i data-lucide="user" class="w-6 h-6 text-slate-300"></i>
+                  </template>
                 </div>
-                <h4 class="text-base font-black text-[#072b4c] mt-0.5" x-text="item.nomeCompleto"></h4>
-                <p class="text-xs text-slate-500">
-                  Nome de Urna: <strong class="text-slate-700" x-text="item.nomeUrna"></strong> • Bairro: <strong class="text-slate-700" x-text="item.bairro"></strong> • Segmento: <span x-text="item.segmento"></span>
-                </p>
+
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <span class="font-mono text-xs font-black text-[#015797]" x-text="item.protocolo"></span>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase"
+                          :class="{
+                            'bg-amber-100 text-amber-800': normalizar(item.status) === 'pendente',
+                            'bg-orange-100 text-orange-800': normalizar(item.status) === 'diligencia',
+                            'bg-emerald-100 text-emerald-800': normalizar(item.status) === 'deferida' || normalizar(item.status) === 'deferido',
+                            'bg-red-100 text-red-800': normalizar(item.status) === 'indeferida' || normalizar(item.status) === 'indeferido'
+                          }"
+                          x-text="item.status"></span>
+                  </div>
+                  <h4 class="text-base font-black text-[#072b4c] mt-0.5" x-text="item.nomeCompleto"></h4>
+                  <p class="text-xs text-slate-500">
+                    Nome de Urna: <strong class="text-slate-700" x-text="item.nomeUrna"></strong> • Bairro: <strong class="text-slate-700" x-text="item.bairro"></strong> • Segmento: <span x-text="item.segmento"></span>
+                  </p>
+                </div>
               </div>
 
-              <div class="text-xs text-slate-400">
+              <div class="text-xs text-slate-400 shrink-0">
                 Inscrito em: <span x-text="item.timestamp"></span>
               </div>
             </div>
@@ -344,6 +356,8 @@ function adminComponent() {
     abaAdmin: "candidaturas",
     filtroStatus: "todos",
     modalParecerAberto: false,
+    salvandoPrazos: false,
+    carregandoDados: false,
 
     stats: {
       totalInscritos: 0,
@@ -351,6 +365,7 @@ function adminComponent() {
       diligencias: 0,
       deferidos: 0,
       indeferidos: 0,
+      totalEleitores: 0,
       totalVotosUrna: 0,
       apuracaoVotos: {}
     },
@@ -372,6 +387,11 @@ function adminComponent() {
     inscricoes: [],
     inscricoesFiltradas: [],
 
+    normalizar(s) {
+      if (!s) return "";
+      return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    },
+
     initAdmin() {
       this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
     },
@@ -386,9 +406,14 @@ function adminComponent() {
             this.validandoPin = false;
             if (res && res.success) {
               this.autenticado = true;
+              if (window.showToast) window.showToast("Acesso autorizado com sucesso!", "success", "Painel da Comissão");
               this.recarregarDados();
             } else {
-              alert(res ? res.message : "PIN Inválido.");
+              if (window.showToast) {
+                window.showToast(res ? res.message : "PIN Inválido.", "error", "Acesso Negado");
+              } else {
+                alert(res ? res.message : "PIN Inválido.");
+              }
             }
           })
           .withFailureHandler((err) => {
@@ -402,38 +427,68 @@ function adminComponent() {
           this.validandoPin = false;
           this.autenticado = true;
           this.recarregarDados();
-        }, 500);
+        }, 300);
       }
     },
 
     recarregarDados() {
+      this.carregandoDados = true;
       if (window.google && google.script && google.script.run) {
-        // Estatísticas
+        // 1. Estatísticas
         google.script.run
           .withSuccessHandler((res) => {
             if (res && res.success) this.stats = res.data;
             this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
           })
+          .withFailureHandler((err) => {
+            console.error("Erro estatísticas:", err);
+          })
           .adminObterEstatisticas();
 
-        // Inscrições
+        // 2. Inscrições
         google.script.run
           .withSuccessHandler((res) => {
+            this.carregandoDados = false;
             if (res && res.success) {
               this.inscricoes = res.data || [];
               this.filtrarInscricoes();
+            } else if (res && !res.success) {
+              if (window.showToast) window.showToast(res.message, "error", "Erro ao Carregar Candidatos");
             }
             this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
           })
+          .withFailureHandler((err) => {
+            this.carregandoDados = false;
+            console.error("Erro inscrições:", err);
+            if (window.showToast) window.showToast("Erro ao listar inscrições: " + err.message, "error");
+          })
           .adminListarInscricoes("todos");
+
+        // 3. Configurações de Prazos
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res && res.success && res.data) {
+              this.configPrazos.DATA_INICIO_INSCRICAO = res.data.DATA_INICIO_INSCRICAO || "";
+              this.configPrazos.DATA_FIM_INSCRICAO = res.data.DATA_FIM_INSCRICAO || "";
+              this.configPrazos.DATA_INICIO_VOTACAO = res.data.DATA_INICIO_VOTACAO || "";
+              this.configPrazos.DATA_FIM_VOTACAO = res.data.DATA_FIM_VOTACAO || "";
+            }
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+          })
+          .withFailureHandler((err) => {
+            console.error("Erro configurações:", err);
+          })
+          .adminObterConfiguracoes();
       } else {
         // Mock local
+        this.carregandoDados = false;
         this.stats = {
           totalInscritos: 4,
           pendentes: 1,
           diligencias: 1,
           deferidos: 2,
           indeferidos: 0,
+          totalEleitores: 28,
           totalVotosUrna: 28,
           apuracaoVotos: { "Maria do Bairro América (DEL-2026-101)": 18, "Carlos Agronegócio (DEL-2026-102)": 10 }
         };
@@ -444,7 +499,7 @@ function adminComponent() {
             nomeCompleto: "Maria das Graças Silva",
             nomeUrna: "Maria do Bairro América",
             cpf: "123.456.789-00",
-            rg: "123456 SSP/MT",
+            dataNasc: "15/05/1985",
             telefone: "(65) 99999-1111",
             email: "maria@exemplo.com",
             bairro: "Jardim América",
@@ -453,7 +508,7 @@ function adminComponent() {
             status: "Deferida",
             linkIdentidade: "#",
             linkResidencia: "#",
-            linkQuitacao: "#",
+            linkDeclaracaoCargo: "#",
             linkFoto: "#",
             parecer: "Documentação homologada com êxito."
           }
@@ -467,24 +522,49 @@ function adminComponent() {
       if (this.filtroStatus === "todos") {
         this.inscricoesFiltradas = this.inscricoes;
       } else {
-        this.inscricoesFiltradas = this.inscricoes.filter(i => i.status.toLowerCase() === this.filtroStatus.toLowerCase());
+        const fn = this.normalizar(this.filtroStatus);
+        this.inscricoesFiltradas = this.inscricoes.filter(i => this.normalizar(i.status) === fn);
       }
       this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
     },
 
     atualizarStatusDireto(protocolo, novoStatus) {
-      if (!confirm(`Deseja alterar a candidatura ${protocolo} para ${novoStatus}?`)) return;
+      if (!confirm(`Deseja alterar a candidatura ${protocolo} para "${novoStatus}"?`)) return;
+
+      // Atualização otimista imediata na interface
+      const itemLocal = this.inscricoes.find(i => String(i.protocolo).trim() === String(protocolo).trim());
+      const statusAnterior = itemLocal ? itemLocal.status : "Pendente";
+      if (itemLocal) {
+        itemLocal.status = novoStatus;
+        this.filtrarInscricoes();
+      }
 
       if (window.google && google.script && google.script.run) {
         google.script.run
           .withSuccessHandler((res) => {
-            alert(res.message);
-            this.recarregarDados();
+            if (res && res.success) {
+              if (window.showToast) {
+                window.showToast(res.message || `Candidatura ${protocolo} alterada para ${novoStatus}`, "success", "Status Atualizado");
+              }
+              this.recarregarDados();
+              window.dispatchEvent(new CustomEvent('candidatos-updated'));
+            } else {
+              // Reverte se falhou
+              if (itemLocal) { itemLocal.status = statusAnterior; this.filtrarInscricoes(); }
+              alert(res ? res.message : "Erro ao atualizar status.");
+            }
+          })
+          .withFailureHandler((err) => {
+            if (itemLocal) { itemLocal.status = statusAnterior; this.filtrarInscricoes(); }
+            alert("Erro ao atualizar: " + err.message);
           })
           .adminAtualizarStatus(protocolo, novoStatus, "Homologado pela Comissão.");
       } else {
-        alert(`Status de ${protocolo} atualizado para ${novoStatus}!`);
-        this.recarregarDados();
+        if (window.showToast) {
+          window.showToast(`Status de ${protocolo} atualizado para ${novoStatus}!`, "success");
+        } else {
+          alert(`Status de ${protocolo} atualizado para ${novoStatus}!`);
+        }
       }
     },
 
@@ -496,35 +576,74 @@ function adminComponent() {
     },
 
     confirmarParecer() {
-      if (!this.parecerModal.texto) {
-        alert("Por favor, informe a justificativa.");
+      if (!this.parecerModal.texto || !this.parecerModal.texto.trim()) {
+        alert("Por favor, informe a justificativa ou instrução de diligência.");
         return;
+      }
+
+      const prot = this.parecerModal.protocolo;
+      const novoSt = this.parecerModal.status;
+      const parecerTxt = this.parecerModal.texto;
+      this.modalParecerAberto = false;
+
+      // Atualização otimista imediata na interface
+      const itemLocal = this.inscricoes.find(i => String(i.protocolo).trim() === String(prot).trim());
+      const statusAnterior = itemLocal ? itemLocal.status : "Pendente";
+      if (itemLocal) {
+        itemLocal.status = novoSt;
+        itemLocal.parecer = parecerTxt;
+        this.filtrarInscricoes();
       }
 
       if (window.google && google.script && google.script.run) {
         google.script.run
           .withSuccessHandler((res) => {
-            this.modalParecerAberto = false;
-            alert(res.message);
-            this.recarregarDados();
+            if (res && res.success) {
+              if (window.showToast) {
+                window.showToast(res.message || "Decisão da comissão gravada com sucesso.", "success", "Parecer Registrado");
+              }
+              this.recarregarDados();
+              window.dispatchEvent(new CustomEvent('candidatos-updated'));
+            } else {
+              if (itemLocal) { itemLocal.status = statusAnterior; this.filtrarInscricoes(); }
+              alert(res ? res.message : "Erro ao registrar decisão.");
+            }
           })
-          .adminAtualizarStatus(this.parecerModal.protocolo, this.parecerModal.status, this.parecerModal.texto);
+          .withFailureHandler((err) => {
+            if (itemLocal) { itemLocal.status = statusAnterior; this.filtrarInscricoes(); }
+            alert("Erro ao registrar decisão: " + err.message);
+          })
+          .adminAtualizarStatus(prot, novoSt, parecerTxt);
       } else {
-        this.modalParecerAberto = false;
-        alert("Decisão confirmada com sucesso.");
-        this.recarregarDados();
+        if (window.showToast) window.showToast("Decisão confirmada com sucesso.", "success");
       }
     },
 
     salvarPrazos() {
+      this.salvandoPrazos = true;
       if (window.google && google.script && google.script.run) {
         google.script.run
           .withSuccessHandler((res) => {
-            alert(res.message);
+            this.salvandoPrazos = false;
+            if (window.showToast) {
+              window.showToast(res.message || "Prazos atualizados com sucesso!", "success", "Configurações Salvas");
+            } else {
+              alert(res.message);
+            }
+            this.recarregarDados();
+            window.dispatchEvent(new CustomEvent('prazos-updated'));
+          })
+          .withFailureHandler((err) => {
+            this.salvandoPrazos = false;
+            alert("Erro ao salvar prazos: " + err.message);
           })
           .adminSalvarConfiguracoes(this.configPrazos);
       } else {
-        alert("Prazos atualizados com sucesso!");
+        setTimeout(() => {
+          this.salvandoPrazos = false;
+          if (window.showToast) window.showToast("Prazos atualizados com sucesso!", "success");
+          window.dispatchEvent(new CustomEvent('prazos-updated'));
+        }, 500);
       }
     },
 

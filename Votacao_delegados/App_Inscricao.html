@@ -19,8 +19,15 @@
       </div>
 
       <p class="text-sm text-slate-600 leading-relaxed">
-        O prazo para registro de candidaturas para a Comissão de Delegados do Plano Diretor de Sapezal/MT foi encerrado. Todas as candidaturas submetidas encontram-se em fase de análise e homologação documental pela Comissão Eleitoral.
+        O prazo para registro de candidaturas para a Comissão de Delegados do Plano Diretor de Sapezal/MT não está aberto no momento.
       </p>
+
+      <template x-if="prazoInfo.inicio || prazoInfo.fim">
+        <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 font-medium">
+          <strong>Período Oficial de Inscrições:</strong>
+          <span x-text="(prazoInfo.inicio ? ' De ' + prazoInfo.inicio : '') + (prazoInfo.fim ? ' até ' + prazoInfo.fim : '')"></span>
+        </div>
+      </template>
 
       <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs text-slate-700 space-y-2">
         <div class="font-bold text-[#015797] flex items-center space-x-1.5">
@@ -828,6 +835,97 @@
     </div>
   </div>
 
+  <!-- MODAL DE GERADOR DA DECLARAÇÃO DE NÃO OCUPAÇÃO DE CARGO ELETIVO OU COMISSIONADO -->
+  <div x-show="abrirModalDeclaracaoCargo" x-cloak class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full p-6 sm:p-8 space-y-5 animate-ballot-drop max-h-[92vh] flex flex-col">
+      
+      <!-- Cabeçalho do Modal -->
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center space-x-2.5">
+          <div class="p-2 bg-blue-50 text-[#015797] rounded-xl">
+            <i data-lucide="shield-alert" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base sm:text-lg font-black text-[#072b4c]">Declaração de Não Ocupação de Cargo</h3>
+            <p class="text-xs text-slate-500">Documento obrigatório de não impedimento para candidatura a Delegado.</p>
+          </div>
+        </div>
+        <button @click="abrirModalDeclaracaoCargo = false" class="p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Conteúdo com Scroll -->
+      <div class="flex-1 overflow-y-auto space-y-4 pr-1">
+        
+        <!-- Alerta Didático sobre Assinatura Eletrônica GOV.BR / ICP-Brasil ou Manual -->
+        <div class="p-3.5 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900 space-y-1.5">
+          <div class="font-bold flex items-center space-x-1.5 text-amber-950">
+            <i data-lucide="shield-check" class="w-4 h-4 text-amber-700"></i>
+            <span>Instruções para Assinatura e Envio:</span>
+          </div>
+          <ul class="list-disc list-inside space-y-1 pl-1 text-[11px]">
+            <li><strong>Opção 1 (100% Digital via GOV.BR):</strong> Baixe o PDF desta declaração preenchida, assine gratuitamente pela sua <strong>Conta GOV.BR</strong> (<a href="https://validar.iti.gov.br/" target="_blank" class="underline font-bold text-amber-950">gov.br/assinador</a>) ou Certificado Digital ICP-Brasil e faça o upload no Item 3.</li>
+            <li><strong>Opção 2 (Assinatura Manual):</strong> Imprima a declaração, assine à caneta de próprio punho, fotografe/digitalize com nitidez e anexe no Item 3.</li>
+          </ul>
+        </div>
+
+        <!-- Área de Impressão da Declaração Exata -->
+        <div class="p-4 bg-white rounded-2xl border border-slate-300 shadow-inner">
+          <span class="text-[10px] font-bold text-slate-400 uppercase block mb-2">Visualização da Minuta Oficial:</span>
+          
+          <div id="areaDeclaracaoCargo" class="bg-slate-50 p-6 rounded-xl border border-slate-200 text-xs text-slate-900 space-y-4 font-serif leading-relaxed">
+            <div class="text-center pb-2">
+              <h4 class="font-bold text-sm tracking-wider uppercase">DECLARAÇÃO DE NÃO OCUPAÇÃO DE CARGO ELETIVO OU COMISSIONADO</h4>
+            </div>
+
+            <p class="text-justify">
+              Eu, <strong class="font-sans text-[#015797]" x-text="form.dadosPessoais.nomeCompleto || '___________________________________________________________________'"></strong>, portador do CPF nº <strong class="font-sans font-mono text-[#015797]" x-text="form.dadosPessoais.cpf || '__________________________________'"></strong>, residente e domiciliado(a) no Município de Sapezal/MT, DECLARO, para fins de inscrição como candidato(a) a Delegado(a) da Sociedade Civil na Conferência Final da Revisão do Plano Diretor Participativo de Sapezal, sob as penas da lei (art. 299 do Código Penal), que:
+            </p>
+
+            <ol class="list-decimal list-inside space-y-2 pl-2 text-justify">
+              <li>Não exerço mandato eletivo em qualquer dos Poderes (Executivo ou Legislativo) de qualquer esfera da federação;</li>
+              <li>Não ocupo cargo em comissão, função de confiança ou emprego público de livre nomeação e exoneração no âmbito da Administração Pública Direta ou Indireta do Município de Sapezal/MT;</li>
+              <li>Não sou membro integrante do Núcleo Gestor da Revisão do Plano Diretor Participativo;</li>
+              <li>Não incorro em nenhuma das vedações ou hipóteses de impedimento previstas no Edital de Chamamento Público e no Regimento Interno da Conferência.</li>
+            </ol>
+
+            <p class="text-justify pt-1">
+              Por ser a expressão da verdade, firmo a presente declaração para que produza seus efeitos legais.
+            </p>
+
+            <p class="text-left pt-2">
+              Sapezal/MT, _____ de _________________ de 2026.
+            </p>
+
+            <div class="pt-8 text-center font-sans space-y-1">
+              <div class="border-t border-slate-400 max-w-sm mx-auto pt-2">
+                <p class="font-bold text-xs" x-text="form.dadosPessoais.nomeCompleto || 'Assinatura do(a) Declarante'"></p>
+                <p class="text-[10px] text-slate-500">Assinatura do(a) Declarante</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Rodapé do Modal com Ações -->
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+        <span class="text-[11px] text-slate-500">Após assinar, anexe o arquivo no campo do Item 3.</span>
+        <div class="flex items-center space-x-2">
+          <button type="button" @click="imprimirModeloDeclaracaoCargo()" class="px-5 py-2.5 rounded-xl btn-brand-primary text-xs font-bold flex items-center space-x-2 shadow-md hover:shadow-lg transition-all">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span>Baixar / Imprimir Declaração</span>
+          </button>
+          <button type="button" @click="abrirModalDeclaracaoCargo = false" class="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-bold transition-colors">
+            Fechar
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- TELA DE SUCESSO E EMISSÃO DE PROTOCOLO -->
   <div x-show="sucessoEnvio" x-cloak class="max-w-2xl mx-auto space-y-6">
     <div class="bg-white p-6 sm:p-10 rounded-2xl border-2 border-emerald-500 shadow-xl text-center space-y-5 animate-ballot-drop">
@@ -892,6 +990,7 @@ function inscricaoComponent() {
     fotoPreviewUrl: "",
     explicarSigilo: false,
     abrirModalDeclaracao: false,
+    abrirModalDeclaracaoCargo: false,
     mostrarAvisoPrivacidade: false,
     cepStatus: '',
     cepStatusMensagem: '',
@@ -939,28 +1038,43 @@ function inscricaoComponent() {
         declaracaoResidencia: "",
         declaracaoResidenciaName: "",
         declaracaoResidenciaType: "",
-        certQuitacao: "",
-        certQuitacaoName: "",
-        certQuitacaoType: "",
+        declaracaoCargo: "",
+        declaracaoCargoName: "",
+        declaracaoCargoType: "",
         fotoRosto: "",
         fotoRostoName: "",
         fotoRostoType: ""
       },
       declaracoes: {
         veracidade: false,
+        naoImpedimento: false,
         avisoPrivacidade: false,
         autorizacaoDivulgacao: false
       }
     },
 
+    prazoAberto: true,
+    loadingStatus: true,
+    prazoInfo: {
+      inicio: '',
+      fim: ''
+    },
+
     get declaracoesCompletas() {
       return this.form.declaracoes.veracidade &&
+             this.form.declaracoes.naoImpedimento &&
              this.form.declaracoes.avisoPrivacidade &&
              this.form.declaracoes.autorizacaoDivulgacao;
     },
 
     initInscricao() {
       this.consultarPrazo();
+      window.addEventListener('prazos-updated', () => this.consultarPrazo());
+      window.addEventListener('tab-changed', (e) => {
+        if (e.detail && e.detail.tab === 'inscricao') {
+          this.consultarPrazo();
+        }
+      });
       this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
     },
 
@@ -972,6 +1086,8 @@ function inscricaoComponent() {
             this.loadingStatus = false;
             if (res && res.success && res.data && res.data.inscricao) {
               this.prazoAberto = res.data.inscricao.aberta;
+              this.prazoInfo.inicio = res.data.inscricao.inicio || '';
+              this.prazoInfo.fim = res.data.inscricao.fim || '';
             }
             this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
           })
@@ -1232,6 +1348,42 @@ function inscricaoComponent() {
       }, 500);
     },
 
+    abrirGeradorDeclaracaoCargo() {
+      this.abrirModalDeclaracaoCargo = true;
+      this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+    },
+
+    imprimirModeloDeclaracaoCargo() {
+      const conteudo = document.getElementById('areaDeclaracaoCargo').innerHTML;
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Declaração de Não Ocupação de Cargo - Sapezal/MT</title>
+          <style>
+            body { font-family: 'Times New Roman', Times, serif; padding: 40px 60px; color: #111; line-height: 1.6; }
+            h4 { text-align: center; margin-top: 10px; font-size: 16px; letter-spacing: 1px; }
+            p { text-align: justify; font-size: 14px; margin-bottom: 16px; }
+            ol { font-size: 14px; margin-bottom: 16px; line-height: 1.6; text-align: justify; }
+            li { margin-bottom: 8px; }
+            .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 30px; font-family: sans-serif; }
+            .signature { margin-top: 60px; text-align: center; font-family: sans-serif; }
+            .line { border-top: 1px solid #333; width: 320px; margin: 40px auto 10px auto; }
+          </style>
+        </head>
+        <body>
+          ${conteudo}
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+      }, 500);
+    },
+
     avancarEtapa() {
       if (this.step === 1) {
         const dp = this.form.dadosPessoais;
@@ -1301,14 +1453,23 @@ function inscricaoComponent() {
           }
           return;
         }
+
+        if (!arq.declaracaoCargo) {
+          if (window.showToast) {
+            window.showToast("É obrigatório anexar a Declaração de Não Ocupação de Cargo (Item 3).", "warning", "Documento Pendente");
+          } else {
+            alert("Anexe a Declaração de Não Ocupação de Cargo.");
+          }
+          return;
+        }
       }
 
       if (this.step === 4) {
         if (!this.declaracoesCompletas) {
           if (window.showToast) {
-            window.showToast("Você deve assinalar os 3 termos e declarações obrigatórias para poder finalizar.", "warning", "Declarações Obrigatórias");
+            window.showToast("Você deve assinalar os 4 termos e declarações obrigatórias para poder finalizar.", "warning", "Declarações Obrigatórias");
           } else {
-            alert("Assinale todas as declarações.");
+            alert("Assinale todas as 4 declarações.");
           }
           return;
         }

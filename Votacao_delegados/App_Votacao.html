@@ -18,8 +18,16 @@
         </div>
       </div>
       <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-        A urna eletrônica para eleição dos Delegados do Plano Diretor de Sapezal abre de acordo com o cronograma estabelecido pela Comissão Eleitoral após o período de homologação das candidaturas.
+        A cabine de votação eletrônica para eleição dos Delegados do Plano Diretor de Sapezal não está aberta no momento.
       </p>
+
+      <template x-if="prazoInfoVotacao.inicio || prazoInfoVotacao.fim">
+        <div class="p-3 bg-blue-50 rounded-xl border border-blue-200 text-xs text-[#015797] font-medium">
+          <strong>Período Oficial de Votação:</strong>
+          <span x-text="(prazoInfoVotacao.inicio ? ' De ' + prazoInfoVotacao.inicio : '') + (prazoInfoVotacao.fim ? ' até ' + prazoInfoVotacao.fim : '')"></span>
+        </div>
+      </template>
+
       <div class="pt-2">
         <button @click="navigate('inscricao')" class="px-5 py-2.5 rounded-xl btn-brand-primary text-xs font-bold flex items-center justify-center space-x-2 mx-auto sm:mx-0">
           <i data-lucide="user-plus" class="w-4 h-4"></i>
@@ -390,7 +398,8 @@
               <div class="flex flex-col sm:flex-row items-center sm:items-start gap-3">
                 <div class="w-20 h-20 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center shadow-xs">
                   <template x-if="cand.fotoUrl">
-                    <img :src="cand.fotoUrl" alt="Foto Candidato" class="w-full h-full object-cover">
+                    <img :src="formatarUrlFoto(cand.fotoUrl)" alt="Foto Candidato" class="w-full h-full object-cover"
+                         @error="cand.fotoUrl = ''">
                   </template>
                   <template x-if="!cand.fotoUrl">
                     <i data-lucide="user" class="w-10 h-10 text-slate-300"></i>
@@ -450,7 +459,8 @@
       <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200 space-y-3">
         <div class="w-24 h-24 rounded-2xl bg-white border-2 border-slate-200 mx-auto overflow-hidden shadow-md flex items-center justify-center">
           <template x-if="candidatoEscolhido?.fotoUrl">
-            <img :src="candidatoEscolhido.fotoUrl" alt="Foto" class="w-full h-full object-cover">
+            <img :src="formatarUrlFoto(candidatoEscolhido.fotoUrl)" alt="Foto" class="w-full h-full object-cover"
+                 @error="candidatoEscolhido.fotoUrl = ''">
           </template>
           <template x-if="!candidatoEscolhido?.fotoUrl">
             <i data-lucide="user" class="w-12 h-12 text-slate-300"></i>
@@ -560,6 +570,10 @@ function votacaoComponent() {
     termoBusca: "",
     candidatos: [],
     candidatoEscolhido: null,
+    prazoInfoVotacao: {
+      inicio: '',
+      fim: ''
+    },
 
     cpfStatusEleitor: 'empty', // 'empty' | 'typing' | 'valid' | 'invalid'
     cpfErroMsgEleitor: '',
@@ -588,6 +602,22 @@ function votacaoComponent() {
              this.eleitor.avisoPrivacidade;
     },
 
+    formatarUrlFoto(url) {
+      if (!url) return "";
+      const s = String(url).trim();
+      if (!s) return "";
+      if (s.startsWith("data:") || s.startsWith("blob:") || s.includes("googleusercontent.com/d/")) return s;
+      
+      const match = s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || 
+                    s.match(/id=([a-zA-Z0-9_-]+)/) || 
+                    s.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      
+      if (match && match[1]) {
+        return "https://lh3.googleusercontent.com/d/" + match[1];
+      }
+      return s;
+    },
+
     get candidatosFiltrados() {
       if (!this.termoBusca) return this.candidatos;
       const t = this.termoBusca.toLowerCase();
@@ -600,6 +630,13 @@ function votacaoComponent() {
 
     initVotacao() {
       this.carregarStatusEVotacao();
+      window.addEventListener('prazos-updated', () => this.carregarStatusEVotacao());
+      window.addEventListener('candidatos-updated', () => this.carregarStatusEVotacao());
+      window.addEventListener('tab-changed', (e) => {
+        if (e.detail && e.detail.tab === 'votacao') {
+          this.carregarStatusEVotacao();
+        }
+      });
       this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
     },
 
@@ -614,8 +651,13 @@ function votacaoComponent() {
             this.carregandoStatus = false;
             if (res && res.success && res.data && res.data.votacao) {
               this.votacaoAberta = res.data.votacao.aberta;
+              this.prazoInfoVotacao.inicio = res.data.votacao.inicio || '';
+              this.prazoInfoVotacao.fim = res.data.votacao.fim || '';
             }
             this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+          })
+          .withFailureHandler(() => {
+            this.carregandoStatus = false;
           })
           .obterStatusSistema();
 
@@ -627,6 +669,9 @@ function votacaoComponent() {
               this.candidatos = res.data || [];
             }
             this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+          })
+          .withFailureHandler(() => {
+            this.carregandoCandidatos = false;
           })
           .obterCandidatosDeferidos();
       } else {

@@ -34,7 +34,7 @@ function validarCPF(cpf) {
 /**
  * Salva arquivo a partir de string Base64 em pasta do Drive
  */
-function salvarArquivoDrive(pasta, base64Data, nomeArquivo, mimeTypePadrao) {
+function salvarArquivoDrive(pasta, base64Data, nomeArquivo, mimeTypePadrao, isPublic) {
   if (!base64Data || typeof base64Data !== 'string') return "";
   
   let cleanBase64 = base64Data;
@@ -50,6 +50,15 @@ function salvarArquivoDrive(pasta, base64Data, nomeArquivo, mimeTypePadrao) {
   const bytes = Utilities.base64Decode(cleanBase64);
   const blob = Utilities.newBlob(bytes, mimeType, nomeArquivo);
   const file = pasta.createFile(blob);
+
+  if (isPublic) {
+    try {
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    } catch (e) {
+      console.warn("Aviso ao definir permissão pública do arquivo: " + e);
+    }
+  }
+
   return file.getUrl();
 }
 
@@ -191,7 +200,8 @@ function salvarInscricao(payload) {
         pastas.fotos,
         arq.fotoRosto,
         nomePrefixo + "_FotoDivulgacao",
-        arq.fotoRostoType
+        arq.fotoRostoType,
+        true // Público para exibição na cédula
       );
     }
 
@@ -218,6 +228,8 @@ function salvarInscricao(payload) {
       "", // Parecer comissão vazio
       timestamp
     ]);
+
+    SpreadsheetApp.flush(); // Gravação imediata síncrona
 
     return {
       success: true,

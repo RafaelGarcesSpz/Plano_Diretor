@@ -4,6 +4,25 @@
  */
 
 /**
+ * Extrai URL direta da imagem para exibição imediata em tags <img>
+ */
+function formatarUrlImagemDrive(url) {
+  if (!url) return "";
+  const s = String(url).trim();
+  if (!s) return "";
+  if (s.startsWith("data:") || s.startsWith("blob:") || s.includes("googleusercontent.com/d/")) return s;
+  
+  const match = s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || 
+                s.match(/id=([a-zA-Z0-9_-]+)/) || 
+                s.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  
+  if (match && match[1]) {
+    return "https://lh3.googleusercontent.com/d/" + match[1];
+  }
+  return s;
+}
+
+/**
  * Retorna a lista de candidatos homologados e deferidos para a votação pública
  */
 function obterCandidatosDeferidos() {
@@ -18,18 +37,23 @@ function obterCandidatosDeferidos() {
     const listaDeferidos = [];
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
-      const status = String(row[15] || "").trim().toLowerCase();
+      if (!row[0] && !row[2]) continue;
 
-      // Filtra apenas candidaturas Deferidas
-      if (status === 'deferida' || status === 'deferido' || status === 'aprovado') {
+      const rawStatus = String(row[15] || "").trim();
+      const status = typeof normalizarTexto === 'function' 
+        ? normalizarTexto(rawStatus) 
+        : rawStatus.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+      // Filtra apenas candidaturas Deferidas / Homologadas / Aprovadas
+      if (status === 'deferida' || status === 'deferido' || status === 'aprovado' || status === 'aprovada' || status === 'homologado' || status === 'homologada') {
         listaDeferidos.push({
-          id: row[0],             // Protocolo
-          nome: row[2],           // Nome Completo
-          nomeUrna: row[3] || row[2], // Nome de Urna
-          bairro: row[8],         // Bairro
-          segmento: row[9] || "Sociedade Civil",
-          minibio: row[10] || "", // Apresentação
-          fotoUrl: row[14] || ""  // Foto
+          id: String(row[0] || ""),             // Protocolo
+          nome: String(row[2] || ""),           // Nome Completo
+          nomeUrna: String(row[3] || row[2] || ""), // Nome de Urna
+          bairro: String(row[8] || ""),         // Bairro
+          segmento: String(row[9] || "Sociedade Civil"),
+          minibio: String(row[10] || ""), // Apresentação
+          fotoUrl: formatarUrlImagemDrive(row[14])  // Link direto de imagem
         });
       }
     }
@@ -147,6 +171,8 @@ function registrarVoto(payload) {
       voto.candidatoNome,
       voto.candidatoBairro
     ]);
+
+    SpreadsheetApp.flush(); // Garante gravação imediata síncrona
 
     return {
       success: true,
