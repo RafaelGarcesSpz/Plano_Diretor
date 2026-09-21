@@ -1,0 +1,447 @@
+<!--
+  Sistema de Inscrição e Votação de Delegados - Plano Diretor de Sapezal/MT
+  Componente: App_Apuracao.html (Painel de Apuração Oficial dos Votos estilo Eleições Oficiais/TSE)
+-->
+
+<div x-data="apuracaoApp()" x-init="init()" class="space-y-6 max-w-5xl mx-auto pb-12">
+  
+  <!-- CABEÇALHO DA APURAÇÃO (TELA WEB) -->
+  <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-xs border border-slate-200 relative overflow-hidden print:hidden">
+    <div class="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-blue-100/50 via-emerald-50/30 to-transparent rounded-full -mr-20 -mt-20 pointer-events-none"></div>
+
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+      <div class="space-y-2">
+        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Apuração Oficial Consolidada</span>
+          <span class="text-slate-400">•</span>
+          <span x-text="dados.percentualUrnasApuradas || '100%'"></span> das urnas
+        </div>
+        
+        <h2 class="text-2xl sm:text-3xl font-black text-[#072b4c] tracking-tight">
+          Resultado da Eleição de Delegados
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed">
+          Classificação geral dos candidatos representantes da sociedade civil para a Conferência Final da Revisão do Plano Diretor Participativo de Sapezal/MT.
+        </p>
+      </div>
+
+      <!-- BOTÃO DE IMPRESSÃO / PDF -->
+      <div class="flex items-center space-x-3 shrink-0">
+        <button @click="recarregar()" :disabled="carregando"
+                class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 transition-colors shadow-2xs"
+                title="Recarregar Dados">
+          <i data-lucide="refresh-cw" class="w-4 h-4" :class="{'animate-spin': carregando}"></i>
+        </button>
+
+        <button @click="imprimirRelatorio()"
+                class="px-5 py-2.5 rounded-xl bg-[#015797] hover:bg-[#072b4c] text-white font-bold text-xs shadow-md transition-all flex items-center space-x-2">
+          <i data-lucide="printer" class="w-4 h-4 text-[#ffd200]"></i>
+          <span>Imprimir Ata / Salvar PDF</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- CARDS DE MÉTRICAS CONSOLIDADAS -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mt-6 pt-6 border-t border-slate-100">
+      
+      <div class="bg-slate-50/80 rounded-2xl p-3.5 border border-slate-100">
+        <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center space-x-1.5">
+          <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-[#015797]"></i>
+          <span>Votos Válidos</span>
+        </div>
+        <div class="text-xl sm:text-2xl font-black text-[#072b4c] mt-1" x-text="dados.totalVotosValidos || 0"></div>
+        <div class="text-[10px] text-slate-600 mt-0.5">Urna 100% Auditada</div>
+      </div>
+
+      <div class="bg-slate-50/80 rounded-2xl p-3.5 border border-slate-100">
+        <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center space-x-1.5">
+          <i data-lucide="users" class="w-3.5 h-3.5 text-[#015797]"></i>
+          <span>Eleitores Votantes</span>
+        </div>
+        <div class="text-xl sm:text-2xl font-black text-[#072b4c] mt-1" x-text="dados.totalEleitoresVotantes || 0"></div>
+        <div class="text-[10px] text-slate-600 mt-0.5">Quórum Registrado</div>
+      </div>
+
+      <div class="bg-emerald-50/60 rounded-2xl p-3.5 border border-emerald-100">
+        <div class="text-[11px] font-bold text-emerald-800 uppercase tracking-wider flex items-center space-x-1.5">
+          <i data-lucide="award" class="w-3.5 h-3.5 text-emerald-600"></i>
+          <span>Titulares Eleitos</span>
+        </div>
+        <div class="text-xl sm:text-2xl font-black text-emerald-700 mt-1">10 Vagas</div>
+        <div class="text-[10px] text-emerald-800 mt-0.5">1º ao 10º colocado</div>
+      </div>
+
+      <div class="bg-amber-50/60 rounded-2xl p-3.5 border border-amber-100">
+        <div class="text-[11px] font-bold text-amber-800 uppercase tracking-wider flex items-center space-x-1.5">
+          <i data-lucide="user-check" class="w-3.5 h-3.5 text-amber-600"></i>
+          <span>Suplentes</span>
+        </div>
+        <div class="text-xl sm:text-2xl font-black text-amber-700 mt-1">10 Vagas</div>
+        <div class="text-[10px] text-amber-800 mt-0.5">11º ao 20º colocado</div>
+      </div>
+
+    </div>
+
+    <!-- DATA DA APURAÇÃO -->
+    <div class="mt-4 flex items-center justify-between text-[11px] text-slate-600">
+      <span class="flex items-center space-x-1.5">
+        <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
+        <span>Última atualização: <strong class="text-slate-600" x-text="dados.dataApuracao || 'Aguardando'"></strong></span>
+      </span>
+      <span class="hidden sm:inline text-slate-600">Sapezal/MT • Horário Oficial de Mato Grosso</span>
+    </div>
+  </div>
+
+  <!-- CABEÇALHO OFICIAL DE IMPRESSÃO (EXIBIDO SOMENTE NO PDF / PRINT) -->
+  <div class="hidden print:block mb-6 border-b-2 border-[#072b4c] pb-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-lg font-black uppercase text-[#072b4c]">Prefeitura Municipal de Sapezal/MT</h1>
+        <h2 class="text-sm font-bold text-slate-700">Revisão do Plano Diretor Participativo • Eleição de Delegados 2026</h2>
+        <h3 class="text-xs font-semibold text-slate-600">Ata Oficial de Apuração e Totalização dos Votos</h3>
+      </div>
+      <div class="text-right text-[11px] text-slate-500">
+        <p>Data do Relatório: <strong x-text="dados.dataApuracao"></strong></p>
+        <p>Total de Votos Apurados: <strong x-text="dados.totalVotosValidos"></strong></p>
+        <p>Urnas: <strong>100% Apuradas</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- BARRA DE FERRAMENTAS E FILTROS (TELA WEB) -->
+  <div class="bg-white rounded-2xl p-4 shadow-2xs border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 print:hidden">
+    
+    <!-- Busca Rápida -->
+    <div class="relative w-full sm:w-72">
+      <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+      <input type="text" x-model="filtroBusca" placeholder="Buscar candidato ou bairro..."
+             class="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:border-[#015797] focus:ring-1 focus:ring-[#015797] transition-all">
+    </div>
+
+    <!-- Alternador de Modo de Exibição -->
+    <div class="flex items-center space-x-1.5 w-full sm:w-auto justify-end">
+      <button @click="modoExibicao = 'cards'"
+              :class="modoExibicao === 'cards' ? 'bg-[#015797] text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+              class="px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all">
+        <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+        <span>Cédulas</span>
+      </button>
+
+      <button @click="modoExibicao = 'tabela'"
+              :class="modoExibicao === 'tabela' ? 'bg-[#015797] text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+              class="px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all">
+        <i data-lucide="list-ordered" class="w-3.5 h-3.5"></i>
+        <span>Tabela Oficial</span>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- SPINNER DE CARREGAMENTO -->
+  <div x-show="carregando" class="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-2xs">
+    <i data-lucide="loader-2" class="w-8 h-8 text-[#015797] animate-spin mx-auto mb-3"></i>
+    <p class="text-xs font-bold text-slate-600">Calculando e consolidando a apuração dos votos...</p>
+  </div>
+
+  <!-- SEM CANDIDATOS APURADOS -->
+  <div x-show="!carregando && candidatosFiltrados.length === 0" class="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-2xs">
+    <i data-lucide="inbox" class="w-10 h-10 text-slate-300 mx-auto mb-3"></i>
+    <h3 class="text-sm font-bold text-slate-700">Nenhum registro localizado</h3>
+    <p class="text-xs text-slate-400 mt-1">A apuração oficial ainda não possui votos registrados ou nenhum candidato corresponde à busca.</p>
+  </div>
+
+  <!-- VISUALIZAÇÃO 1: CARDS ESTILO TSE (EXIBIÇÃO PADRÃO NA TELA) -->
+  <div x-show="!carregando && modoExibicao === 'cards' && candidatosFiltrados.length > 0" class="space-y-3.5 print:hidden">
+    <template x-for="c in candidatosFiltrados" :key="c.id">
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border transition-all shadow-2xs hover:shadow-xs relative overflow-hidden"
+           :class="{
+             'border-emerald-300 ring-2 ring-emerald-100/70': c.statusEleitoral === 'TITULAR',
+             'border-amber-300 ring-1 ring-amber-100/70': c.statusEleitoral === 'SUPLENTE',
+             'border-slate-200 opacity-90': c.statusEleitoral === 'NAO_ELEITO'
+           }">
+        
+        <!-- Faixa lateral decorativa de status -->
+        <div class="absolute left-0 top-0 bottom-0 w-1.5"
+             :class="{
+               'bg-emerald-500': c.statusEleitoral === 'TITULAR',
+               'bg-amber-400': c.statusEleitoral === 'SUPLENTE',
+               'bg-slate-300': c.statusEleitoral === 'NAO_ELEITO'
+             }"></div>
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pl-2">
+          
+          <!-- Lado Esquerdo: Posição, Foto e Dados -->
+          <div class="flex items-center space-x-3.5 sm:space-x-4 min-w-0">
+            
+            <!-- Medalha / Posição -->
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm shrink-0 border shadow-2xs"
+                 :class="{
+                   'bg-emerald-600 text-white border-emerald-700': c.posicao <= 3,
+                   'bg-emerald-50 text-emerald-800 border-emerald-200': c.posicao > 3 && c.posicao <= 10,
+                   'bg-amber-50 text-amber-800 border-amber-200': c.posicao > 10 && c.posicao <= 20,
+                   'bg-slate-100 text-slate-600 border-slate-200': c.posicao > 20
+                 }"
+                 x-text="c.posicaoOrdinal">
+            </div>
+
+            <!-- Miniatura da Foto -->
+            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0 relative flex items-center justify-center shadow-2xs">
+              <template x-if="c.fotoUrl">
+                <img :src="c.fotoUrl" :alt="c.nomeUrna" class="w-full h-full object-cover object-center"
+                     @error="$el.style.display='none'; $el.nextElementSibling.style.display='flex'">
+              </template>
+              <div class="w-full h-full flex items-center justify-center font-bold text-xs text-slate-400 bg-slate-100"
+                   :style="c.fotoUrl ? 'display:none' : 'display:flex'"
+                   x-text="iniciais(c.nomeUrna || c.nome)">
+              </div>
+            </div>
+
+            <!-- Identificação -->
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-1.5 mb-1">
+                <span class="text-xs px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border text-[10px]"
+                      :class="c.statusBadge"
+                      x-text="c.statusDescricao">
+                </span>
+                <span class="text-[11px] text-slate-600 font-medium" x-text="'Protocolo: ' + c.id"></span>
+              </div>
+
+              <h4 class="text-sm sm:text-base font-black text-[#072b4c] truncate" x-text="c.nomeUrna"></h4>
+              <p class="text-xs text-slate-600 truncate font-medium" x-text="c.nome"></p>
+              
+              <div class="flex items-center space-x-2 text-[11px] text-slate-600 mt-0.5">
+                <span class="flex items-center space-x-1">
+                  <i data-lucide="map-pin" class="w-3 h-3 text-slate-400"></i>
+                  <span x-text="c.bairro || 'Sapezal/MT'"></span>
+                </span>
+                <span class="text-slate-300">•</span>
+                <span x-text="c.segmento || 'Sociedade Civil'"></span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Lado Direito: Votos e Barra de Progresso -->
+          <div class="sm:w-56 shrink-0 bg-slate-50/90 rounded-xl p-3 border border-slate-100">
+            <div class="flex items-baseline justify-between mb-1.5">
+              <div>
+                <span class="text-base sm:text-lg font-black text-[#072b4c]" x-text="c.votos"></span>
+                <span class="text-[11px] font-bold text-slate-600 uppercase ml-0.5">votos</span>
+              </div>
+              <span class="text-xs sm:text-sm font-black text-[#015797]" x-text="c.percentualFormatado"></span>
+            </div>
+
+            <!-- Barra de Progresso -->
+            <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-500"
+                   :class="{
+                     'bg-emerald-600': c.statusEleitoral === 'TITULAR',
+                     'bg-amber-500': c.statusEleitoral === 'SUPLENTE',
+                     'bg-[#015797]': c.statusEleitoral === 'NAO_ELEITO'
+                   }"
+                   :style="'width: ' + Math.max(c.percentual, (c.votos > 0 ? 3 : 0)) + '%'">
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </template>
+  </div>
+
+  <!-- VISUALIZAÇÃO 2: TABELA OFICIAL (EXIBIDA NA WEB SE SELECIONADA E SEMPRE NA IMPRESSÃO) -->
+  <div x-show="!carregando && (modoExibicao === 'tabela' || true)" 
+       :class="modoExibicao === 'tabela' ? 'block' : 'hidden print:block'"
+       class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
+    
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead>
+          <tr class="bg-[#072b4c] text-white font-bold border-b border-slate-200">
+            <th class="py-3 px-3 w-12 text-center">Class.</th>
+            <th class="py-3 px-3">Candidato (Nome de Urna)</th>
+            <th class="py-3 px-3 hidden sm:table-cell">Nome Completo</th>
+            <th class="py-3 px-3 hidden md:table-cell">Bairro</th>
+            <th class="py-3 px-3 text-center">Resultado Oficial</th>
+            <th class="py-3 px-3 text-right">Votos</th>
+            <th class="py-3 px-3 text-right w-20">% Votos</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <template x-for="c in candidatosFiltrados" :key="'tab-' + c.id">
+            <tr class="hover:bg-slate-50 transition-colors"
+                :class="{
+                  'bg-emerald-50/40 font-semibold': c.statusEleitoral === 'TITULAR',
+                  'bg-amber-50/30': c.statusEleitoral === 'SUPLENTE'
+                }">
+              
+              <!-- Posição -->
+              <td class="py-2.5 px-3 text-center font-black"
+                  :class="{
+                    'text-emerald-700': c.statusEleitoral === 'TITULAR',
+                    'text-amber-700': c.statusEleitoral === 'SUPLENTE',
+                    'text-slate-500': c.statusEleitoral === 'NAO_ELEITO'
+                  }"
+                  x-text="c.posicaoOrdinal">
+              </td>
+
+              <!-- Nome de Urna -->
+              <td class="py-2.5 px-3">
+                <div class="font-black text-slate-800" x-text="c.nomeUrna"></div>
+                <div class="text-[10px] text-slate-600 sm:hidden" x-text="c.nome"></div>
+              </td>
+
+              <!-- Nome Completo -->
+              <td class="py-2.5 px-3 text-slate-600 hidden sm:table-cell" x-text="c.nome"></td>
+
+              <!-- Bairro -->
+              <td class="py-2.5 px-3 text-slate-600 hidden md:table-cell" x-text="c.bairro || '-'"></td>
+
+              <!-- Status Oficial -->
+              <td class="py-2.5 px-3 text-center">
+                <span class="inline-block px-2 py-0.5 rounded text-[10px] uppercase font-bold border"
+                      :class="c.statusBadge"
+                      x-text="c.statusDescricao">
+                </span>
+              </td>
+
+              <!-- Total Votos -->
+              <td class="py-2.5 px-3 text-right font-black text-slate-800" x-text="c.votos"></td>
+
+              <!-- Percentual -->
+              <td class="py-2.5 px-3 text-right font-bold text-[#015797]" x-text="c.percentualFormatado"></td>
+
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- TERMO DE FECHAMENTO E ASSINATURAS (EXCLUSIVO PARA IMPRESSÃO / ATA OFICIAL) -->
+  <div class="hidden print:block mt-8 pt-6 border-t-2 border-slate-300 text-xs text-slate-700 space-y-6">
+    <p class="leading-relaxed text-justify">
+      A presente Ata Eleitoral consolida os votos apurados eletronicamente para a escolha de delegados representantes da sociedade civil na <strong>Conferência Final de Revisão do Plano Diretor Participativo de Sapezal/MT</strong>, em estrita observância ao respectivo Edital de Chamamento Público e Regimento Interno.
+    </p>
+
+    <div class="grid grid-cols-3 gap-6 pt-12 text-center">
+      <div class="border-t border-slate-800 pt-2">
+        <p class="font-bold">Presidente da Comissão Eleitoral</p>
+        <p class="text-[10px] text-slate-500">Comissão de Delegados • Sapezal/MT</p>
+      </div>
+      <div class="border-t border-slate-800 pt-2">
+        <p class="font-bold">Membro da Comissão</p>
+        <p class="text-[10px] text-slate-500">Representante do Núcleo Gestor</p>
+      </div>
+      <div class="border-t border-slate-800 pt-2">
+        <p class="font-bold">Ouvidoria Municipal</p>
+        <p class="text-[10px] text-slate-500">Fiscalização e Integridade</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- COMPONENTE SCRIPT ALPINE.JS -->
+<script>
+  function apuracaoApp() {
+    return {
+      carregando: true,
+      modoExibicao: 'cards',
+      filtroBusca: '',
+      dados: {
+        totalVotosValidos: 0,
+        totalEleitoresVotantes: 0,
+        percentualUrnasApuradas: '100%',
+        dataApuracao: '',
+        totalCandidatos: 0,
+        candidatos: []
+      },
+
+      init() {
+        this.carregarApuracao();
+
+        window.addEventListener('tab-changed', (e) => {
+          if (e.detail && e.detail.tab === 'apuracao') {
+            this.carregarApuracao();
+          }
+        });
+      },
+
+      recarregar() {
+        this.carregarApuracao();
+      },
+
+      carregarApuracao() {
+        this.carregando = true;
+
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+          google.script.run
+            .withSuccessHandler((resp) => {
+              this.carregando = false;
+              if (resp && resp.success && resp.data) {
+                this.dados = resp.data;
+              } else {
+                window.showToast(resp ? resp.message : 'Erro ao obter apuração', 'error', 'Falha na Apuração');
+              }
+              this.$nextTick(() => {
+                if (window.lucide) lucide.createIcons();
+              });
+            })
+            .withFailureHandler((err) => {
+              this.carregando = false;
+              window.showToast('Erro de comunicação: ' + err.message, 'error', 'Erro do Servidor');
+              this.$nextTick(() => {
+                if (window.lucide) lucide.createIcons();
+              });
+            })
+            .obterApuracaoPublica();
+        } else {
+          // Mock para visualização local/teste
+          setTimeout(() => {
+            this.carregando = false;
+            this.dados = {
+              totalVotosValidos: 0,
+              totalEleitoresVotantes: 0,
+              percentualUrnasApuradas: '100%',
+              dataApuracao: new Date().toLocaleString('pt-BR'),
+              totalCandidatos: 0,
+              candidatos: []
+            };
+            this.$nextTick(() => {
+              if (window.lucide) lucide.createIcons();
+            });
+          }, 400);
+        }
+      },
+
+      get candidatosFiltrados() {
+        if (!this.dados || !this.dados.candidatos) return [];
+        if (!this.filtroBusca.trim()) return this.dados.candidatos;
+
+        const termo = this.filtroBusca.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+        return this.dados.candidatos.filter(c => {
+          const nomeUrna = (c.nomeUrna || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          const nome = (c.nome || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          const bairro = (c.bairro || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          return nomeUrna.includes(termo) || nome.includes(termo) || bairro.includes(termo);
+        });
+      },
+
+      iniciais(nome) {
+        if (!nome) return 'PD';
+        const partes = String(nome).trim().split(/\s+/);
+        if (partes.length === 1) return partes[0].substring(0, 2).toUpperCase();
+        return (partes[0].charAt(0) + partes[partes.length - 1].charAt(0)).toUpperCase();
+      },
+
+      imprimirRelatorio() {
+        window.print();
+      }
+    };
+  }
+</script>
+

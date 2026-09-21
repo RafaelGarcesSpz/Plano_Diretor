@@ -101,6 +101,59 @@ function formatarUrlImagemDrive(url) {
 }
 
 /**
+ * Mapeia dinamicamente os índices das colunas da aba Inscricoes baseado nos cabeçalhos
+ */
+function mapearColunasInscricoes(headerRow) {
+  const map = {
+    protocolo: 0,
+    timestamp: 1,
+    nomeCompleto: 2,
+    nomeUrna: 3,
+    cpf: 4,
+    dataNasc: 5,
+    telefone: 6,
+    email: 7,
+    bairro: 8,
+    segmento: 9,
+    minibio: 10,
+    linkIdentidade: 11,
+    linkResidencia: 12,
+    linkDeclaracaoCargo: 13,
+    linkFoto: 14,
+    status: 15,
+    parecer: 16,
+    dataAtualizacao: 17
+  };
+
+  if (!headerRow || headerRow.length === 0) return map;
+
+  const normalized = headerRow.map(h => normalizarTexto(h));
+
+  normalized.forEach((h, idx) => {
+    if (h.includes("protocolo")) map.protocolo = idx;
+    else if (h.includes("timestamp") || h.includes("data/hora") || h.includes("carimbo")) map.timestamp = idx;
+    else if (h.includes("nome de urna") || h.includes("nome urna") || h.includes("apelido")) map.nomeUrna = idx;
+    else if (h.includes("nome completo") || h === "nome") map.nomeCompleto = idx;
+    else if (h.includes("cpf")) map.cpf = idx;
+    else if (h.includes("nascimento") || h.includes("data nasc")) map.dataNasc = idx;
+    else if (h.includes("telefone") || h.includes("whatsapp") || h.includes("celular")) map.telefone = idx;
+    else if (h.includes("email") || h.includes("e-mail")) map.email = idx;
+    else if (h.includes("bairro") || h.includes("comunidade")) map.bairro = idx;
+    else if (h.includes("segmento")) map.segmento = idx;
+    else if (h.includes("minibiografia") || h.includes("apresentacao") || h.includes("proposta")) map.minibio = idx;
+    else if (h.includes("identidade") || h.includes("rg") || h.includes("doc")) map.linkIdentidade = idx;
+    else if (h.includes("residencia") || h.includes("comprovante")) map.linkResidencia = idx;
+    else if (h.includes("cargo") || h.includes("quitacao") || h.includes("declaracao nao")) map.linkDeclaracaoCargo = idx;
+    else if (h.includes("foto") || h.includes("divulgacao") || h.includes("imagem")) map.linkFoto = idx;
+    else if (h === "status" || h.includes("status")) map.status = idx;
+    else if (h.includes("parecer")) map.parecer = idx;
+    else if (h.includes("atualizacao") || h.includes("atualizado")) map.dataAtualizacao = idx;
+  });
+
+  return map;
+}
+
+/**
  * Lista todas as inscrições com suporte a filtro por status
  */
 function adminListarInscricoes(filtroStatus) {
@@ -112,41 +165,44 @@ function adminListarInscricoes(filtroStatus) {
     const rows = sheet.getDataRange().getValues();
     if (rows.length <= 1) return { success: true, data: [] };
 
+    const map = mapearColunasInscricoes(rows[0]);
     const filtroNorm = normalizarTexto(filtroStatus);
     const lista = [];
 
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
       // Pula linhas totalmente vazias
-      if (!row[0] && !row[2]) continue;
+      if (!row[map.protocolo] && !row[map.nomeCompleto]) continue;
 
-      const status = String(row[15] || "Pendente").trim();
-      const statusNorm = normalizarTexto(status);
+      const rawStatus = row[map.status] !== undefined && row[map.status] !== null && String(row[map.status]).trim() !== "" 
+        ? String(row[map.status]).trim() 
+        : "Pendente";
+      const statusNorm = normalizarTexto(rawStatus);
 
       const atendeFiltro = (!filtroNorm || filtroNorm === 'todos' || statusNorm === filtroNorm);
 
       if (atendeFiltro) {
         lista.push({
-          protocolo: String(row[0] || ""),
-          timestamp: formatDateToDisplay(row[1], true),
-          nomeCompleto: String(row[2] || ""),
-          nomeUrna: String(row[3] || row[2] || ""),
-          cpf: String(row[4] || ""),
-          dataNasc: formatDateToDisplay(row[5], false),
-          telefone: String(row[6] || ""),
-          email: String(row[7] || ""),
-          bairro: String(row[8] || ""),
-          segmento: String(row[9] || "Sociedade Civil"),
-          minibio: String(row[10] || ""),
-          linkIdentidade: String(row[11] || ""),
-          linkResidencia: String(row[12] || ""),
-          linkDeclaracaoCargo: String(row[13] || ""),
-          linkQuitacao: String(row[13] || ""),
-          linkFoto: String(row[14] || ""),
-          fotoThumbnail: formatarUrlImagemDrive(row[14]),
-          status: status || "Pendente",
-          parecer: String(row[16] || ""),
-          dataAtualizacao: formatDateToDisplay(row[17], true)
+          protocolo: String(row[map.protocolo] || ""),
+          timestamp: formatDateToDisplay(row[map.timestamp], true),
+          nomeCompleto: String(row[map.nomeCompleto] || ""),
+          nomeUrna: String(row[map.nomeUrna] || row[map.nomeCompleto] || ""),
+          cpf: String(row[map.cpf] || ""),
+          dataNasc: formatDateToDisplay(row[map.dataNasc], false),
+          telefone: String(row[map.telefone] || ""),
+          email: String(row[map.email] || ""),
+          bairro: String(row[map.bairro] || ""),
+          segmento: String(row[map.segmento] || "Sociedade Civil"),
+          minibio: String(row[map.minibio] || ""),
+          linkIdentidade: String(row[map.linkIdentidade] || ""),
+          linkResidencia: String(row[map.linkResidencia] || ""),
+          linkDeclaracaoCargo: String(row[map.linkDeclaracaoCargo] || ""),
+          linkQuitacao: String(row[map.linkDeclaracaoCargo] || ""),
+          linkFoto: String(row[map.linkFoto] || ""),
+          fotoThumbnail: formatarUrlImagemDrive(row[map.linkFoto]),
+          status: rawStatus,
+          parecer: String(row[map.parecer] || ""),
+          dataAtualizacao: formatDateToDisplay(row[map.dataAtualizacao], true)
         });
       }
     }
@@ -169,9 +225,13 @@ function adminAtualizarStatus(protocolo, novoStatus, parecer) {
     if (!sheet) return { success: false, message: "Planilha de inscrições não encontrada." };
 
     const rows = sheet.getDataRange().getValues();
+    if (rows.length <= 1) return { success: false, message: "Nenhum registro localizado." };
+
+    const map = mapearColunasInscricoes(rows[0]);
     let linhaEncontrada = -1;
+
     for (let i = 1; i < rows.length; i++) {
-      if (String(rows[i][0]).trim() === String(protocolo).trim()) {
+      if (String(rows[i][map.protocolo]).trim() === String(protocolo).trim()) {
         linhaEncontrada = i + 1; // +1 devido à base 1 do Sheets
         break;
       }
@@ -182,9 +242,20 @@ function adminAtualizarStatus(protocolo, novoStatus, parecer) {
     }
 
     const timestamp = Utilities.formatDate(new Date(), "America/Cuiaba", "dd/MM/yyyy HH:mm:ss");
-    sheet.getRange(linhaEncontrada, 16).setValue(novoStatus); // Coluna P: Status
-    sheet.getRange(linhaEncontrada, 17).setValue(parecer || ""); // Coluna Q: Parecer
-    sheet.getRange(linhaEncontrada, 18).setValue(timestamp); // Coluna R: Data Atualização
+    
+    // Atualiza coluna de Status (+1 para 1-based no getRange)
+    sheet.getRange(linhaEncontrada, map.status + 1).setValue(novoStatus);
+    
+    // Atualiza coluna de Parecer
+    if (map.parecer !== undefined && map.parecer !== -1) {
+      sheet.getRange(linhaEncontrada, map.parecer + 1).setValue(parecer || "");
+    }
+    
+    // Atualiza coluna de Data Atualização
+    if (map.dataAtualizacao !== undefined && map.dataAtualizacao !== -1) {
+      sheet.getRange(linhaEncontrada, map.dataAtualizacao + 1).setValue(timestamp);
+    }
+
     SpreadsheetApp.flush(); // Garante gravação imediata síncrona
 
     return {
@@ -269,18 +340,24 @@ function adminObterEstatisticas() {
 
     if (sheetInsc) {
       const rows = sheetInsc.getDataRange().getValues();
-      let total = 0;
-      for (let i = 1; i < rows.length; i++) {
-        if (!rows[i][0] && !rows[i][2]) continue;
-        total++;
-        const st = normalizarTexto(rows[i][15] || "Pendente"); // Coluna P (índice 15) é o Status!
-        if (st === 'pendente') stats.pendentes++;
-        else if (st === 'diligencia') stats.diligencias++;
-        else if (st === 'deferida' || st === 'deferido' || st === 'aprovado' || st === 'aprovada') stats.deferidos++;
-        else if (st === 'indeferida' || st === 'indeferido') stats.indeferidos++;
-        else stats.pendentes++;
+      if (rows.length > 1) {
+        const map = mapearColunasInscricoes(rows[0]);
+        let total = 0;
+        for (let i = 1; i < rows.length; i++) {
+          if (!rows[i][map.protocolo] && !rows[i][map.nomeCompleto]) continue;
+          total++;
+          const rawSt = rows[i][map.status] !== undefined && rows[i][map.status] !== null && String(rows[i][map.status]).trim() !== ""
+            ? String(rows[i][map.status]).trim()
+            : "Pendente";
+          const st = normalizarTexto(rawSt);
+          if (st === 'pendente') stats.pendentes++;
+          else if (st === 'diligencia') stats.diligencias++;
+          else if (st === 'deferida' || st === 'deferido' || st === 'aprovado' || st === 'aprovada' || st === 'homologado' || st === 'homologada') stats.deferidos++;
+          else if (st === 'indeferida' || st === 'indeferido') stats.indeferidos++;
+          else stats.pendentes++;
+        }
+        stats.totalInscritos = total;
       }
-      stats.totalInscritos = total;
     }
 
     if (sheetEleit) {

@@ -20,9 +20,34 @@ const APP_CONFIG = {
  */
 function doGet(e) {
   try {
-    const page = (e && e.parameter && e.parameter.p) ? e.parameter.p : 'home';
+    const rawPage = (e && e.parameter && e.parameter.p) ? String(e.parameter.p).toLowerCase().trim() : '';
+    // Acesso admin APENAS se explicitamente solicitado via ?p=admin
+    const isAdminRoute = (rawPage === 'admin');
+    
+    // Consulta o status atual do sistema para definir a página padrão caso não seja especificada
+    const statusResp = obterStatusSistema();
+    const status = (statusResp && statusResp.data) ? statusResp.data : {};
+    
+    let defaultPage = 'inscricao';
+    const now = new Date().getTime();
+    const fimVot = status.votacao && status.votacao.fimRaw ? parseDateToTimestamp(status.votacao.fimRaw) : null;
+
+    if (fimVot && now > fimVot) {
+      // Votação já encerrou: página padrão passa a ser apuração
+      defaultPage = 'apuracao';
+    } else if (status.votacao && status.votacao.aberta) {
+      // Votação está aberta no momento
+      defaultPage = 'votacao';
+    } else {
+      defaultPage = 'inscricao';
+    }
+
+    const initialPage = isAdminRoute ? 'admin' : (rawPage || defaultPage);
+
     const template = HtmlService.createTemplateFromFile('Index');
-    template.initialPage = page;
+    template.initialPage = initialPage;
+    template.isAdminRoute = isAdminRoute ? 'true' : 'false';
+    template.defaultPhase = defaultPage;
 
     return template.evaluate()
       .setTitle(APP_CONFIG.TITLE)

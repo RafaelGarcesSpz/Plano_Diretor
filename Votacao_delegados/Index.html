@@ -47,12 +47,12 @@
       x-data="mainApp()" x-init="initApp()">
 
   <!-- HEADER INSTITUCIONAL & NAVBAR -->
-  <header class="bg-white text-slate-800 shadow-xs sticky top-0 z-50 border-b-2 border-[#015797]">
+  <header class="bg-white text-slate-800 shadow-xs sticky top-0 z-50 border-b-2 border-[#015797] print:hidden">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-20">
         
         <!-- Logo Institucional e Identificação -->
-        <div class="flex items-center space-x-3 cursor-pointer shrink-0" @click="navigate('inscricao')">
+        <div class="flex items-center space-x-3 cursor-pointer shrink-0" @click="isAdminMode ? navigate('admin') : navigate(currentPhase)">
           <div class="flex items-center bg-white p-1 rounded-xl border border-slate-100 shadow-2xs">
             <template x-if="typeof APP_LOGO !== 'undefined'">
               <a href="https://script.google.com/macros/s/AKfycbxVbiQ9dvbazPdGedS7nQFdpa90u137zJ9NAnlAM65Gr_G2S-3Wjps0P-2DJkji6XYj2Q/exec" target="_blank" rel="noopener noreferrer">
@@ -61,43 +61,88 @@
             </template>
           </div>
           <div class="hidden sm:block">
-            <span class="text-[10px] font-black uppercase tracking-wider text-[#015797] bg-blue-50 px-2 py-0.5 rounded">
-              Votação 2026
-            </span>
-            <h1 class="text-sm font-black text-[#072b4c] leading-tight">Eleição de Delegados</h1>
-            <p class="text-[11px] text-slate-500 font-medium">Revisão do Plano Diretor de Sapezal</p>
+            <div x-show="isAdminMode">
+              <span class="text-[10px] font-black uppercase tracking-wider text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                Comissão Eleitoral • Restrito
+              </span>
+              <h1 class="text-sm font-black text-[#072b4c] leading-tight">Painel de Gestão e Moderação</h1>
+              <p class="text-[11px] text-slate-500 font-medium">Revisão do Plano Diretor de Sapezal</p>
+            </div>
+            <div x-show="!isAdminMode">
+              <span class="text-[10px] font-black uppercase tracking-wider text-[#015797] bg-blue-50 px-2 py-0.5 rounded">
+                Votação 2026
+              </span>
+              <h1 class="text-sm font-black text-[#072b4c] leading-tight">Eleição de Delegados</h1>
+              <p class="text-[11px] text-slate-500 font-medium">Revisão do Plano Diretor de Sapezal</p>
+            </div>
           </div>
         </div>
 
-        <!-- Navegação Principal Desktop -->
+        <!-- Navegação Principal Desktop (FOCADA POR FASE / CONTEXTO) -->
         <nav class="hidden md:flex items-center space-x-1.5 py-1">
-          <button @click="navigate('inscricao')"
-                  :class="currentTab === 'inscricao' ? 'bg-[#015797] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-slate-100 hover:text-[#072b4c]'"
-                  class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 shrink-0">
-            <i data-lucide="user-plus" class="w-4 h-4 text-[#ffd200]"></i>
-            <span>Inscrição de Delegados</span>
-          </button>
+          
+          <!-- MODO ADMIN EXCLUSIVO -->
+          <div x-show="isAdminMode" class="flex items-center space-x-2">
+            <button @click="navigate('admin')"
+                    type="button"
+                    :class="currentTab === 'admin' ? 'bg-[#072b4c] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-slate-100 hover:text-[#072b4c]'"
+                    class="px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 shrink-0">
+              <i data-lucide="lock" class="w-4 h-4 text-amber-400"></i>
+              <span>Painel da Comissão</span>
+            </button>
 
-          <button @click="navigate('votacao')"
-                  :class="currentTab === 'votacao' ? 'bg-[#015797] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-slate-100 hover:text-[#072b4c]'"
-                  class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 shrink-0">
-            <i data-lucide="vote" class="w-4 h-4 text-[#409240]"></i>
-            <span>Cédula de Votação</span>
-          </button>
+            <button @click="abrirPortalPublico()"
+                    type="button"
+                    class="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-[#015797] transition-all flex items-center space-x-1.5 shrink-0 border border-slate-200">
+              <i data-lucide="globe" class="w-3.5 h-3.5 text-slate-400"></i>
+              <span>Portal Público</span>
+            </button>
+          </div>
 
-          <button @click="navigate('sigilo')"
-                  :class="currentTab === 'sigilo' ? 'bg-[#015797] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-slate-100 hover:text-[#072b4c]'"
-                  class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 shrink-0">
-            <i data-lucide="shield-check" class="w-4 h-4 text-[#0385d0]"></i>
-            <span>Sigilo do Voto</span>
-          </button>
+          <!-- MODO PÚBLICO (SEM ABA ADMIN) -->
+          <div x-show="!isAdminMode" class="flex items-center space-x-1.5">
+            
+            <!-- 1. Aba Inscrição (Visível na fase de Inscrição ou por link direto) -->
+            <button x-show="mostrarAbaInscricao"
+                    @click="navigate('inscricao')"
+                    type="button"
+                    :class="currentTab === 'inscricao' ? 'bg-[#015797] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-slate-100 hover:text-[#072b4c]'"
+                    class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 shrink-0">
+              <i data-lucide="user-plus" class="w-4 h-4 text-[#ffd200]"></i>
+              <span>Inscrição de Delegados</span>
+            </button>
 
-          <button @click="navigate('admin')"
-                  :class="currentTab === 'admin' ? 'bg-[#072b4c] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-slate-100 hover:text-[#072b4c]'"
-                  class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 shrink-0">
-            <i data-lucide="lock" class="w-4 h-4 text-amber-400"></i>
-            <span>Comissão (Admin)</span>
-          </button>
+            <!-- 2. Aba Votação (Visível na fase de Votação ou por link direto) -->
+            <button x-show="mostrarAbaVotacao"
+                    @click="navigate('votacao')"
+                    type="button"
+                    :class="currentTab === 'votacao' ? 'bg-[#015797] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-slate-100 hover:text-[#072b4c]'"
+                    class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 shrink-0">
+              <i data-lucide="vote" class="w-4 h-4 text-[#409240]"></i>
+              <span>Cédula de Votação</span>
+            </button>
+
+            <!-- 3. Aba Apuração Oficial (Visível no encerramento da votação ou por link direto) -->
+            <button x-show="mostrarAbaApuracao"
+                    @click="navigate('apuracao')"
+                    type="button"
+                    :class="currentTab === 'apuracao' ? 'bg-[#015797] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-slate-100 hover:text-[#072b4c]'"
+                    class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 shrink-0">
+              <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-400"></i>
+              <span>Apuração dos Votos</span>
+            </button>
+
+            <!-- 4. Aba Sigilo do Voto (Sempre presente como garantia cívica) -->
+            <button @click="navigate('sigilo')"
+                    type="button"
+                    :class="currentTab === 'sigilo' ? 'bg-[#015797] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-slate-100 hover:text-[#072b4c]'"
+                    class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 shrink-0">
+              <i data-lucide="shield-check" class="w-4 h-4 text-[#0385d0]"></i>
+              <span>Sigilo do Voto</span>
+            </button>
+
+          </div>
+
         </nav>
 
         <!-- Botão Hamburger Mobile -->
@@ -121,33 +166,62 @@
          x-transition:enter-end="opacity-100 translate-y-0"
          class="md:hidden bg-white border-b border-slate-200 px-4 pt-3 pb-5 space-y-1.5 shadow-md">
       
-      <button @click="navigate('inscricao')"
-              :class="currentTab === 'inscricao' ? 'bg-slate-100 text-[#015797] font-bold border-l-4 border-[#015797]' : 'text-slate-700 hover:bg-slate-50'"
-              class="w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-3 transition-colors">
-        <i data-lucide="user-plus" class="w-4 h-4 text-[#ffd200]"></i>
-        <span>Inscrição de Delegados</span>
-      </button>
+      <!-- Mobile Modo Admin -->
+      <div x-show="isAdminMode" class="space-y-1.5">
+        <button @click="navigate('admin')"
+                type="button"
+                :class="currentTab === 'admin' ? 'bg-slate-100 text-[#072b4c] font-bold border-l-4 border-[#072b4c]' : 'text-slate-700 hover:bg-slate-50'"
+                class="w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-3 transition-colors">
+          <i data-lucide="lock" class="w-4 h-4 text-amber-500"></i>
+          <span>Painel da Comissão</span>
+        </button>
 
-      <button @click="navigate('votacao')"
-              :class="currentTab === 'votacao' ? 'bg-slate-100 text-[#015797] font-bold border-l-4 border-[#015797]' : 'text-slate-700 hover:bg-slate-50'"
-              class="w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-3 transition-colors">
-        <i data-lucide="vote" class="w-4 h-4 text-[#409240]"></i>
-        <span>Cédula de Votação</span>
-      </button>
+        <button @click="abrirPortalPublico()"
+                type="button"
+                class="w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-3 text-slate-600 hover:bg-slate-50 border border-slate-200">
+          <i data-lucide="globe" class="w-4 h-4 text-slate-400"></i>
+          <span>Ir para o Portal Público</span>
+        </button>
+      </div>
 
-      <button @click="navigate('sigilo')"
-              :class="currentTab === 'sigilo' ? 'bg-slate-100 text-[#015797] font-bold border-l-4 border-[#015797]' : 'text-slate-700 hover:bg-slate-50'"
-              class="w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-3 transition-colors">
-        <i data-lucide="shield-check" class="w-4 h-4 text-[#0385d0]"></i>
-        <span>Sigilo do Voto</span>
-      </button>
+      <!-- Mobile Modo Público -->
+      <div x-show="!isAdminMode" class="space-y-1.5">
+        <button x-show="mostrarAbaInscricao"
+                @click="navigate('inscricao')"
+                type="button"
+                :class="currentTab === 'inscricao' ? 'bg-slate-100 text-[#015797] font-bold border-l-4 border-[#015797]' : 'text-slate-700 hover:bg-slate-50'"
+                class="w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-3 transition-colors">
+          <i data-lucide="user-plus" class="w-4 h-4 text-[#ffd200]"></i>
+          <span>Inscrição de Delegados</span>
+        </button>
 
-      <button @click="navigate('admin')"
-              :class="currentTab === 'admin' ? 'bg-slate-100 text-[#072b4c] font-bold border-l-4 border-[#072b4c]' : 'text-slate-700 hover:bg-slate-50'"
-              class="w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-3 transition-colors">
-        <i data-lucide="lock" class="w-4 h-4 text-amber-500"></i>
-        <span>Comissão (Admin)</span>
-      </button>
+        <button x-show="mostrarAbaVotacao"
+                @click="navigate('votacao')"
+                type="button"
+                :class="currentTab === 'votacao' ? 'bg-slate-100 text-[#015797] font-bold border-l-4 border-[#015797]' : 'text-slate-700 hover:bg-slate-50'"
+                class="w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-3 transition-colors">
+          <i data-lucide="vote" class="w-4 h-4 text-[#409240]"></i>
+          <span>Cédula de Votação</span>
+        </button>
+
+        <button x-show="mostrarAbaApuracao"
+                @click="navigate('apuracao')"
+                type="button"
+                :class="currentTab === 'apuracao' ? 'bg-slate-100 text-[#015797] font-bold border-l-4 border-[#015797]' : 'text-slate-700 hover:bg-slate-50'"
+                class="w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-3 transition-colors">
+          <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-500"></i>
+          <span>Apuração dos Votos</span>
+        </button>
+
+        <button @click="navigate('sigilo')"
+                type="button"
+                :class="currentTab === 'sigilo' ? 'bg-slate-100 text-[#015797] font-bold border-l-4 border-[#015797]' : 'text-slate-700 hover:bg-slate-50'"
+                class="w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-3 transition-colors">
+          <i data-lucide="shield-check" class="w-4 h-4 text-[#0385d0]"></i>
+          <span>Sigilo do Voto</span>
+        </button>
+      </div>
+
     </div>
   </header>
 
@@ -164,7 +238,12 @@
       <?!= include('App_Votacao'); ?>
     </div>
 
-    <!-- ROTA 3: EXPLICAÇÃO DO SIGILO -->
+    <!-- ROTA 3: APURAÇÃO OFICIAL DOS VOTOS (NOVO MÓDULO) -->
+    <div x-show="currentTab === 'apuracao'" x-transition.opacity.duration.250ms>
+      <?!= include('App_Apuracao'); ?>
+    </div>
+
+    <!-- ROTA 4: EXPLICAÇÃO DO SIGILO -->
     <div x-show="currentTab === 'sigilo'" x-transition.opacity.duration.250ms class="max-w-4xl mx-auto space-y-6">
       <div class="text-center space-y-2 mb-4">
         <h2 class="text-2xl font-black text-[#072b4c]">Transparência e Inviolabilidade do Voto</h2>
@@ -175,8 +254,8 @@
       <?!= include('Comp_SigiloVoto'); ?>
     </div>
 
-    <!-- ROTA 4: COMISSÃO ELEITORAL (ADMIN) -->
-    <div x-show="currentTab === 'admin'" x-transition.opacity.duration.250ms>
+    <!-- ROTA 5: COMISSÃO ELEITORAL (ADMIN) -->
+    <div x-show="currentTab === 'admin' && isAdminMode" x-transition.opacity.duration.250ms>
       <?!= include('App_Admin'); ?>
     </div>
 
@@ -223,7 +302,7 @@
       <h4 class="text-xs font-black" x-text="toast.titulo || (toast.tipo === 'error' ? 'Atenção' : (toast.tipo === 'success' ? 'Sucesso' : 'Informação'))"></h4>
       <p class="text-xs text-slate-600 mt-0.5 leading-relaxed" x-text="toast.mensagem"></p>
     </div>
-    <button @click="toast.show = false" class="text-slate-400 hover:text-slate-600 p-1">
+    <button @click="toast.show = false" type="button" class="text-slate-400 hover:text-slate-600 p-1">
       <i data-lucide="x" class="w-4 h-4"></i>
     </button>
   </div>
@@ -263,6 +342,9 @@
     function mainApp() {
       return {
         currentTab: '<?= initialPage ?>' || 'inscricao',
+        isAdminMode: '<?= isAdminRoute ?>' === 'true',
+        currentPhase: '<?= defaultPhase ?>' || 'inscricao',
+        requestedTab: '<?= initialPage ?>' || '',
         mobileMenuOpen: false,
 
         toast: {
@@ -273,9 +355,35 @@
           timer: null
         },
 
+        get mostrarAbaInscricao() {
+          if (this.isAdminMode) return false;
+          // Se o usuário entrou pelo link de inscrição, ou se a fase atual do sistema for inscrição
+          return this.requestedTab === 'inscricao' || this.currentTab === 'inscricao' || this.currentPhase === 'inscricao';
+        },
+
+        get mostrarAbaVotacao() {
+          if (this.isAdminMode) return false;
+          // Se o usuário entrou pelo link de votação, ou se a fase atual for votação
+          return this.requestedTab === 'votacao' || this.currentTab === 'votacao' || this.currentPhase === 'votacao';
+        },
+
+        get mostrarAbaApuracao() {
+          if (this.isAdminMode) return false;
+          // Se o usuário entrou pelo link de apuração, ou se a fase atual for apuração pós-votação
+          return this.requestedTab === 'apuracao' || this.currentTab === 'apuracao' || this.currentPhase === 'apuracao';
+        },
+
+        abrirPortalPublico() {
+          this.isAdminMode = false;
+          this.requestedTab = '';
+          this.navigate(this.currentPhase || 'votacao');
+        },
+
         initApp() {
-          if (!this.currentTab || this.currentTab === 'home') {
-            this.currentTab = 'inscricao';
+          if (this.isAdminMode) {
+            this.currentTab = 'admin';
+          } else if (!this.currentTab || this.currentTab === 'home' || this.currentTab === 'admin') {
+            this.currentTab = this.currentPhase || 'inscricao';
           }
           
           window.showToast = (mensagem, tipo = 'info', titulo = '') => {
@@ -291,6 +399,28 @@
               this.toast.show = false;
             }, 4500);
           };
+
+          // Consulta assíncrona do status para sincronizar a fase caso haja mudança de cronograma
+          if (typeof google !== 'undefined' && google.script && google.script.run) {
+            google.script.run
+              .withSuccessHandler((resp) => {
+                if (resp && resp.success && resp.data) {
+                  const now = new Date().getTime();
+                  const vot = resp.data.votacao;
+                  if (vot && vot.fimRaw && typeof window.parseDateToTimestamp === 'function') {
+                    const fimTs = window.parseDateToTimestamp(vot.fimRaw);
+                    if (fimTs && now > fimTs) {
+                      this.currentPhase = 'apuracao';
+                    } else if (vot.aberta) {
+                      this.currentPhase = 'votacao';
+                    } else {
+                      this.currentPhase = 'inscricao';
+                    }
+                  }
+                }
+              })
+              .obterStatusSistema();
+          }
 
           this.$nextTick(() => {
             if (window.lucide) {

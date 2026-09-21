@@ -23,6 +23,51 @@ function formatarUrlImagemDrive(url) {
 }
 
 /**
+ * Normaliza textos para comparação
+ */
+function normalizarTextoVotacao(str) {
+  if (!str) return "";
+  return String(str)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+/**
+ * Mapeia dinamicamente os índices das colunas da aba Inscricoes
+ */
+function mapearColunasInscricoesVotacao(headerRow) {
+  const map = {
+    protocolo: 0,
+    nomeCompleto: 2,
+    nomeUrna: 3,
+    bairro: 8,
+    segmento: 9,
+    minibio: 10,
+    linkFoto: 14,
+    status: 15
+  };
+
+  if (!headerRow || headerRow.length === 0) return map;
+
+  const normalized = headerRow.map(h => normalizarTextoVotacao(h));
+
+  normalized.forEach((h, idx) => {
+    if (h.includes("protocolo")) map.protocolo = idx;
+    else if (h.includes("nome de urna") || h.includes("nome urna") || h.includes("apelido")) map.nomeUrna = idx;
+    else if (h.includes("nome completo") || h === "nome") map.nomeCompleto = idx;
+    else if (h.includes("bairro") || h.includes("comunidade")) map.bairro = idx;
+    else if (h.includes("segmento")) map.segmento = idx;
+    else if (h.includes("minibiografia") || h.includes("apresentacao") || h.includes("proposta")) map.minibio = idx;
+    else if (h.includes("foto") || h.includes("divulgacao") || h.includes("imagem")) map.linkFoto = idx;
+    else if (h === "status" || h.includes("status")) map.status = idx;
+  });
+
+  return map;
+}
+
+/**
  * Retorna a lista de candidatos homologados e deferidos para a votação pública
  */
 function obterCandidatosDeferidos() {
@@ -34,26 +79,26 @@ function obterCandidatosDeferidos() {
     const rows = sheet.getDataRange().getValues();
     if (rows.length <= 1) return { success: true, data: [] };
 
+    const map = mapearColunasInscricoesVotacao(rows[0]);
     const listaDeferidos = [];
+
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
-      if (!row[0] && !row[2]) continue;
+      if (!row[map.protocolo] && !row[map.nomeCompleto]) continue;
 
-      const rawStatus = String(row[15] || "").trim();
-      const status = typeof normalizarTexto === 'function' 
-        ? normalizarTexto(rawStatus) 
-        : rawStatus.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+      const rawStatus = row[map.status] !== undefined && row[map.status] !== null ? String(row[map.status]).trim() : "";
+      const status = normalizarTextoVotacao(rawStatus);
 
       // Filtra apenas candidaturas Deferidas / Homologadas / Aprovadas
       if (status === 'deferida' || status === 'deferido' || status === 'aprovado' || status === 'aprovada' || status === 'homologado' || status === 'homologada') {
         listaDeferidos.push({
-          id: String(row[0] || ""),             // Protocolo
-          nome: String(row[2] || ""),           // Nome Completo
-          nomeUrna: String(row[3] || row[2] || ""), // Nome de Urna
-          bairro: String(row[8] || ""),         // Bairro
-          segmento: String(row[9] || "Sociedade Civil"),
-          minibio: String(row[10] || ""), // Apresentação
-          fotoUrl: formatarUrlImagemDrive(row[14])  // Link direto de imagem
+          id: String(row[map.protocolo] || ""),             // Protocolo
+          nome: String(row[map.nomeCompleto] || ""),           // Nome Completo
+          nomeUrna: String(row[map.nomeUrna] || row[map.nomeCompleto] || ""), // Nome de Urna
+          bairro: String(row[map.bairro] || ""),         // Bairro
+          segmento: String(row[map.segmento] || "Sociedade Civil"),
+          minibio: String(row[map.minibio] || ""), // Apresentação
+          fotoUrl: formatarUrlImagemDrive(row[map.linkFoto])  // Link direto de imagem
         });
       }
     }
@@ -62,6 +107,138 @@ function obterCandidatosDeferidos() {
   } catch (err) {
     console.error("Erro em obterCandidatosDeferidos: " + err);
     return { success: false, message: "Erro ao consultar candidatos: " + err.message, data: [] };
+  }
+}
+
+/**
+ * Retorna os resultados e ranking oficial da Apuração Pública dos Votos
+ */
+function obterApuracaoPublica() {
+  try {
+    const ss = getSpreadsheet();
+    const sheetUrna = ss.getSheetByName(APP_CONFIG.SHEET_URNA);
+    const sheetEleitores = ss.getSheetByName(APP_CONFIG.SHEET_ELEITORES);
+    
+    // 1. Obtém a lista oficial de candidatos homologados/deferidos
+    const candResp = obterCandidatosDeferidos();
+    const candidatos = (candResp && candResp.success && candResp.data) ? candResp.data : [];
+
+    // Mapa de contagem de votos por Protocolo do Candidato
+    const mapaVotos = {};
+    candidatos.forEach(c => {
+      mapaVotos[String(c.id).trim()] = 0;
+    });
+
+    let totalVotosValidos = 0;
+
+    // 2. Contabiliza votos da Urna Eletrônica
+    if (sheetUrna) {
+      const rowsUrna = sheetUrna.getDataRange().getValues();
+      for (let i = 1; i < rowsUrna.length; i++) {
+        const row = rowsUrna[i];
+        if (!row[0] && !row[2]) continue;
+        const candId = String(row[2] || "").trim();
+        if (candId) {
+          totalVotosValidos++;
+          mapaVotos[candId] = (mapaVotos[candId] || 0) + 1;
+        }
+      }
+    }
+
+    // 3. Contabiliza quórum de eleitores votantes
+    let totalEleitoresVotantes = 0;
+    if (sheetEleitores) {
+      const rowsEleit = sheetEleitores.getDataRange().getValues();
+      for (let i = 1; i < rowsEleit.length; i++) {
+        if (rowsEleit[i][0] || rowsEleit[i][2]) {
+          totalEleitoresVotantes++;
+        }
+      }
+    }
+
+    // 4. Monta lista consolidada de resultados
+    const listaApurada = candidatos.map(c => {
+      const votos = mapaVotos[String(c.id).trim()] || 0;
+      const percentual = totalVotosValidos > 0 ? ((votos / totalVotosValidos) * 100).toFixed(2) : "0.00";
+      return {
+        id: c.id,
+        nome: c.nome,
+        nomeUrna: c.nomeUrna,
+        bairro: c.bairro,
+        segmento: c.segmento,
+        minibio: c.minibio,
+        fotoUrl: c.fotoUrl,
+        votos: votos,
+        percentual: parseFloat(percentual),
+        percentualFormatado: percentual.replace('.', ',') + '%'
+      };
+    });
+
+    // 5. Ordena decrescente por quantidade de votos (desempate por nome alfabético)
+    listaApurada.sort((a, b) => {
+      if (b.votos !== a.votos) {
+        return b.votos - a.votos;
+      }
+      return a.nomeUrna.localeCompare(b.nomeUrna);
+    });
+
+    // 6. Atribui a classificação e status oficial conforme o Edital / Regras
+    // Regra 1: 10 Titulares (1º ao 10º), 10 Suplentes (11º ao 20º), Demais não eleitos
+    const resultadoFinal = listaApurada.map((item, idx) => {
+      const posicao = idx + 1;
+      let statusEleitoral = "NAO_ELEITO";
+      let statusDescricao = "Não Eleito";
+      let statusBadge = "bg-slate-100 text-slate-700 border-slate-300";
+
+      if (posicao <= 10) {
+        statusEleitoral = "TITULAR";
+        statusDescricao = "ELEITO (TITULAR)";
+        statusBadge = "bg-emerald-100 text-emerald-800 border-emerald-400 font-black";
+      } else if (posicao <= 20) {
+        statusEleitoral = "SUPLENTE";
+        statusDescricao = "SUPLENTE";
+        statusBadge = "bg-amber-100 text-amber-800 border-amber-400 font-bold";
+      }
+
+      return {
+        ...item,
+        posicao: posicao,
+        posicaoOrdinal: posicao + "º",
+        statusEleitoral: statusEleitoral,
+        statusDescricao: statusDescricao,
+        statusBadge: statusBadge
+      };
+    });
+
+    const timestampApuracao = Utilities.formatDate(new Date(), "America/Cuiaba", "dd/MM/yyyy HH:mm:ss");
+
+    return {
+      success: true,
+      data: {
+        totalVotosValidos: totalVotosValidos,
+        totalEleitoresVotantes: totalEleitoresVotantes || totalVotosValidos,
+        percentualUrnasApuradas: "100%",
+        dataApuracao: timestampApuracao,
+        totalCandidatos: resultadoFinal.length,
+        totalTitulares: Math.min(10, resultadoFinal.length),
+        totalSuplentes: Math.max(0, Math.min(10, resultadoFinal.length - 10)),
+        candidatos: resultadoFinal
+      }
+    };
+  } catch (err) {
+    console.error("Erro em obterApuracaoPublica: " + err);
+    return {
+      success: false,
+      message: "Erro ao compilar apuração oficial: " + err.message,
+      data: {
+        totalVotosValidos: 0,
+        totalEleitoresVotantes: 0,
+        percentualUrnasApuradas: "0%",
+        dataApuracao: "",
+        totalCandidatos: 0,
+        candidatos: []
+      }
+    };
   }
 }
 
