@@ -182,19 +182,18 @@ function obterApuracaoPublica() {
       return a.nomeUrna.localeCompare(b.nomeUrna);
     });
 
-    // 6. Atribui a classificação e status oficial conforme o Edital / Regras
-    // Regra 1: 10 Titulares (1º ao 10º), 10 Suplentes (11º ao 20º), Demais não eleitos
+    // 6. Atribui a classificação e status oficial conforme o Edital / Regras (8 Titulares e 8 Suplentes)
     const resultadoFinal = listaApurada.map((item, idx) => {
       const posicao = idx + 1;
       let statusEleitoral = "NAO_ELEITO";
       let statusDescricao = "Não Eleito";
       let statusBadge = "bg-slate-100 text-slate-700 border-slate-300";
 
-      if (posicao <= 10) {
+      if (posicao <= 8) {
         statusEleitoral = "TITULAR";
         statusDescricao = "ELEITO (TITULAR)";
         statusBadge = "bg-emerald-100 text-emerald-800 border-emerald-400 font-black";
-      } else if (posicao <= 20) {
+      } else if (posicao <= 16) {
         statusEleitoral = "SUPLENTE";
         statusDescricao = "SUPLENTE";
         statusBadge = "bg-amber-100 text-amber-800 border-amber-400 font-bold";
@@ -220,8 +219,8 @@ function obterApuracaoPublica() {
         percentualUrnasApuradas: "100%",
         dataApuracao: timestampApuracao,
         totalCandidatos: resultadoFinal.length,
-        totalTitulares: Math.min(10, resultadoFinal.length),
-        totalSuplentes: Math.max(0, Math.min(10, resultadoFinal.length - 10)),
+        totalTitulares: Math.min(8, resultadoFinal.length),
+        totalSuplentes: Math.max(0, Math.min(8, resultadoFinal.length - 8)),
         candidatos: resultadoFinal
       }
     };
@@ -240,6 +239,21 @@ function obterApuracaoPublica() {
       }
     };
   }
+}
+
+/**
+ * Gera hash criptográfico seguro (SHA-256) do CPF com salt para verificação unívoca sem expor o dado (LGPD)
+ */
+function gerarHashCpfEleitor(cpfLimpo) {
+  const secretSalt = "SAPEZAL_PDM_DELEGADOS_SALT_2026";
+  const rawBytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, secretSalt + "_" + String(cpfLimpo).trim());
+  let hex = "";
+  for (let i = 0; i < rawBytes.length; i++) {
+    let b = (rawBytes[i] & 0xFF).toString(16);
+    if (b.length === 1) b = "0" + b;
+    hex += b;
+  }
+  return hex;
 }
 
 /**
@@ -277,10 +291,10 @@ function registrarVoto(payload) {
     const eleitor = payload.eleitor;
     const voto = payload.voto;
 
-    if (!eleitor.nome || !eleitor.cpf || !eleitor.bairro || !voto.candidatoId) {
+    if (!eleitor.cpf || !voto.candidatoId) {
       return {
         success: false,
-        message: "Identificação do eleitor ou seleção de candidato pendente."
+        message: "Identificação do eleitor por CPF ou seleção de candidato pendente."
       };
     }
 
@@ -297,14 +311,17 @@ function registrarVoto(payload) {
     const sheetEleitores = ss.getSheetByName(APP_CONFIG.SHEET_ELEITORES);
     const sheetUrna = ss.getSheetByName(APP_CONFIG.SHEET_URNA);
 
-    // 4. Verificação de Voto Único (Prevenção de Duplicidade por CPF)
+    // 4. Verificação de Voto Único (Prevenção de Duplicidade com Hash Criptográfico sem Colisão)
     const dadosEleitores = sheetEleitores.getDataRange().getValues();
+    const hashCpfAtual = gerarHashCpfEleitor(cpfLimpo);
     const cpfMascarado = cpfLimpo.substring(0, 3) + ".***.***-" + cpfLimpo.substring(9, 11);
 
     for (let i = 1; i < dadosEleitores.length; i++) {
-      const cpfRegistrado = String(dadosEleitores[i][3]).trim();
-      // Verificação por CPF mascarado ou protocolo existente
-      if (cpfRegistrado === cpfMascarado) {
+      const row = dadosEleitores[i];
+      // Verifica pelo Hash seguro do CPF (coluna 6 ou 5) para eliminar qualquer falso positivo ou colisão
+      const hashRegistrado = String(row[5] || "").trim();
+      const cpfRegistrado = String(row[3] || "").trim();
+      if ((hashRegistrado && hashRegistrado === hashCpfAtual) || (!hashRegistrado && cpfRegistrado === cpfMascarado)) {
         return {
           success: false,
           message: "Este CPF já participou e registrou seu voto nesta eleição. Cada cidadão pode votar apenas uma vez."
@@ -327,26 +344,29 @@ function registrarVoto(payload) {
     }
     const hashAutenticidade = hexHash.substring(0, 4) + "-" + hexHash.substring(4, 8) + "-" + hexHash.substring(8, 12) + "-" + hexHash.substring(12, 16);
     
-    const timestamp = Utilities.formatDate(new Date(), "America/Cuiaba", "dd/MM/yyyy HH:mm:ss");
+    const timestampPresenca = Utilities.formatDate(new Date(), "America/Cuiaba", "dd/MM/yyyy HH:mm:ss");
 
-    // 6. Registro 1: Lista Cívica de Presença dos Eleitores (SEM associação ao voto)
+    // 6. Registro 1: Lista Cívica de Presença dos Eleitores (SEM associação ao voto da urna)
     sheetEleitores.appendRow([
       protocoloPresenca,
-      timestamp,
-      eleitor.nome.trim(),
+      timestampPresenca,
+      "Cidadão Eleitor",
       cpfMascarado,
-      eleitor.bairro,
+      "Sapezal/MT",
+      hashCpfAtual,
       hashAutenticidade
     ]);
 
-    // 7. Registro 2: Urna Eletrônica Anonimizada (SEM CPF, SEM NOME DO ELEITOR)
+    // 7. Registro 2: Urna Eletrônica Anonimizada (SEM CPF, SEM NOME, DESVINCULADA DO SEGUNDO EXATO)
+    // O timestamp da urna grava apenas a data para não permitir correlacionar ao segundo da lista de presença
+    const dataUrna = Utilities.formatDate(new Date(), "America/Cuiaba", "dd/MM/yyyy");
     const idVotoAnonimo = "VOTO-" + Utilities.getUuid().substring(0, 8).toUpperCase();
     sheetUrna.appendRow([
       idVotoAnonimo,
-      timestamp,
+      dataUrna,
       voto.candidatoId,
       voto.candidatoNome,
-      voto.candidatoBairro
+      voto.segmento || "Sociedade Civil"
     ]);
 
     SpreadsheetApp.flush(); // Garante gravação imediata síncrona
@@ -355,7 +375,7 @@ function registrarVoto(payload) {
       success: true,
       protocolo: protocoloPresenca,
       autenticidade: hashAutenticidade,
-      timestamp: timestamp,
+      timestamp: timestampPresenca,
       message: "Voto computado com sigilo absoluto na urna!"
     };
 

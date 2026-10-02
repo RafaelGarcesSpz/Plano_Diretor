@@ -53,7 +53,7 @@
       setupRouting() {
         const handleHash = () => {
           const hash = window.location.hash.replace('#', '');
-          const validTabs = ['inicio', 'calendario', 'mapas', 'participacao', 'videos', 'plano-anterior', 'faq'];
+          const validTabs = ['inicio', 'calendario', 'participacao', 'videos', 'plano-anterior', 'faq'];
           
           if (validTabs.includes(hash)) {
             this.currentTab = hash;

@@ -92,7 +92,7 @@
         <?!= include('PageCalendario'); ?>
       </div>
       
-      <!-- O mapa compensa o padding lateral do main para ocupar toda a viewport sem faixa branca no mobile. -->
+      <!-- Aba de Mapas temporariamente oculta conforme solicitação
       <div 
         x-show="currentTab === 'mapas'" 
         x-transition.opacity.duration.300ms
@@ -100,6 +100,7 @@
       >
         <?!= include('PageMapas'); ?>
       </div>
+      -->
 
       <div x-show="currentTab === 'participacao'" x-transition.opacity.duration.300ms>
         <?!= include('PageParticipacao'); ?>

@@ -68,8 +68,8 @@
           <i data-lucide="award" class="w-3.5 h-3.5 text-emerald-600"></i>
           <span>Titulares Eleitos</span>
         </div>
-        <div class="text-xl sm:text-2xl font-black text-emerald-700 mt-1">10 Vagas</div>
-        <div class="text-[10px] text-emerald-800 mt-0.5">1º ao 10º colocado</div>
+        <div class="text-xl sm:text-2xl font-black text-emerald-700 mt-1">8 Vagas</div>
+        <div class="text-[10px] text-emerald-800 mt-0.5">1º ao 8º colocado</div>
       </div>
 
       <div class="bg-amber-50/60 rounded-2xl p-3.5 border border-amber-100">
@@ -77,8 +77,8 @@
           <i data-lucide="user-check" class="w-3.5 h-3.5 text-amber-600"></i>
           <span>Suplentes</span>
         </div>
-        <div class="text-xl sm:text-2xl font-black text-amber-700 mt-1">10 Vagas</div>
-        <div class="text-[10px] text-amber-800 mt-0.5">11º ao 20º colocado</div>
+        <div class="text-xl sm:text-2xl font-black text-amber-700 mt-1">8 Vagas</div>
+        <div class="text-[10px] text-amber-800 mt-0.5">9º ao 16º colocado</div>
       </div>
 
     </div>
@@ -115,7 +115,7 @@
     <!-- Busca Rápida -->
     <div class="relative w-full sm:w-72">
       <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-      <input type="text" x-model="filtroBusca" placeholder="Buscar candidato ou bairro..."
+      <input type="text" x-model="filtroBusca" placeholder="Buscar por nome do candidato..."
              class="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:border-[#015797] focus:ring-1 focus:ring-[#015797] transition-all">
     </div>
 
@@ -178,9 +178,9 @@
             <div class="w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm shrink-0 border shadow-2xs"
                  :class="{
                    'bg-emerald-600 text-white border-emerald-700': c.posicao <= 3,
-                   'bg-emerald-50 text-emerald-800 border-emerald-200': c.posicao > 3 && c.posicao <= 10,
-                   'bg-amber-50 text-amber-800 border-amber-200': c.posicao > 10 && c.posicao <= 20,
-                   'bg-slate-100 text-slate-600 border-slate-200': c.posicao > 20
+                   'bg-emerald-50 text-emerald-800 border-emerald-200': c.posicao > 3 && c.posicao <= 8,
+                   'bg-amber-50 text-amber-800 border-amber-200': c.posicao > 8 && c.posicao <= 16,
+                   'bg-slate-100 text-slate-600 border-slate-200': c.posicao > 16
                  }"
                  x-text="c.posicaoOrdinal">
             </div>
@@ -213,7 +213,7 @@
               <div class="flex items-center space-x-2 text-[11px] text-slate-600 mt-0.5">
                 <span class="flex items-center space-x-1">
                   <i data-lucide="map-pin" class="w-3 h-3 text-slate-400"></i>
-                  <span x-text="c.bairro || 'Sapezal/MT'"></span>
+                  <span>Sapezal/MT</span>
                 </span>
                 <span class="text-slate-300">•</span>
                 <span x-text="c.segmento || 'Sociedade Civil'"></span>
@@ -263,7 +263,7 @@
             <th class="py-3 px-3 w-12 text-center">Class.</th>
             <th class="py-3 px-3">Candidato (Nome de Urna)</th>
             <th class="py-3 px-3 hidden sm:table-cell">Nome Completo</th>
-            <th class="py-3 px-3 hidden md:table-cell">Bairro</th>
+            <th class="py-3 px-3 hidden md:table-cell">Segmento</th>
             <th class="py-3 px-3 text-center">Resultado Oficial</th>
             <th class="py-3 px-3 text-right">Votos</th>
             <th class="py-3 px-3 text-right w-20">% Votos</th>
@@ -296,8 +296,8 @@
               <!-- Nome Completo -->
               <td class="py-2.5 px-3 text-slate-600 hidden sm:table-cell" x-text="c.nome"></td>
 
-              <!-- Bairro -->
-              <td class="py-2.5 px-3 text-slate-600 hidden md:table-cell" x-text="c.bairro || '-'"></td>
+              <!-- Segmento -->
+              <td class="py-2.5 px-3 text-slate-600 hidden md:table-cell" x-text="c.segmento || 'Sociedade Civil'"></td>
 
               <!-- Status Oficial -->
               <td class="py-2.5 px-3 text-center">
@@ -426,8 +426,7 @@
         return this.dados.candidatos.filter(c => {
           const nomeUrna = (c.nomeUrna || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
           const nome = (c.nome || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-          const bairro = (c.bairro || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-          return nomeUrna.includes(termo) || nome.includes(termo) || bairro.includes(termo);
+          return nomeUrna.includes(termo) || nome.includes(termo);
         });
       },
 

@@ -4,9 +4,10 @@
  */
 
 /**
- * Validação de PIN de acesso da Comissão
+ * Validação segura de PIN de acesso da Comissão Eleitoral
  */
-function adminLogin(pin) {
+function validarAdminPin(pin) {
+  if (!pin) return false;
   try {
     const ss = getSpreadsheet();
     let sheet = ss.getSheetByName(APP_CONFIG.SHEET_CONFIG);
@@ -24,7 +25,19 @@ function adminLogin(pin) {
       }
     }
 
-    if (String(pin).trim() === savedPin) {
+    return String(pin).trim() === savedPin;
+  } catch (err) {
+    console.error("Erro na verificação do PIN: " + err);
+    return false;
+  }
+}
+
+/**
+ * Validação de PIN de acesso da Comissão
+ */
+function adminLogin(pin) {
+  try {
+    if (validarAdminPin(pin)) {
       return { success: true, message: "Acesso autorizado com sucesso." };
     } else {
       return { success: false, message: "PIN incorreto. Tente novamente." };
@@ -37,7 +50,10 @@ function adminLogin(pin) {
 /**
  * Retorna as configurações e prazos atuais para o formulário do painel Admin
  */
-function adminObterConfiguracoes() {
+function adminObterConfiguracoes(pin) {
+  if (!validarAdminPin(pin)) {
+    return { success: false, message: "Acesso não autorizado. PIN inválido ou sessão expirada." };
+  }
   try {
     const ss = getSpreadsheet();
     let sheet = ss.getSheetByName(APP_CONFIG.SHEET_CONFIG);
@@ -61,7 +77,8 @@ function adminObterConfiguracoes() {
         DATA_FIM_INSCRICAO: formatDateToInput(config.DATA_FIM_INSCRICAO),
         DATA_INICIO_VOTACAO: formatDateToInput(config.DATA_INICIO_VOTACAO),
         DATA_FIM_VOTACAO: formatDateToInput(config.DATA_FIM_VOTACAO),
-        ADMIN_PIN: String(config.ADMIN_PIN || APP_CONFIG.DEFAULT_ADMIN_PIN)
+        TOTAL_VAGAS: String(config.TOTAL_VAGAS || "8"),
+        ADMIN_PIN: "" // Não expõe o PIN atual via rede por segurança
       }
     };
   } catch (err) {
@@ -156,7 +173,10 @@ function mapearColunasInscricoes(headerRow) {
 /**
  * Lista todas as inscrições com suporte a filtro por status
  */
-function adminListarInscricoes(filtroStatus) {
+function adminListarInscricoes(pin, filtroStatus) {
+  if (!validarAdminPin(pin)) {
+    return { success: false, message: "Acesso não autorizado. PIN inválido ou sessão expirada.", data: [] };
+  }
   try {
     const ss = getSpreadsheet();
     const sheet = ss.getSheetByName(APP_CONFIG.SHEET_INSCRICOES);
@@ -216,7 +236,10 @@ function adminListarInscricoes(filtroStatus) {
 /**
  * Atualiza status da candidatura (Deferida, Indeferida ou Diligência)
  */
-function adminAtualizarStatus(protocolo, novoStatus, parecer) {
+function adminAtualizarStatus(pin, protocolo, novoStatus, parecer) {
+  if (!validarAdminPin(pin)) {
+    return { success: false, message: "Acesso não autorizado. PIN inválido ou sessão expirada." };
+  }
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(10000);
@@ -275,7 +298,10 @@ function adminAtualizarStatus(protocolo, novoStatus, parecer) {
 /**
  * Atualiza prazos e configurações do sistema
  */
-function adminSalvarConfiguracoes(configData) {
+function adminSalvarConfiguracoes(pin, configData) {
+  if (!validarAdminPin(pin)) {
+    return { success: false, message: "Acesso não autorizado. PIN inválido ou sessão expirada." };
+  }
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(10000);
@@ -320,7 +346,10 @@ function adminSalvarConfiguracoes(configData) {
 /**
  * Apuração e métricas consolidadas para a Comissão
  */
-function adminObterEstatisticas() {
+function adminObterEstatisticas(pin) {
+  if (!validarAdminPin(pin)) {
+    return { success: false, message: "Acesso não autorizado. PIN inválido ou sessão expirada." };
+  }
   try {
     const ss = getSpreadsheet();
     const sheetInsc = ss.getSheetByName(APP_CONFIG.SHEET_INSCRICOES);

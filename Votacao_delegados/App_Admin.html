@@ -154,7 +154,7 @@
                   </div>
                   <h4 class="text-base font-black text-[#072b4c] mt-0.5" x-text="item.nomeCompleto"></h4>
                   <p class="text-xs text-slate-500">
-                    Nome de Urna: <strong class="text-slate-700" x-text="item.nomeUrna"></strong> • Bairro: <strong class="text-slate-700" x-text="item.bairro"></strong> • Segmento: <span x-text="item.segmento"></span>
+                    Nome de Urna: <strong class="text-slate-700" x-text="item.nomeUrna"></strong> • Segmento: <span class="font-bold text-slate-700" x-text="item.segmento || 'Sociedade Civil'"></span>
                   </p>
                 </div>
               </div>
@@ -353,6 +353,7 @@ function adminComponent() {
     autenticado: false,
     validandoPin: false,
     pinInput: "",
+    authPin: "",
     abaAdmin: "candidaturas",
     filtroStatus: "todos",
     modalParecerAberto: false,
@@ -406,6 +407,7 @@ function adminComponent() {
             this.validandoPin = false;
             if (res && res.success) {
               this.autenticado = true;
+              this.authPin = this.pinInput;
               if (window.showToast) window.showToast("Acesso autorizado com sucesso!", "success", "Painel da Comissão");
               this.recarregarDados();
             } else {
@@ -426,6 +428,7 @@ function adminComponent() {
         setTimeout(() => {
           this.validandoPin = false;
           this.autenticado = true;
+          this.authPin = this.pinInput;
           this.recarregarDados();
         }, 300);
       }
@@ -443,7 +446,7 @@ function adminComponent() {
           .withFailureHandler((err) => {
             console.error("Erro estatísticas:", err);
           })
-          .adminObterEstatisticas();
+          .adminObterEstatisticas(this.authPin);
 
         // 2. Inscrições
         google.script.run
@@ -462,7 +465,7 @@ function adminComponent() {
             console.error("Erro inscrições:", err);
             if (window.showToast) window.showToast("Erro ao listar inscrições: " + err.message, "error");
           })
-          .adminListarInscricoes("todos");
+          .adminListarInscricoes(this.authPin, "todos");
 
         // 3. Configurações de Prazos
         google.script.run
@@ -478,7 +481,7 @@ function adminComponent() {
           .withFailureHandler((err) => {
             console.error("Erro configurações:", err);
           })
-          .adminObterConfiguracoes();
+          .adminObterConfiguracoes(this.authPin);
       } else {
         // Mock local
         this.carregandoDados = false;
@@ -558,7 +561,7 @@ function adminComponent() {
             if (itemLocal) { itemLocal.status = statusAnterior; this.filtrarInscricoes(); }
             alert("Erro ao atualizar: " + err.message);
           })
-          .adminAtualizarStatus(protocolo, novoStatus, "Homologado pela Comissão.");
+          .adminAtualizarStatus(this.authPin, protocolo, novoStatus, "Homologado pela Comissão.");
       } else {
         if (window.showToast) {
           window.showToast(`Status de ${protocolo} atualizado para ${novoStatus}!`, "success");
@@ -613,7 +616,7 @@ function adminComponent() {
             if (itemLocal) { itemLocal.status = statusAnterior; this.filtrarInscricoes(); }
             alert("Erro ao registrar decisão: " + err.message);
           })
-          .adminAtualizarStatus(prot, novoSt, parecerTxt);
+          .adminAtualizarStatus(this.authPin, prot, novoSt, parecerTxt);
       } else {
         if (window.showToast) window.showToast("Decisão confirmada com sucesso.", "success");
       }
@@ -637,7 +640,7 @@ function adminComponent() {
             this.salvandoPrazos = false;
             alert("Erro ao salvar prazos: " + err.message);
           })
-          .adminSalvarConfiguracoes(this.configPrazos);
+          .adminSalvarConfiguracoes(this.authPin, this.configPrazos);
       } else {
         setTimeout(() => {
           this.salvandoPrazos = false;
@@ -650,6 +653,7 @@ function adminComponent() {
     sairAdmin() {
       this.autenticado = false;
       this.pinInput = "";
+      this.authPin = "";
     }
   };
 }

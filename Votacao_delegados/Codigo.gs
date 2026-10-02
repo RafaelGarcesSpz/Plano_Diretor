@@ -28,26 +28,15 @@ function doGet(e) {
     const statusResp = obterStatusSistema();
     const status = (statusResp && statusResp.data) ? statusResp.data : {};
     
-    let defaultPage = 'inscricao';
-    const now = new Date().getTime();
-    const fimVot = status.votacao && status.votacao.fimRaw ? parseDateToTimestamp(status.votacao.fimRaw) : null;
-
-    if (fimVot && now > fimVot) {
-      // Votação já encerrou: página padrão passa a ser apuração
-      defaultPage = 'apuracao';
-    } else if (status.votacao && status.votacao.aberta) {
-      // Votação está aberta no momento
-      defaultPage = 'votacao';
-    } else {
-      defaultPage = 'inscricao';
-    }
-
+    let defaultPage = 'inicio';
     const initialPage = isAdminRoute ? 'admin' : (rawPage || defaultPage);
+    const defaultPhase = (status && status.faseAtual) ? status.faseAtual : 'inscricao';
 
     const template = HtmlService.createTemplateFromFile('Index');
     template.initialPage = initialPage;
     template.isAdminRoute = isAdminRoute ? 'true' : 'false';
-    template.defaultPhase = defaultPage;
+    template.defaultPhase = defaultPhase;
+    template.serverStatusJson = JSON.stringify(status);
 
     return template.evaluate()
       .setTitle(APP_CONFIG.TITLE)
@@ -106,10 +95,11 @@ function initDatabase(ssInstance) {
   if (!sheetConfig) {
     sheetConfig = ss.insertSheet(APP_CONFIG.SHEET_CONFIG);
     sheetConfig.appendRow(["Chave", "Valor", "Descricao"]);
-    sheetConfig.appendRow(["DATA_INICIO_INSCRICAO", "2026-01-01T00:00", "Data e hora de abertura das inscrições"]);
-    sheetConfig.appendRow(["DATA_FIM_INSCRICAO", "2026-12-31T23:59", "Data e hora de encerramento das inscrições"]);
-    sheetConfig.appendRow(["DATA_INICIO_VOTACAO", "2026-10-15T08:00", "Data e hora de abertura da votação"]);
-    sheetConfig.appendRow(["DATA_FIM_VOTACAO", "2026-10-21T17:00", "Data e hora de encerramento da votação"]);
+    sheetConfig.appendRow(["DATA_INICIO_INSCRICAO", "2026-10-06T00:00", "Data e hora de abertura das inscrições (06/10/2026)"]);
+    sheetConfig.appendRow(["DATA_FIM_INSCRICAO", "2026-10-15T23:59", "Data e hora de encerramento das inscrições (15/10/2026)"]);
+    sheetConfig.appendRow(["DATA_INICIO_VOTACAO", "2026-10-22T08:00", "Data e hora de abertura da votação eletrônica (22/10/2026)"]);
+    sheetConfig.appendRow(["DATA_FIM_VOTACAO", "2026-10-25T23:59", "Data e hora de encerramento da votação eletrônica (25/10/2026)"]);
+    sheetConfig.appendRow(["TOTAL_VAGAS", "8", "Quantidade de delegados titulares eleitos da sociedade civil"]);
     sheetConfig.appendRow(["ADMIN_PIN", APP_CONFIG.DEFAULT_ADMIN_PIN, "Senha/PIN para acesso da Comissão"]);
     sheetConfig.getRange("A1:C1").setFontWeight("bold").setBackground("#015797").setFontColor("#ffffff");
   }
@@ -303,9 +293,9 @@ function formatDateToDisplay(val, includeTime) {
 }
 
 /**
- * Consulta status e prazos do sistema
+ * Consulta status e prazos do sistema diretamente da planilha (com suporte a cacheBuster)
  */
-function obterStatusSistema() {
+function obterStatusSistema(cacheBuster) {
   try {
     const ss = getSpreadsheet();
     let sheet = ss.getSheetByName(APP_CONFIG.SHEET_CONFIG);
@@ -332,10 +322,22 @@ function obterStatusSistema() {
     const inscricaoAberta = (inicioInsc === null || now >= inicioInsc) && (fimInsc === null || now <= fimInsc);
     const votacaoAberta = (inicioVot === null || now >= inicioVot) && (fimVot === null || now <= fimVot);
 
+    // Determina a fase ativa do processo eleitoral para controle de visibilidade das abas
+    let faseAtual = 'inscricao';
+    if (fimVot !== null && now > fimVot) {
+      faseAtual = 'apuracao';
+    } else if (votacaoAberta) {
+      faseAtual = 'votacao';
+    } else {
+      faseAtual = 'inscricao';
+    }
+
     return {
       success: true,
       data: {
         now: formatDateToDisplay(new Date(), true),
+        totalVagas: parseInt(config.TOTAL_VAGAS || '8', 10),
+        faseAtual: faseAtual,
         inscricao: {
           aberta: Boolean(inscricaoAberta),
           inicio: formatDateToDisplay(config.DATA_INICIO_INSCRICAO, true),
@@ -357,6 +359,7 @@ function obterStatusSistema() {
       success: false,
       message: "Erro ao consultar status: " + e.message,
       data: {
+        totalVagas: 8,
         inscricao: { aberta: true, inicio: "", fim: "" },
         votacao: { aberta: true, inicio: "", fim: "" }
       }

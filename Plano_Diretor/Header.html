@@ -44,12 +44,14 @@
           <span>Participação Social</span>
         </button>
 
+<!-- Aba de Mapas temporariamente oculta conforme solicitação 
         <button @click="navigate('mapas')" 
                 :class="currentTab === 'mapas' ? 'bg-[#015797] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-slate-100 hover:text-[#072b4c]'"
                 class="px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 shrink-0">
           <i data-lucide="map" class="w-4 h-4 text-[#409240]"></i>
           <span>Mapas Urbanos</span>
         </button>
+        -->
 
         <button @click="navigate('calendario')" 
                 :class="currentTab === 'calendario' ? 'bg-[#015797] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-slate-100 hover:text-[#072b4c]'"
@@ -132,12 +134,14 @@
       <span>Calendário</span>
     </button>
 
+<!-- Aba de Mapas temporariamente oculta no mobile
     <button @click="navigate('mapas')" 
             :class="currentTab === 'mapas' ? 'bg-slate-100 text-[#015797] font-bold border-l-4 border-[#015797]' : 'text-slate-700 hover:bg-slate-50'"
             class="w-full text-left px-3 py-2.5 rounded-md text-sm font-semibold flex items-center space-x-3 transition-colors">
       <i data-lucide="map" class="w-4 h-4 text-[#409240]"></i>
       <span>Mapas</span>
     </button>
+    -->
 
     <button @click="navigate('participacao')" 
             :class="currentTab === 'participacao' ? 'bg-slate-100 text-[#015797] font-bold border-l-4 border-[#015797]' : 'text-slate-700 hover:bg-slate-50'"

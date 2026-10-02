@@ -100,12 +100,15 @@ function salvarInscricao(payload) {
     const arq = payload.arquivosUpload || {};
     const dec = payload.declaracoes || {};
 
-    if (!dp.nomeCompleto || !dp.cpf || !dp.bairro || !dp.telefone) {
+    if (!dp.nomeCompleto || !dp.cpf || !dp.telefone) {
       return {
         success: false,
         message: "Campos obrigatórios de identificação não foram preenchidos."
       };
     }
+
+    dp.bairro = dp.bairro || "Sapezal/MT";
+    dp.segmento = "Sociedade Civil";
 
     // Valida CPF
     const cpfLimpo = dp.cpf.replace(/[^\d]/g, '');

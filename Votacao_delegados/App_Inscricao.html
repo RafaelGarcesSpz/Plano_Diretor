@@ -175,41 +175,23 @@
           </div>
         </div>
 
-        <!-- Bairro / Comunidade -->
-        <div class="sm:col-span-1">
-          <label class="block text-xs font-bold text-slate-700 mb-1">Bairro / Região em Sapezal *</label>
-          <select x-model="form.dadosPessoais.bairro"
-                  @change="validarCampo('bairro')"
-                  class="w-full px-3.5 py-2.5 rounded-xl border text-sm bg-white outline-hidden transition-all"
-                  :class="errosCampos.bairro ? 'border-red-500 bg-red-50/20 ring-2 ring-red-100 text-red-900' : 'border-slate-300 focus:ring-2 focus:ring-[#015797] focus:border-transparent'">
-            <option value="">Selecione o Bairro...</option>
-            <option value="Centro">Centro</option>
-            <option value="Cidezal I">Cidezal I</option>
-            <option value="Cidezal II">Cidezal II</option>
-            <option value="Jardim América">Jardim América</option>
-            <option value="Jardim Ipê">Jardim Ipê</option>
-            <option value="Parque das Nações">Parque das Nações</option>
-            <option value="Água Limpa">Água Limpa</option>
-            <option value="Distrito Industrial">Distrito Industrial</option>
-            <option value="Zona Rural / Comunidades">Zona Rural / Comunidades</option>
-          </select>
-          <div x-show="errosCampos.bairro" x-cloak class="flex items-center space-x-1.5 text-[11px] text-red-600 font-bold mt-1">
-            <i data-lucide="alert-circle" class="w-3.5 h-3.5 shrink-0"></i>
-            <span>Selecione seu bairro de residência.</span>
+        <!-- Segmento Representativo (Informativo / Somente Leitura) -->
+        <div class="sm:col-span-2 bg-blue-50/80 border border-blue-200 rounded-2xl p-4 flex items-start space-x-3.5">
+          <div class="p-2.5 rounded-xl bg-[#015797] text-white shrink-0 mt-0.5">
+            <i data-lucide="users" class="w-5 h-5"></i>
           </div>
-        </div>
-
-        <!-- Segmento Representado -->
-        <div class="sm:col-span-1">
-          <label class="block text-xs font-bold text-slate-700 mb-1">Segmento Representativo *</label>
-          <select x-model="form.dadosPessoais.segmento"
-                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white focus:ring-2 focus:ring-[#015797] focus:border-transparent outline-hidden transition-all">
-            <option value="Sociedade Civil">Sociedade Civil / Morador</option>
-            <option value="Movimento Comunitário">Movimento Comunitário / Associação</option>
-            <option value="Setor Produtivo / Empresarial">Setor Produtivo / Comercial / Agronegócio</option>
-            <option value="Trabalhadores e Sindicatos">Trabalhadores e Entidades Sindicais</option>
-            <option value="Profissional / Acadêmico">Setor Técnico / Acadêmico</option>
-          </select>
+          <div class="flex-1 space-y-1">
+            <div class="flex flex-wrap items-center justify-between gap-1">
+              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Segmento Representativo da Inscrição</span>
+              <span class="text-[10px] font-black uppercase bg-blue-100 text-[#015797] px-2.5 py-0.5 rounded-md border border-blue-200">
+                Sociedade Civil
+              </span>
+            </div>
+            <div class="text-sm font-black text-[#072b4c]">Candidatura para Delegado da Sociedade Civil</div>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Em conformidade com o Edital de Chamamento Público e Regimento Interno, esta eleição destina-se exclusivamente à escolha de <strong>8 delegados titulares e 8 suplentes</strong> representantes da sociedade civil organizada e moradores de Sapezal/MT.
+            </p>
+          </div>
         </div>
       </div>
     </section>
@@ -283,8 +265,9 @@
             <!-- Dados no Cartão -->
             <div class="flex-1 text-center sm:text-left space-y-1">
               <div class="flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
-                <div class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-[#015797]"
-                      x-text="form.dadosPessoais.bairro || 'Bairro Não Selecionado'"></div>
+                <div class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-[#015797]">
+                  Sociedade Civil • Sapezal/MT
+                </div>
                 <template x-if="!fotoPreviewUrl">
                   <span class="text-[10px] text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-md flex items-center space-x-1 cursor-pointer"
                         @click="$refs.fotoInputCard.click()">
@@ -296,8 +279,7 @@
 
               <h4 class="text-base font-black text-[#072b4c]" 
                   x-text="form.dadosDivulgacao.nomeUrna || form.dadosPessoais.nomeCompleto || 'Nome de Urna do Candidato'"></h4>
-              <p class="text-xs text-slate-500 font-medium" 
-                 x-text="form.dadosPessoais.segmento || 'Segmento Representativo'"></p>
+              <p class="text-xs text-slate-500 font-medium">Delegado(a) da Sociedade Civil</p>
               <p class="text-xs text-slate-700 line-clamp-3 italic pt-1" 
                  x-text="form.dadosDivulgacao.minibio || 'Sua apresentação e trajetória comunitária aparecerão aqui para os cidadãos de Sapezal.'"></p>
             </div>
@@ -603,8 +585,8 @@
           <div><strong class="text-slate-500">Nome de Urna:</strong> <span class="text-slate-800 font-bold block" x-text="form.dadosDivulgacao.nomeUrna || form.dadosPessoais.nomeCompleto"></span></div>
           <div><strong class="text-slate-500">CPF:</strong> <span class="text-slate-800 font-mono block" x-text="form.dadosPessoais.cpf"></span></div>
           <div><strong class="text-slate-500">Telefone:</strong> <span class="text-slate-800 font-mono block" x-text="form.dadosPessoais.telefone"></span></div>
-          <div><strong class="text-slate-500">Bairro:</strong> <span class="text-slate-800 font-bold block" x-text="form.dadosPessoais.bairro"></span></div>
-          <div><strong class="text-slate-500">Segmento:</strong> <span class="text-slate-800 block" x-text="form.dadosPessoais.segmento"></span></div>
+          <div><strong class="text-slate-500">Município:</strong> <span class="text-slate-800 font-bold block">Sapezal/MT</span></div>
+          <div><strong class="text-slate-500">Segmento Representativo:</strong> <span class="text-slate-800 block">Sociedade Civil (Vagas Oficiais)</span></div>
         </div>
 
         <div class="pt-2 border-t border-slate-200">
@@ -1010,8 +992,7 @@ function inscricaoComponent() {
       nomeCompleto: false,
       dataNasc: false,
       telefone: false,
-      email: false,
-      bairro: false
+      email: false
     },
 
     form: {
@@ -1021,7 +1002,7 @@ function inscricaoComponent() {
         dataNasc: "",
         telefone: "",
         email: "",
-        bairro: "",
+        bairro: "Sapezal/MT",
         segmento: "Sociedade Civil"
       },
       dadosDivulgacao: {
@@ -1111,8 +1092,6 @@ function inscricaoComponent() {
         this.errosCampos.telefone = !dp.telefone || dp.telefone.replace(/\D/g, "").length < 10;
       } else if (campo === 'email') {
         this.errosCampos.email = !dp.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dp.email);
-      } else if (campo === 'bairro') {
-        this.errosCampos.bairro = !dp.bairro;
       }
       this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
     },
@@ -1403,7 +1382,7 @@ function inscricaoComponent() {
           return;
         }
 
-        if (this.errosCampos.nomeCompleto || this.errosCampos.dataNasc || this.errosCampos.telefone || this.errosCampos.email || this.errosCampos.bairro) {
+        if (this.errosCampos.nomeCompleto || this.errosCampos.dataNasc || this.errosCampos.telefone || this.errosCampos.email) {
           if (window.showToast) {
             window.showToast("Por favor, preencha os campos obrigatórios destacados em vermelho.", "warning", "Campos Pendentes");
           } else {

@@ -4,7 +4,15 @@
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Eleição de Delegados - Plano Diretor de Sapezal/MT</title>
+
+  <!-- Injeção do Status Atualizado da Planilha sem Cache -->
+  <script>
+    window.SERVER_STATUS = <?!= (typeof serverStatusJson !== 'undefined' && serverStatusJson) ? serverStatusJson : 'null' ?>;
+  </script>
 
   <!-- Componente de Logo Institucional em Base64 -->
   <?!= include('Logo'); ?>
@@ -52,7 +60,7 @@
       <div class="flex items-center justify-between h-20">
         
         <!-- Logo Institucional e Identificação -->
-        <div class="flex items-center space-x-3 cursor-pointer shrink-0" @click="isAdminMode ? navigate('admin') : navigate(currentPhase)">
+        <div class="flex items-center space-x-3 cursor-pointer shrink-0" @click="isAdminMode ? navigate('admin') : navigate('inicio')">
           <div class="flex items-center bg-white p-1 rounded-xl border border-slate-100 shadow-2xs">
             <template x-if="typeof APP_LOGO !== 'undefined'">
               <a href="https://script.google.com/macros/s/AKfycbxVbiQ9dvbazPdGedS7nQFdpa90u137zJ9NAnlAM65Gr_G2S-3Wjps0P-2DJkji6XYj2Q/exec" target="_blank" rel="noopener noreferrer">
@@ -102,6 +110,15 @@
           <!-- MODO PÚBLICO (SEM ABA ADMIN) -->
           <div x-show="!isAdminMode" class="flex items-center space-x-1.5">
             
+            <!-- 0. Aba Início (Chamada e Explicação Oficial baseada no PDF) -->
+            <button @click="navigate('inicio')"
+                    type="button"
+                    :class="currentTab === 'inicio' ? 'bg-[#015797] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-slate-100 hover:text-[#072b4c]'"
+                    class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 shrink-0">
+              <i data-lucide="home" class="w-4 h-4"></i>
+              <span>Início</span>
+            </button>
+
             <!-- 1. Aba Inscrição (Visível na fase de Inscrição ou por link direto) -->
             <button x-show="mostrarAbaInscricao"
                     @click="navigate('inscricao')"
@@ -186,6 +203,14 @@
 
       <!-- Mobile Modo Público -->
       <div x-show="!isAdminMode" class="space-y-1.5">
+        <button @click="navigate('inicio')"
+                type="button"
+                :class="currentTab === 'inicio' ? 'bg-slate-100 text-[#015797] font-bold border-l-4 border-[#015797]' : 'text-slate-700 hover:bg-slate-50'"
+                class="w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-3 transition-colors">
+          <i data-lucide="home" class="w-4 h-4 text-[#015797]"></i>
+          <span>Início</span>
+        </button>
+
         <button x-show="mostrarAbaInscricao"
                 @click="navigate('inscricao')"
                 type="button"
@@ -228,6 +253,11 @@
   <!-- CONTEÚDO PRINCIPAL -->
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 focus:outline-hidden">
     
+    <!-- ROTA 0: PÁGINA INICIAL / CHAMADA E EXPLICAÇÃO (PDF OFICIAL) -->
+    <div x-show="currentTab === 'inicio'" x-transition.opacity.duration.250ms>
+      <?!= include('App_Inicio'); ?>
+    </div>
+
     <!-- ROTA 1: INSCRIÇÃO DE DELEGADOS -->
     <div x-show="currentTab === 'inscricao'" x-transition.opacity.duration.250ms>
       <?!= include('App_Inscricao'); ?>
@@ -341,9 +371,9 @@
   <script>
     function mainApp() {
       return {
-        currentTab: '<?= initialPage ?>' || 'inscricao',
+        currentTab: '<?= initialPage ?>' || 'inicio',
         isAdminMode: '<?= isAdminRoute ?>' === 'true',
-        currentPhase: '<?= defaultPhase ?>' || 'inscricao',
+        currentPhase: '<?= defaultPhase ?>' || 'inicio',
         requestedTab: '<?= initialPage ?>' || '',
         mobileMenuOpen: false,
 
@@ -357,33 +387,33 @@
 
         get mostrarAbaInscricao() {
           if (this.isAdminMode) return false;
-          // Se o usuário entrou pelo link de inscrição, ou se a fase atual do sistema for inscrição
-          return this.requestedTab === 'inscricao' || this.currentTab === 'inscricao' || this.currentPhase === 'inscricao';
+          // Mostra apenas na fase de inscrição, se a aba estiver ativa ou se for acessada diretamente via URL ?p=inscricao
+          return this.currentPhase === 'inscricao' || this.currentTab === 'inscricao' || this.requestedTab === 'inscricao';
         },
 
         get mostrarAbaVotacao() {
           if (this.isAdminMode) return false;
-          // Se o usuário entrou pelo link de votação, ou se a fase atual for votação
-          return this.requestedTab === 'votacao' || this.currentTab === 'votacao' || this.currentPhase === 'votacao';
+          // Mostra apenas na fase de votação, se a aba estiver ativa ou se for acessada diretamente via URL ?p=votacao
+          return this.currentPhase === 'votacao' || this.currentTab === 'votacao' || this.requestedTab === 'votacao';
         },
 
         get mostrarAbaApuracao() {
           if (this.isAdminMode) return false;
-          // Se o usuário entrou pelo link de apuração, ou se a fase atual for apuração pós-votação
-          return this.requestedTab === 'apuracao' || this.currentTab === 'apuracao' || this.currentPhase === 'apuracao';
+          // Mostra apenas na fase de apuração (pós-votação), se a aba estiver ativa ou se for acessada diretamente via URL ?p=apuracao
+          return this.currentPhase === 'apuracao' || this.currentTab === 'apuracao' || this.requestedTab === 'apuracao';
         },
 
         abrirPortalPublico() {
           this.isAdminMode = false;
           this.requestedTab = '';
-          this.navigate(this.currentPhase || 'votacao');
+          this.navigate('inicio');
         },
 
         initApp() {
           if (this.isAdminMode) {
             this.currentTab = 'admin';
-          } else if (!this.currentTab || this.currentTab === 'home' || this.currentTab === 'admin') {
-            this.currentTab = this.currentPhase || 'inscricao';
+          } else if (!this.currentTab || this.currentTab === 'home') {
+            this.currentTab = '<?= initialPage ?>' || 'inicio';
           }
           
           window.showToast = (mensagem, tipo = 'info', titulo = '') => {
@@ -400,26 +430,46 @@
             }, 4500);
           };
 
-          // Consulta assíncrona do status para sincronizar a fase caso haja mudança de cronograma
+          // Ouvinte para atualizações de status disparadas por outros componentes
+          window.addEventListener('status-updated', (e) => {
+            if (e.detail && e.detail.faseAtual) {
+              this.currentPhase = e.detail.faseAtual;
+              this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            }
+          });
+
+          // Ouvinte para reconfigurações de prazos salvas no painel da comissão
+          window.addEventListener('prazos-updated', () => {
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+              google.script.run
+                .withSuccessHandler((resp) => {
+                  if (resp && resp.success && resp.data) {
+                    window.SERVER_STATUS = resp.data;
+                    if (resp.data.faseAtual) {
+                      this.currentPhase = resp.data.faseAtual;
+                    }
+                    window.dispatchEvent(new CustomEvent('status-updated', { detail: resp.data }));
+                    this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+                  }
+                })
+                .obterStatusSistema(new Date().getTime());
+            }
+          });
+
+          // Consulta assíncrona do status (com timestamp anti-cache) para sincronizar prazos da planilha
           if (typeof google !== 'undefined' && google.script && google.script.run) {
             google.script.run
               .withSuccessHandler((resp) => {
                 if (resp && resp.success && resp.data) {
-                  const now = new Date().getTime();
-                  const vot = resp.data.votacao;
-                  if (vot && vot.fimRaw && typeof window.parseDateToTimestamp === 'function') {
-                    const fimTs = window.parseDateToTimestamp(vot.fimRaw);
-                    if (fimTs && now > fimTs) {
-                      this.currentPhase = 'apuracao';
-                    } else if (vot.aberta) {
-                      this.currentPhase = 'votacao';
-                    } else {
-                      this.currentPhase = 'inscricao';
-                    }
+                  window.SERVER_STATUS = resp.data;
+                  if (resp.data.faseAtual) {
+                    this.currentPhase = resp.data.faseAtual;
                   }
+                  window.dispatchEvent(new CustomEvent('status-updated', { detail: resp.data }));
+                  this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
                 }
               })
-              .obterStatusSistema();
+              .obterStatusSistema(new Date().getTime());
           }
 
           this.$nextTick(() => {

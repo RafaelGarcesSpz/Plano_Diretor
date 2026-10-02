@@ -1,0 +1,384 @@
+<!-- Componente SPA: Página Inicial / Chamada e Explicação da Eleição de Delegados (Baseada no PDF Oficial) -->
+<div x-data="inicioComponent()" x-init="initInicio()" class="space-y-8 max-w-5xl mx-auto pb-12">
+
+  <!-- HERO PRINCIPAL DE CHAMADA INSTITUCIONAL -->
+  <section class="bg-gradient-to-br from-[#072b4c] via-[#015797] to-[#0385d0] text-white rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden border-b-4 border-[#ffd200]">
+    <div class="max-w-3xl space-y-4 relative z-10">
+      
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="inline-flex items-center px-3.5 py-1 rounded-full text-xs font-black bg-[#ffd200] text-[#072b4c] shadow-md uppercase tracking-wide">
+          <i data-lucide="vote" class="w-3.5 h-3.5 mr-1.5 text-[#072b4c]"></i>
+          Processo Participativo • Sapezal/MT
+        </span>
+        <span class="text-xs text-blue-200 font-bold flex items-center space-x-1">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-[#ffd200] animate-pulse"></i>
+          <span>Eleição de Delegados 2026</span>
+        </span>
+      </div>
+
+      <h1 class="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white drop-shadow-md leading-tight">
+        PLANO DIRETOR PARTICIPATIVO DE SAPEZAL
+      </h1>
+
+      <p class="text-base sm:text-2xl text-[#ffd200] font-black uppercase tracking-wide drop-shadow-sm">
+        VOCÊ PODE FAZER PARTE DESSA DECISÃO
+      </p>
+
+      <div class="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 space-y-2">
+        <h2 class="text-sm sm:text-base font-bold text-white flex items-center space-x-2">
+          <i data-lucide="flag" class="w-4 h-4 text-[#ffd200]"></i>
+          <span>A revisão está na reta final!</span>
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-100 leading-relaxed font-normal">
+          O Plano Diretor orientará o crescimento e o desenvolvimento de Sapezal pelos próximos 10 anos. Na Conferência Municipal, representantes da sociedade civil poderão discutir e votar propostas para a minuta do Plano.
+        </p>
+      </div>
+
+      <!-- STATUS DINÂMICO E BOTÕES DE AÇÃO -->
+      <div class="pt-2 flex flex-wrap items-center gap-3">
+        
+        <!-- Botão Inscrição (visível quando na fase de inscrição ou padrão) -->
+        <button x-show="status.faseAtual === 'inscricao' || (!status.votacao?.aberta && status.faseAtual !== 'apuracao')"
+                @click="navigate('inscricao')"
+                class="px-6 py-3 bg-[#ffd200] hover:bg-[#e2bd1e] text-[#072b4c] font-black text-xs sm:text-sm rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105 flex items-center space-x-2 cursor-pointer border border-yellow-300">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>
+          <span>Inscrever-se como Candidato</span>
+        </button>
+
+        <!-- Botão Votação (visível apenas na fase de votação) -->
+        <button x-show="status.votacao?.aberta || status.faseAtual === 'votacao'"
+                @click="navigate('votacao')"
+                class="px-6 py-3 bg-[#409240] hover:bg-[#0f560f] text-white font-black text-xs sm:text-sm rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105 flex items-center space-x-2 cursor-pointer border border-emerald-400/40">
+          <i data-lucide="vote" class="w-4 h-4"></i>
+          <span>Acessar Cédula de Votação</span>
+        </button>
+
+        <!-- Botão Apuração (visível apenas na fase pós-votação) -->
+        <button x-show="status.faseAtual === 'apuracao'"
+                @click="navigate('apuracao')"
+                class="px-6 py-3 bg-[#015797] hover:bg-[#072b4c] text-white font-black text-xs sm:text-sm rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105 flex items-center space-x-2 cursor-pointer border border-blue-400/40">
+          <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-400"></i>
+          <span>Acompanhar Apuração Oficial</span>
+        </button>
+
+        <!-- Botão Garantias de Sigilo -->
+        <button @click="navigate('sigilo')"
+                class="px-4 py-3 bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm rounded-xl transition-all border border-white/30 backdrop-blur-md flex items-center space-x-2 cursor-pointer">
+          <i data-lucide="shield-check" class="w-4 h-4 text-[#ffd200]"></i>
+          <span>Garantias de Sigilo</span>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- Marca d'água decorativa -->
+    <div class="absolute -right-12 -bottom-12 opacity-10 pointer-events-none">
+      <i data-lucide="users" class="w-80 h-80 text-white"></i>
+    </div>
+  </section>
+
+  <!-- CARD DE STATUS DO CRONOGRAMA EM TEMPO REAL (SEM CACHE) -->
+  <section class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+    <div class="flex items-center space-x-3.5">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+           :class="status.votacao?.aberta ? 'bg-emerald-100 text-emerald-700' : (status.inscricao?.aberta ? 'bg-blue-100 text-[#015797]' : 'bg-slate-100 text-slate-700')">
+        <i :data-lucide="status.votacao?.aberta ? 'vote' : (status.inscricao?.aberta ? 'user-plus' : 'calendar')" class="w-5 h-5"></i>
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full"
+                :class="status.votacao?.aberta ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : (status.inscricao?.aberta ? 'bg-blue-100 text-blue-800 border border-blue-300' : 'bg-slate-100 text-slate-800 border border-slate-300')"
+                x-text="status.votacao?.aberta ? 'Votação Aberta' : (status.inscricao?.aberta ? 'Inscrições Abertas' : 'Aguardando Próxima Fase')">
+          </span>
+          <span class="text-xs text-slate-400 font-semibold">• Sincronizado com a Planilha Oficial</span>
+        </div>
+        <p class="text-xs text-slate-600 mt-0.5">
+          <template x-if="status.inscricao?.aberta">
+            <span>Inscrições abertas de <strong class="text-slate-800" x-text="status.inscricao.inicio || '06/10/2026'"></strong> até <strong class="text-slate-800" x-text="status.inscricao.fim || '15/10/2026'"></strong>.</span>
+          </template>
+          <template x-if="status.votacao?.aberta">
+            <span>Votação popular aberta de <strong class="text-slate-800" x-text="status.votacao.inicio || '22/10/2026'"></strong> até <strong class="text-slate-800" x-text="status.votacao.fim || '25/10/2026'"></strong>.</span>
+          </template>
+          <template x-if="!status.inscricao?.aberta && !status.votacao?.aberta">
+            <span>Consulte o cronograma de etapas e datas importantes abaixo.</span>
+          </template>
+        </p>
+      </div>
+    </div>
+
+    <!-- Botão de atualização rápida -->
+    <button @click="recarregarStatus()" type="button"
+            class="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[11px] font-bold text-slate-600 flex items-center space-x-1 shrink-0 transition-colors"
+            title="Verificar status atualizado da planilha">
+      <i data-lucide="refresh-cw" class="w-3.5 h-3.5" :class="{'animate-spin': carregandoStatus}"></i>
+      <span>Atualizar Prazos</span>
+    </button>
+  </section>
+
+  <!-- BLOCO DE 2 COLUNAS: QUEM É O DELEGADO? E O QUE ELE FAZ? -->
+  <section class="grid grid-cols-1 md:grid-cols-2 gap-5">
+    
+    <!-- Card 1: Quem é o Delegado -->
+    <div class="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-3 border-t-4 border-t-[#015797]">
+      <div class="flex items-center space-x-3 text-[#015797]">
+        <div class="p-2.5 bg-blue-50 text-[#015797] rounded-xl">
+          <i data-lucide="user-check" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-lg font-black text-[#072b4c] uppercase tracking-wide">Quem é o Delegado?</h3>
+      </div>
+      <p class="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
+        É um representante que participa da Conferência, acompanha os debates e exerce o direito de voto sobre as propostas apresentadas.
+      </p>
+    </div>
+
+    <!-- Card 2: O que ele faz -->
+    <div class="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-3 border-t-4 border-t-[#409240]">
+      <div class="flex items-center space-x-3 text-[#409240]">
+        <div class="p-2.5 bg-emerald-50 text-[#409240] rounded-xl">
+          <i data-lucide="file-check-2" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-lg font-black text-[#072b4c] uppercase tracking-wide">O que ele faz?</h3>
+      </div>
+      <p class="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
+        Analisa previamente a minuta, participa das atividades preparatórias, pode apresentar propostas no prazo previsto e vota as deliberações da Conferência.
+      </p>
+    </div>
+
+  </section>
+
+  <!-- BLOCO: QUEM PODE SE CANDIDATAR? & DESTAQUE 8 VAGAS -->
+  <section class="grid grid-cols-1 md:grid-cols-3 gap-5">
+    
+    <!-- Requisitos para Candidatura (2 colunas) -->
+    <div class="md:col-span-2 bg-white rounded-2xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-4">
+      <h3 class="text-lg font-black text-[#072b4c] flex items-center space-x-2">
+        <i data-lucide="check-square" class="w-5 h-5 text-[#015797]"></i>
+        <span>QUEM PODE SE CANDIDATAR?</span>
+      </h3>
+
+      <ul class="space-y-2.5 text-xs sm:text-sm text-slate-700 font-medium">
+        <li class="flex items-start space-x-2.5">
+          <i data-lucide="check" class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"></i>
+          <span><strong>Ter 18 anos completos ou mais</strong> na data da inscrição.</span>
+        </li>
+        <li class="flex items-start space-x-2.5">
+          <i data-lucide="check" class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"></i>
+          <span><strong>Residir no Município de Sapezal</strong> (comprovado por residência ou declaração).</span>
+        </li>
+        <li class="flex items-start space-x-2.5">
+          <i data-lucide="check" class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"></i>
+          <span><strong>Apresentar os documentos e declarações</strong> exigidos no Regimento e no Edital.</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Destaque: SERÃO 8 VAGAS (1 coluna) -->
+    <div class="bg-gradient-to-br from-[#ffd200] to-[#e2bd1e] rounded-2xl p-6 sm:p-7 shadow-lg flex flex-col justify-center items-center text-center space-y-2 border-2 border-yellow-400">
+      <span class="text-[11px] font-black uppercase tracking-widest text-[#072b4c] bg-white/70 px-3 py-0.5 rounded-full">
+        Representação Social
+      </span>
+      <h3 class="text-3xl sm:text-4xl font-black text-[#072b4c] leading-tight">
+        SERÃO 8 VAGAS
+      </h3>
+      <p class="text-xs sm:text-sm font-bold text-[#072b4c] max-w-xs">
+        para delegados eleitos da sociedade civil
+      </p>
+    </div>
+
+  </section>
+
+  <!-- ALERTA DE IMPEDIMENTOS -->
+  <section class="bg-amber-50 border-l-4 border-amber-500 rounded-2xl p-5 sm:p-6 text-amber-900 shadow-xs space-y-2">
+    <div class="flex items-center space-x-2.5 font-black text-xs sm:text-sm">
+      <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600 shrink-0"></i>
+      <span>Atenção aos Impedimentos Legais</span>
+    </div>
+    <p class="text-xs sm:text-sm leading-relaxed text-amber-950 font-normal">
+      Há impedimentos previstos no Regimento, incluindo mandato eletivo, participação no Núcleo Gestor, cargo em comissão/função de confiança no Executivo Municipal e atuação na organização ou operação da eleição. Consulte as regras completas antes de se inscrever.
+    </p>
+  </section>
+
+  <!-- DATAS IMPORTANTES (CRONOGRAMA OFICIAL COMPLETO CONFORME PDF) -->
+  <section class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md space-y-6">
+    <div class="text-center max-w-xl mx-auto space-y-1">
+      <span class="text-[10px] font-black uppercase tracking-widest text-[#015797] bg-blue-50 px-3 py-1 rounded-full">
+        Cronograma Oficial
+      </span>
+      <h3 class="text-xl sm:text-2xl font-black text-[#072b4c]">DATAS IMPORTANTES</h3>
+      <p class="text-xs text-slate-500 font-medium">Acompanhe os prazos de cada fase da eleição dos delegados.</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+      
+      <!-- 1. Inscrições -->
+      <div class="p-3.5 rounded-xl border border-blue-200 bg-blue-50/50 flex items-center space-x-3.5">
+        <div class="px-2.5 py-1.5 bg-[#015797] text-white rounded-lg font-black text-xs shrink-0 text-center min-w-[76px]">
+          06–15 OUT
+        </div>
+        <div>
+          <h4 class="text-xs font-bold text-[#072b4c]">Inscrições de candidaturas</h4>
+          <p class="text-[11px] text-slate-500">Envio de documentos pelo portal oficial</p>
+        </div>
+      </div>
+
+      <!-- 2. Resultado Preliminar Inscrições -->
+      <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center space-x-3.5">
+        <div class="px-2.5 py-1.5 bg-[#072b4c] text-white rounded-lg font-black text-xs shrink-0 text-center min-w-[76px]">
+          16 OUT
+        </div>
+        <div>
+          <h4 class="text-xs font-bold text-[#072b4c]">Resultado preliminar das inscrições</h4>
+          <p class="text-[11px] text-slate-500">Divulgação da lista inicial pela Comissão</p>
+        </div>
+      </div>
+
+      <!-- 3. Recursos Inscrições -->
+      <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center space-x-3.5">
+        <div class="px-2.5 py-1.5 bg-[#072b4c] text-white rounded-lg font-black text-xs shrink-0 text-center min-w-[76px]">
+          19–20 OUT
+        </div>
+        <div>
+          <h4 class="text-xs font-bold text-[#072b4c]">Prazo para recursos</h4>
+          <p class="text-[11px] text-slate-500">Manifestação sobre indeferimentos</p>
+        </div>
+      </div>
+
+      <!-- 4. Homologação Candidaturas -->
+      <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center space-x-3.5">
+        <div class="px-2.5 py-1.5 bg-[#072b4c] text-white rounded-lg font-black text-xs shrink-0 text-center min-w-[76px]">
+          21 OUT
+        </div>
+        <div>
+          <h4 class="text-xs font-bold text-[#072b4c]">Homologação das candidaturas</h4>
+          <p class="text-[11px] text-slate-500">Publicação final da cédula de votação</p>
+        </div>
+      </div>
+
+      <!-- 5. Votação Eletrônica (Destaque Verde) -->
+      <div class="p-3.5 rounded-xl border border-emerald-300 bg-emerald-50/70 flex items-center space-x-3.5 shadow-2xs">
+        <div class="px-2.5 py-1.5 bg-[#409240] text-white rounded-lg font-black text-xs shrink-0 text-center min-w-[76px]">
+          22–25 OUT
+        </div>
+        <div>
+          <h4 class="text-xs font-black text-emerald-950 flex items-center space-x-1.5">
+            <span>Votação eletrônica</span>
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          </h4>
+          <p class="text-[11px] text-emerald-800">Escolha popular dos 8 delegados da sociedade civil</p>
+        </div>
+      </div>
+
+      <!-- 6. Resultado Preliminar Eleição -->
+      <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center space-x-3.5">
+        <div class="px-2.5 py-1.5 bg-[#072b4c] text-white rounded-lg font-black text-xs shrink-0 text-center min-w-[76px]">
+          26 OUT
+        </div>
+        <div>
+          <h4 class="text-xs font-bold text-[#072b4c]">Resultado preliminar da eleição</h4>
+          <p class="text-[11px] text-slate-500">Totalização e apuração pública dos votos</p>
+        </div>
+      </div>
+
+      <!-- 7. Recursos Resultado -->
+      <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center space-x-3.5">
+        <div class="px-2.5 py-1.5 bg-[#072b4c] text-white rounded-lg font-black text-xs shrink-0 text-center min-w-[76px]">
+          27–28 OUT
+        </div>
+        <div>
+          <h4 class="text-xs font-bold text-[#072b4c]">Recursos sobre o resultado</h4>
+          <p class="text-[11px] text-slate-500">Prazo recursal formal</p>
+        </div>
+      </div>
+
+      <!-- 8. Homologação Final -->
+      <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center space-x-3.5">
+        <div class="px-2.5 py-1.5 bg-[#072b4c] text-white rounded-lg font-black text-xs shrink-0 text-center min-w-[76px]">
+          29 OUT
+        </div>
+        <div>
+          <h4 class="text-xs font-bold text-[#072b4c]">Homologação final dos delegados</h4>
+          <p class="text-[11px] text-slate-500">Proclamação dos eleitos e suplentes</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- BANNER DA CONFERÊNCIA MUNICIPAL -->
+  <section class="bg-[#072b4c] rounded-2xl p-6 sm:p-7 text-white shadow-xl text-center space-y-2 border-t-4 border-[#ffd200]">
+    <span class="text-[10px] font-black uppercase tracking-widest text-[#ffd200] bg-white/10 px-3 py-1 rounded-full">
+      Evento Final Deliberativo
+    </span>
+    <h3 class="text-xl sm:text-2xl font-black text-white">
+      CONFERÊNCIA MUNICIPAL • 28 DE NOVEMBRO DE 2026
+    </h3>
+    <p class="text-xs sm:text-sm text-blue-200 font-semibold flex items-center justify-center space-x-2">
+      <i data-lucide="clock" class="w-4 h-4 text-[#ffd200]"></i>
+      <span>Das 8h às 18h</span>
+      <span>•</span>
+      <i data-lucide="map-pin" class="w-4 h-4 text-[#ffd200]"></i>
+      <span>Auditório do Paço Municipal João André Maggi</span>
+    </p>
+  </section>
+
+  <!-- AVISO DE GRATUIDADE E REGIMENTO -->
+  <section class="text-center text-xs text-slate-500 space-y-1 pt-2">
+    <p class="font-bold text-slate-700">
+      A inscrição é gratuita. Candidate-se pelo site oficial da Prefeitura ou presencialmente, conforme orientações do Edital.
+    </p>
+    <p class="text-[11px] text-slate-400">
+      Antes de se inscrever, leia o Regimento Interno.
+    </p>
+  </section>
+
+</div>
+
+<!-- SCRIPT ALPINE DO COMPONENTE INÍCIO -->
+<script>
+  function inicioComponent() {
+    return {
+      carregandoStatus: false,
+      status: {
+        inscricao: { aberta: false, inicio: '', fim: '' },
+        votacao: { aberta: false, inicio: '', fim: '' }
+      },
+
+      initInicio() {
+        // Se houver status inicial fornecido pelo servidor, usa imediatamente sem esperar requisição
+        if (typeof window.SERVER_STATUS !== 'undefined' && window.SERVER_STATUS) {
+          this.status = window.SERVER_STATUS;
+        }
+        this.recarregarStatus();
+      },
+
+      recarregarStatus() {
+        this.carregandoStatus = true;
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+          // Passa Date.now() como parâmetro anti-cache
+          google.script.run
+            .withSuccessHandler((resp) => {
+              this.carregandoStatus = false;
+              if (resp && resp.success && resp.data) {
+                this.status = resp.data;
+                window.SERVER_STATUS = resp.data;
+                window.dispatchEvent(new CustomEvent('status-updated', { detail: resp.data }));
+              }
+              this.$nextTick(() => {
+                if (window.lucide) lucide.createIcons();
+              });
+            })
+            .withFailureHandler((err) => {
+              this.carregandoStatus = false;
+              console.warn("Falha ao obter status dos prazos:", err);
+            })
+            .obterStatusSistema(new Date().getTime());
+        } else {
+          // Fallback para teste
+          setTimeout(() => {
+            this.carregandoStatus = false;
+          }, 300);
+        }
+      }
+    };
+  }
+</script>
