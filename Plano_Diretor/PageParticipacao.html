@@ -13,7 +13,7 @@
 
     <div class="md:col-span-2 bg-brand-blue text-white p-6 rounded-lg shadow-sm flex flex-col justify-between">
       <span class="text-xs font-bold text-brand-green uppercase tracking-wider">Próxima Oportunidade Presencial</span>
-      <div class="text-lg font-bold mt-1" x-text="db.participacao.audienciaProxima"></div>
+      <div class="text-lg font-bold mt-1" x-text="db.participacao.audienciaProxima || 'Em breve divulgaremos as novas datas de audiências públicas.'"></div>
       <p class="text-xs text-slate-200 mt-2">Sua presença é fundamental para a construção da nossa cidade.</p>
     </div>
   </div>
@@ -24,14 +24,31 @@
       <h3 class="text-lg font-bold text-slate-800 border-b pb-3 mb-4">Envie sua Sugestão ou Diagnóstico</h3>
       <form @submit.prevent="
         enviando = true;
-        if(typeof google !== 'undefined' && google.script) {
-          google.script.run.withSuccessHandler((res) => {
-            enviando = false;
-            showAlert('Obrigado!', res.message, 'success');
-            form = { nome: '', bairro: '', email: '', mensagem: '' };
-          }).enviarContribuicao(form);
+        if(typeof google !== 'undefined' && google.script && google.script.run) {
+          google.script.run
+            .withSuccessHandler((res) => {
+              enviando = false;
+              if (res && res.status === 'success') {
+                showAlert('Obrigado!', res.message || 'Sua contribuição foi registrada com sucesso!', 'success');
+                form = { nome: '', bairro: '', email: '', mensagem: '' };
+                if (typeof loadData === 'function') {
+                  loadData();
+                }
+              } else {
+                showAlert('Atenção', (res && res.message) ? res.message : 'Não foi possível registrar a contribuição.', 'error');
+              }
+            })
+            .withFailureHandler((err) => {
+              enviando = false;
+              showAlert('Erro', 'Falha ao registrar contribuição: ' + (err.message || err), 'error');
+            })
+            .enviarContribuicao(form);
         } else {
-          setTimeout(() => { enviando = false; showAlert('Modo Demo', 'Formulário submetido com sucesso no ambiente de testes.', 'success'); form = { nome: '', bairro: '', email: '', mensagem: '' }; }, 500);
+          setTimeout(() => {
+            enviando = false;
+            showAlert('Modo Demo', 'Formulário submetido com sucesso no ambiente de testes.', 'success');
+            form = { nome: '', bairro: '', email: '', mensagem: '' };
+          }, 500);
         }
       " class="space-y-4">
         <div>
@@ -66,7 +83,20 @@
     <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between">
       <div>
         <h3 class="text-lg font-bold text-slate-800 border-b pb-3 mb-4">Últimas Participações Cidadãs</h3>
-        <div class="space-y-4">
+        
+        <!-- Estado Vazio / Sem contribuições ainda -->
+        <div x-show="!db.participacao.ultimas || db.participacao.ultimas.length === 0" class="py-10 px-4 text-center">
+          <div class="inline-flex p-3 bg-slate-100 rounded-full text-slate-400 mb-3">
+            <i data-lucide="message-square" class="w-6 h-6"></i>
+          </div>
+          <h4 class="text-sm font-semibold text-slate-700">Nenhuma contribuição listada no momento</h4>
+          <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+            Seja o primeiro a registrar uma sugestão ou diagnóstico para o novo Plano Diretor utilizando o formulário ao lado.
+          </p>
+        </div>
+
+        <!-- Lista de contribuições reais -->
+        <div x-show="db.participacao.ultimas && db.participacao.ultimas.length > 0" class="space-y-4">
           <template x-for="p in db.participacao.ultimas" :key="p.id">
             <div class="p-3 bg-slate-50 rounded-md border border-slate-100">
               <div class="flex justify-between items-center text-xs text-slate-500 mb-1">

@@ -136,12 +136,9 @@ function getDatabaseDataLegado() {
           { id: 2, titulo: 'Mapa do Sistema Viário e Mobilidade', categoria: 'Transporte', data: '2027-02-14', pdfUrl: '#', imgUrl: 'https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?w=600&auto=format&fit=crop&q=80', descricao: 'Malha viária principal, ciclovias e eixos de transporte coletivo.' }
         ],
         participacao: {
-          totalContribuissoes: 1420,
-          audienciaProxima: '10 de Março de 2027 - 18:30h - Escola Central',
-          ultimas: [
-            { id: 1, bairro: 'Centro', mensagem: 'Melhorias nas calçadas e ampliação das ciclovias.', data: 'Há 1 hora' },
-            { id: 2, bairro: 'Zona Rural', mensagem: 'Necessidade de melhor conservação das estradas vicinais.', data: 'Há 4 horas' }
-          ]
+          totalContribuissoes: 0,
+          audienciaProxima: '',
+          ultimas: []
         },
         videos: [
           { id: 1, titulo: 'Vídeo Explicativo: O que é o Plano Diretor?', data: '2027-01-10', youtubeId: 'dQw4w9WgXcQ', descricao: 'Aprenda como o Plano Diretor impacta a sua vida cotidiana.' }
@@ -160,17 +157,6 @@ function getDatabaseDataLegado() {
   }
 }
 
-function enviarContribuicao(dados) {
-  try {
-    if (!dados.nome || !dados.mensagem) {
-      throw new Error('Preencha os campos obrigatórios.');
-    }
-    return { status: 'success', message: 'Sua contribuição foi registrada com sucesso!' };
-  } catch (e) {
-    return { status: 'error', message: e.message };
-  }
-}
-
 /**
  * Busca o arquivo GeoJSON no Google Drive por ID ou Nome.
  */
@@ -184,6 +170,17 @@ function getDatabaseData() {
     const eventos = getEventosFromSheet(ss);
     const produtos = getProdutosFromSheet(ss);
     const faq = getFaqFromSheet(ss);
+    const dadosParticipacao = getContribuicoesFromSheet(ss);
+
+    // Identifica dinamicamente a próxima oportunidade presencial a partir da agenda de eventos
+    let proximaAudiencia = '';
+    if (eventos && eventos.length > 0) {
+      const nowStr = new Date().toISOString().substring(0, 10);
+      const eventoFuturo = eventos.find(e => e.start && e.start >= nowStr) || eventos[0];
+      if (eventoFuturo && eventoFuturo.title) {
+        proximaAudiencia = formatarDataBR(eventoFuturo.start) + ' - ' + eventoFuturo.title + (eventoFuturo.location ? ' (' + eventoFuturo.location + ')' : '');
+      }
+    }
 
     const etapasCompletas = etapas.map(etapa => ({
 
@@ -239,22 +236,9 @@ function getDatabaseData() {
         ],
 
         participacao: {
-          totalContribuissoes: 1420,
-          audienciaProxima: '10 de Março de 2027 - 18:30h - Escola Central',
-          ultimas: [
-            {
-              id: 1,
-              bairro: 'Centro',
-              mensagem: 'Melhorias nas calçadas e ampliação das ciclovias.',
-              data: 'Há 1 hora'
-            },
-            {
-              id: 2,
-              bairro: 'Zona Rural',
-              mensagem: 'Necessidade de melhor conservação das estradas vicinais.',
-              data: 'Há 4 horas'
-            }
-          ]
+          totalContribuissoes: dadosParticipacao.total,
+          audienciaProxima: proximaAudiencia,
+          ultimas: dadosParticipacao.ultimas
         },
 
         videos: [
@@ -602,14 +586,151 @@ function getProdutosFromSheet(ss) {
 }
 
 
-function enviarContribuicao(dados) {
-  try {
-    if (!dados.nome || !dados.mensagem) {
-      throw new Error('Preencha os campos obrigatórios.');
+/**
+ * Busca as contribuições registradas na aba "Contribuicoes" da planilha oficial
+ */
+function getContribuicoesFromSheet(ss) {
+  if (!ss) return { total: 0, ultimas: [] };
+
+  let sheet = ss.getSheetByName('Contribuicoes');
+  if (!sheet) {
+    sheet = ss.getSheetByName('Contribuições');
+  }
+
+  // Se a aba não existir, cria automaticamente com cabeçalhos padronizados
+  if (!sheet) {
+    try {
+      sheet = ss.insertSheet('Contribuicoes');
+      sheet.appendRow(['ID', 'Data/Hora', 'Nome', 'Bairro', 'E-mail', 'Mensagem', 'Status']);
+      sheet.getRange('A1:G1').setFontWeight('bold').setBackground('#015797').setFontColor('#ffffff');
+      sheet.setFrozenRows(1);
+    } catch (e) {
+      console.warn('Aviso ao inicializar aba Contribuicoes: ' + e);
+      return { total: 0, ultimas: [] };
     }
-    return { status: 'success', message: 'Sua contribuição foi registrada com sucesso!' };
+  }
+
+  const rows = sheet.getDataRange().getValues();
+  if (rows.length <= 1) {
+    return { total: 0, ultimas: [] };
+  }
+
+  let tz = 'America/Cuiaba';
+  try {
+    tz = Session.getScriptTimeZone() || 'America/Cuiaba';
+  } catch (e) {}
+
+  const lista = [];
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    // Ignora linhas totalmente vazias
+    if (!row[0] && !row[2] && !row[5]) continue;
+
+    let dataFormatada = '';
+    if (row[1] instanceof Date) {
+      try {
+        dataFormatada = Utilities.formatDate(row[1], tz, 'dd/MM/yyyy HH:mm');
+      } catch (e) {
+        dataFormatada = String(row[1]);
+      }
+    } else if (row[1]) {
+      dataFormatada = String(row[1]);
+    }
+
+    lista.push({
+      id: row[0] || i,
+      data: dataFormatada,
+      nome: String(row[2] || ''),
+      bairro: String(row[3] || 'Sapezal/MT'),
+      email: String(row[4] || ''),
+      mensagem: String(row[5] || ''),
+      status: String(row[6] || 'Recebida')
+    });
+  }
+
+  // Ordena com as mais recentes primeiro e seleciona até 15 para exibição no feed público
+  const ultimas = lista.slice().reverse().slice(0, 15);
+
+  return {
+    total: lista.length,
+    ultimas: ultimas
+  };
+}
+
+/**
+ * Registra uma nova contribuição diretamente na planilha do Plano Diretor
+ */
+function enviarContribuicao(dados) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+
+    if (!dados || !dados.nome || !dados.mensagem) {
+      throw new Error('Preencha os campos obrigatórios (Nome e Contribuição).');
+    }
+
+    let ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss) {
+      const props = PropertiesService.getScriptProperties();
+      const ssId = props.getProperty('SPREADSHEET_ID');
+      if (ssId) {
+        try {
+          ss = SpreadsheetApp.openById(ssId);
+        } catch (e) {}
+      }
+    }
+
+    if (!ss) {
+      throw new Error('Planilha do Plano Diretor não localizada.');
+    }
+
+    let sheet = ss.getSheetByName('Contribuicoes');
+    if (!sheet) {
+      sheet = ss.getSheetByName('Contribuições');
+    }
+
+    if (!sheet) {
+      sheet = ss.insertSheet('Contribuicoes');
+      sheet.appendRow(['ID', 'Data/Hora', 'Nome', 'Bairro', 'E-mail', 'Mensagem', 'Status']);
+      sheet.getRange('A1:G1').setFontWeight('bold').setBackground('#015797').setFontColor('#ffffff');
+      sheet.setFrozenRows(1);
+    }
+
+    let tz = 'America/Cuiaba';
+    try {
+      tz = Session.getScriptTimeZone() || 'America/Cuiaba';
+    } catch (e) {}
+
+    const timestamp = Utilities.formatDate(new Date(), tz, 'dd/MM/yyyy HH:mm:ss');
+    const ano = Utilities.formatDate(new Date(), tz, 'yyyy');
+    const proximoIdNum = Math.max(1, sheet.getLastRow());
+    const idContribuicao = 'CONTRIB-' + ano + '-' + String(proximoIdNum).padStart(4, '0');
+
+    sheet.appendRow([
+      idContribuicao,
+      timestamp,
+      String(dados.nome).trim(),
+      String(dados.bairro || 'Sapezal/MT').trim(),
+      String(dados.email || '').trim(),
+      String(dados.mensagem).trim(),
+      'Recebida'
+    ]);
+
+    SpreadsheetApp.flush(); // Garante gravação imediata na planilha
+
+    return {
+      status: 'success',
+      message: 'Sua contribuição foi registrada com sucesso!',
+      id: idContribuicao
+    };
   } catch (e) {
-    return { status: 'error', message: e.message };
+    console.error('Erro em enviarContribuicao: ' + e);
+    return {
+      status: 'error',
+      message: 'Erro ao gravar contribuição: ' + e.message
+    };
+  } finally {
+    lock.releaseLock();
   }
 }
 
