@@ -58,7 +58,7 @@
   </div>
 
   <!-- FLUXO ATIVO DE INSCRIÇÃO EM 5 ETAPAS -->
-  <div x-show="prazoAberto && !sucessoEnvio" class="max-w-3xl mx-auto space-y-6 has-fixed-bottom">
+  <div x-show="prazoAberto && !sucessoEnvio" class="max-w-3xl mx-auto space-y-6">
     
     <!-- BARRA DE PROGRESSO STICKY NO TOPO -->
     <header class="sticky top-20 z-40 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200 shadow-xs p-4 transition-all">
@@ -610,45 +610,43 @@
       <?!= include('Comp_SigiloVoto'); ?>
     </section>
 
-    <!-- NAVEGAÇÃO ERGONÔMICA FIXADA NO RODAPÉ (FIXED BOTTOM) -->
-    <nav class="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3 sm:p-4 shadow-lg">
-      <div class="max-w-3xl mx-auto flex items-center justify-between gap-3">
-        <!-- Botão Voltar -->
-        <button x-show="step > 1" @click="voltarEtapa()"
-                class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-xs sm:text-sm flex items-center space-x-1.5 transition-all">
-          <i data-lucide="arrow-left" class="w-4 h-4"></i>
-          <span>Voltar</span>
+    <!-- NAVEGAÇÃO DE ETAPAS (POSICIONADA LOGO ABAIXO DOS BLOCOS DE PREENCHIMENTO) -->
+    <nav class="pt-2 pb-6 flex items-center justify-between gap-3">
+      <!-- Botão Voltar -->
+      <button x-show="step > 1" @click="voltarEtapa()"
+              class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-xs sm:text-sm flex items-center space-x-1.5 transition-all">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+        <span>Voltar</span>
+      </button>
+      <div x-show="step === 1"></div> <!-- Espaçador quando não há botão voltar -->
+
+      <!-- Botão Avançar / Concluir -->
+      <div>
+        <button x-show="step < 5" @click="avancarEtapa()"
+                class="px-6 py-2.5 rounded-xl btn-brand-primary font-bold text-xs sm:text-sm flex items-center space-x-2 shadow-md hover:shadow-lg transition-all">
+          <span>Avançar</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
         </button>
-        <div x-show="step === 1"></div> <!-- Espaçador quando não há botão voltar -->
 
-        <!-- Botão Avançar / Concluir -->
-        <div>
-          <button x-show="step < 5" @click="avancarEtapa()"
-                  class="px-6 py-2.5 rounded-xl btn-brand-primary font-bold text-xs sm:text-sm flex items-center space-x-2 shadow-md hover:shadow-lg transition-all">
-            <span>Avançar</span>
-            <i data-lucide="arrow-right" class="w-4 h-4"></i>
-          </button>
-
-          <button x-show="step === 5" @click="submeterInscricao()" :disabled="enviando"
-                  class="px-6 py-3 rounded-xl btn-brand-secondary font-black text-xs sm:text-sm flex items-center space-x-2 shadow-lg transition-all"
-                  :class="enviando ? 'opacity-50 cursor-not-allowed' : ''">
-            <template x-if="!enviando">
-              <span class="flex items-center space-x-1.5">
-                <i data-lucide="send" class="w-4 h-4"></i>
-                <span>Confirmar e Enviar Inscrição</span>
-              </span>
-            </template>
-            <template x-if="enviando">
-              <span class="flex items-center space-x-2">
-                <svg class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                </svg>
-                <span>Enviando dados...</span>
-              </span>
-            </template>
-          </button>
-        </div>
+        <button x-show="step === 5" @click="submeterInscricao()" :disabled="enviando"
+                class="px-6 py-3 rounded-xl btn-brand-secondary font-black text-xs sm:text-sm flex items-center space-x-2 shadow-lg transition-all"
+                :class="enviando ? 'opacity-50 cursor-not-allowed' : ''">
+          <template x-if="!enviando">
+            <span class="flex items-center space-x-1.5">
+              <i data-lucide="send" class="w-4 h-4"></i>
+              <span>Confirmar e Enviar Inscrição</span>
+            </span>
+          </template>
+          <template x-if="enviando">
+            <span class="flex items-center space-x-2">
+              <svg class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+              </svg>
+              <span>Enviando dados...</span>
+            </span>
+          </template>
+        </button>
       </div>
     </nav>
 
