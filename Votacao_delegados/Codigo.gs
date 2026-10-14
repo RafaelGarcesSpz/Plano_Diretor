@@ -20,9 +20,10 @@ const APP_CONFIG = {
  */
 function doGet(e) {
   try {
-    const rawPage = (e && e.parameter && e.parameter.p) ? String(e.parameter.p).toLowerCase().trim() : '';
-    // Acesso admin APENAS se explicitamente solicitado via ?p=admin
-    const isAdminRoute = (rawPage === 'admin');
+    const params = (e && e.parameter) ? e.parameter : {};
+    const rawPage = String(params.p || params.page || params.aba || '').toLowerCase().trim();
+    // Acesso admin se explicitamente solicitado via ?p=admin, ?page=admin, ?aba=admin, ?admin=true, ?admin=1 ou ?adm
+    const isAdminRoute = (rawPage === 'admin') || (params.admin !== undefined) || (params.adm !== undefined);
     
     // Consulta o status atual do sistema para definir a página padrão caso não seja especificada
     const statusResp = obterStatusSistema();

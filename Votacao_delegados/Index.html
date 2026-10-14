@@ -245,6 +245,14 @@
           <i data-lucide="shield-check" class="w-4 h-4 text-[#0385d0]"></i>
           <span>Sigilo do Voto</span>
         </button>
+
+        <button @click="navigate('admin')"
+                type="button"
+                :class="currentTab === 'admin' ? 'bg-slate-100 text-[#072b4c] font-bold border-l-4 border-[#072b4c]' : 'text-slate-500 hover:text-slate-800'"
+                class="w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-3 transition-colors border-t border-slate-100 pt-3 mt-2">
+          <i data-lucide="lock" class="w-4 h-4 text-slate-400"></i>
+          <span>Painel da Comissão</span>
+        </button>
       </div>
 
     </div>
@@ -285,7 +293,7 @@
     </div>
 
     <!-- ROTA 5: COMISSÃO ELEITORAL (ADMIN) -->
-    <div x-show="currentTab === 'admin' && isAdminMode" x-transition.opacity.duration.250ms>
+    <div x-show="currentTab === 'admin'" x-transition.opacity.duration.250ms>
       <?!= include('App_Admin'); ?>
     </div>
 
@@ -298,8 +306,13 @@
         <h4 class="text-xs font-bold text-[#072b4c]">Prefeitura Municipal de Sapezal/MT</h4>
         <p class="text-[11px] text-slate-500">Revisão do Plano Diretor Municipal • Comissão de Delegados</p>
       </div>
-      <div class="text-[11px] text-slate-500 font-medium">
-        Sistema desenvolvido no Âmbito da Ouvidoria Municipal (versão teste)
+      <div class="flex items-center space-x-3 text-[11px] text-slate-500 font-medium">
+        <span>Sistema desenvolvido no Âmbito da Ouvidoria Municipal</span>
+        <span>•</span>
+        <button @click="navigate('admin')" type="button" class="text-slate-400 hover:text-[#015797] transition-colors flex items-center space-x-1 cursor-pointer">
+          <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+          <span>Painel da Comissão</span>
+        </button>
       </div>
     </div>
   </footer>
@@ -406,13 +419,64 @@
         abrirPortalPublico() {
           this.isAdminMode = false;
           this.requestedTab = '';
+          window.location.hash = 'inicio';
           this.navigate('inicio');
         },
 
         initApp() {
-          if (this.isAdminMode) {
+          // 1. Checa se o backend GAS identificou rota admin
+          if (this.isAdminMode || '<?= isAdminRoute ?>' === 'true') {
+            this.isAdminMode = true;
             this.currentTab = 'admin';
-          } else if (!this.currentTab || this.currentTab === 'home') {
+          }
+
+          // 2. Checa hash do navegador (#admin)
+          const currentHash = window.location.hash.replace('#', '').toLowerCase().trim();
+          if (currentHash === 'admin') {
+            this.isAdminMode = true;
+            this.currentTab = 'admin';
+          }
+
+          // 3. Checa query string do navegador (?p=admin, ?page=admin, ?admin)
+          try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const pParam = (urlParams.get('p') || urlParams.get('page') || urlParams.get('aba') || '').toLowerCase().trim();
+            if (pParam === 'admin' || urlParams.has('admin') || urlParams.has('adm')) {
+              this.isAdminMode = true;
+              this.currentTab = 'admin';
+            }
+          } catch (e) {}
+
+          // 4. API oficial do Google Apps Script para leitura de URL embutida / iframes
+          if (typeof google !== 'undefined' && google.script && google.script.url && google.script.url.getLocation) {
+            google.script.url.getLocation((loc) => {
+              if (loc) {
+                const h = String(loc.hash || '').replace('#', '').toLowerCase().trim();
+                const p = (loc.parameters && (loc.parameters.p || loc.parameters.page || loc.parameters.aba)) 
+                  ? String(loc.parameters.p || loc.parameters.page || loc.parameters.aba).toLowerCase().trim() 
+                  : '';
+                const hasAdm = loc.parameters && (loc.parameters.admin !== undefined || loc.parameters.adm !== undefined);
+                if (h === 'admin' || p === 'admin' || hasAdm) {
+                  this.isAdminMode = true;
+                  this.currentTab = 'admin';
+                  this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+                }
+              }
+            });
+          }
+
+          // 5. Escuta mudança dinâmica de hash (#admin, etc)
+          window.addEventListener('hashchange', () => {
+            const h = window.location.hash.replace('#', '').toLowerCase().trim();
+            if (h === 'admin') {
+              this.isAdminMode = true;
+              this.currentTab = 'admin';
+            } else if (h) {
+              this.navigate(h);
+            }
+          });
+
+          if (!this.isAdminMode && (!this.currentTab || this.currentTab === 'home')) {
             this.currentTab = '<?= initialPage ?>' || 'inicio';
           }
           
@@ -480,7 +544,11 @@
         },
 
         navigate(tab) {
+          if (tab === 'admin') {
+            this.isAdminMode = true;
+          }
           this.currentTab = tab;
+          window.location.hash = tab;
           this.mobileMenuOpen = false;
           window.scrollTo({ top: 0, behavior: 'smooth' });
           window.dispatchEvent(new CustomEvent('tab-changed', { detail: { tab: tab } }));
