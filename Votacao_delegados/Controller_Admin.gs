@@ -118,9 +118,30 @@ function formatarUrlImagemDrive(url) {
 }
 
 /**
+ * Normaliza e formata link do Google Drive para abertura confiável em nova aba
+ */
+function formatarLinkDriveParaAbrir(url) {
+  if (!url) return "";
+  let s = String(url).trim();
+  if (!s || s === "undefined" || s === "null" || s === "#" || s === "-") return "";
+  if (s.startsWith("http://") || s.startsWith("https://")) return s;
+  
+  // Se for apenas o File ID do Google Drive (geralmente >= 25 caracteres alfanuméricos)
+  if (/^[a-zA-Z0-9_-]{20,}$/.test(s)) {
+    return "https://drive.google.com/file/d/" + s + "/view?usp=drivesdk";
+  }
+  
+  if (s.startsWith("drive.google.com")) {
+    return "https://" + s;
+  }
+  return s;
+}
+
+/**
  * Mapeia dinamicamente os índices das colunas da aba Inscricoes baseado nos cabeçalhos
  */
 function mapearColunasInscricoes(headerRow) {
+  // Índices padrão da planilha oficial (18 colunas)
   const map = {
     protocolo: 0,
     timestamp: 1,
@@ -147,24 +168,44 @@ function mapearColunasInscricoes(headerRow) {
   const normalized = headerRow.map(h => normalizarTexto(h));
 
   normalized.forEach((h, idx) => {
-    if (h.includes("protocolo")) map.protocolo = idx;
-    else if (h.includes("timestamp") || h.includes("data/hora") || h.includes("carimbo")) map.timestamp = idx;
-    else if (h.includes("nome de urna") || h.includes("nome urna") || h.includes("apelido")) map.nomeUrna = idx;
-    else if (h.includes("nome completo") || h === "nome") map.nomeCompleto = idx;
-    else if (h.includes("cpf")) map.cpf = idx;
-    else if (h.includes("nascimento") || h.includes("data nasc")) map.dataNasc = idx;
-    else if (h.includes("telefone") || h.includes("whatsapp") || h.includes("celular")) map.telefone = idx;
-    else if (h.includes("email") || h.includes("e-mail")) map.email = idx;
-    else if (h.includes("bairro") || h.includes("comunidade")) map.bairro = idx;
-    else if (h.includes("segmento")) map.segmento = idx;
-    else if (h.includes("minibiografia") || h.includes("apresentacao") || h.includes("proposta")) map.minibio = idx;
-    else if (h.includes("identidade") || h.includes("rg") || h.includes("doc")) map.linkIdentidade = idx;
-    else if (h.includes("residencia") || h.includes("comprovante")) map.linkResidencia = idx;
-    else if (h.includes("cargo") || h.includes("quitacao") || h.includes("declaracao nao")) map.linkDeclaracaoCargo = idx;
-    else if (h.includes("foto") || h.includes("divulgacao") || h.includes("imagem")) map.linkFoto = idx;
-    else if (h === "status" || h.includes("status")) map.status = idx;
-    else if (h.includes("parecer")) map.parecer = idx;
-    else if (h.includes("atualizacao") || h.includes("atualizado")) map.dataAtualizacao = idx;
+    if (h.includes("protocolo")) {
+      map.protocolo = idx;
+    } else if (h.includes("timestamp") || h.includes("data/hora") || h.includes("data hora") || h.includes("carimbo") || h.includes("data de envio")) {
+      map.timestamp = idx;
+    } else if (h.includes("nome de urna") || h.includes("nome urna") || h.includes("apelido") || h.includes("nome social")) {
+      map.nomeUrna = idx;
+    } else if (h.includes("nome completo") || h.includes("nome civil") || h === "nome") {
+      map.nomeCompleto = idx;
+    } else if (h.includes("cpf")) {
+      map.cpf = idx;
+    } else if (h.includes("nascimento") || h.includes("data nasc") || h.includes("dt nasc")) {
+      map.dataNasc = idx;
+    } else if (h.includes("telefone") || h.includes("whatsapp") || h.includes("celular") || h.includes("fone") || h.includes("contato")) {
+      map.telefone = idx;
+    } else if (h.includes("email") || h.includes("e-mail")) {
+      map.email = idx;
+    } else if (h.includes("bairro") || h.includes("comunidade") || h.includes("distrito") || h.includes("regiao")) {
+      map.bairro = idx;
+    } else if (h.includes("segmento") || h.includes("setor") || (h.includes("entidade") && !h.includes("identidade"))) {
+      map.segmento = idx;
+    } else if (h.includes("biografia") || h.includes("proposta") || h.includes("minibiografia") || h.includes("apresentacao") || h.includes("minibio") || h.includes("historico")) {
+      map.minibio = idx;
+    } else if (h.includes("cargo") || h.includes("quitacao") || h.includes("impedimento") || h.includes("declaracao nao") || h.includes("certidao")) {
+      // Prioridade: avaliado antes de identidade para que "cargo" (que contém "rg") não sobrescreva a identidade
+      map.linkDeclaracaoCargo = idx;
+    } else if (h.includes("residencia") || h.includes("moradia") || h.includes("endereco") || (h.includes("comprovante") && !h.includes("identidade") && !h.includes("cnh") && !/\brg\b/.test(h))) {
+      map.linkResidencia = idx;
+    } else if (h.includes("foto") || h.includes("divulgacao") || h.includes("imagem") || h.includes("retrato")) {
+      map.linkFoto = idx;
+    } else if (h.includes("identidade") || h.includes("cnh") || /\brg\b/.test(h) || (h.includes("doc") && !h.includes("cargo") && !h.includes("residencia") && !h.includes("quitacao"))) {
+      map.linkIdentidade = idx;
+    } else if (h === "status" || h.includes("status") || h.includes("situacao") || h.includes("fase")) {
+      map.status = idx;
+    } else if (h.includes("parecer") || h.includes("justificativa") || h.includes("motivo") || h.includes("diligencia") || h.includes("observacao")) {
+      map.parecer = idx;
+    } else if (h.includes("atualizacao") || h.includes("atualizado") || h.includes("modificacao") || h.includes("alteracao")) {
+      map.dataAtualizacao = idx;
+    }
   });
 
   return map;
@@ -203,25 +244,25 @@ function adminListarInscricoes(pin, filtroStatus) {
 
       if (atendeFiltro) {
         lista.push({
-          protocolo: String(row[map.protocolo] || ""),
+          protocolo: String(row[map.protocolo] || "").trim(),
           timestamp: formatDateToDisplay(row[map.timestamp], true),
-          nomeCompleto: String(row[map.nomeCompleto] || ""),
-          nomeUrna: String(row[map.nomeUrna] || row[map.nomeCompleto] || ""),
-          cpf: String(row[map.cpf] || ""),
+          nomeCompleto: String(row[map.nomeCompleto] || "").trim(),
+          nomeUrna: String(row[map.nomeUrna] || row[map.nomeCompleto] || "").trim(),
+          cpf: String(row[map.cpf] || "").trim(),
           dataNasc: formatDateToDisplay(row[map.dataNasc], false),
-          telefone: String(row[map.telefone] || ""),
-          email: String(row[map.email] || ""),
-          bairro: String(row[map.bairro] || ""),
-          segmento: String(row[map.segmento] || "Sociedade Civil"),
-          minibio: String(row[map.minibio] || ""),
-          linkIdentidade: String(row[map.linkIdentidade] || ""),
-          linkResidencia: String(row[map.linkResidencia] || ""),
-          linkDeclaracaoCargo: String(row[map.linkDeclaracaoCargo] || ""),
-          linkQuitacao: String(row[map.linkDeclaracaoCargo] || ""),
-          linkFoto: String(row[map.linkFoto] || ""),
+          telefone: String(row[map.telefone] || "").trim(),
+          email: String(row[map.email] || "").trim(),
+          bairro: String(row[map.bairro] || "").trim(),
+          segmento: String(row[map.segmento] || "Sociedade Civil").trim(),
+          minibio: String(row[map.minibio] || "").trim(),
+          linkIdentidade: formatarLinkDriveParaAbrir(row[map.linkIdentidade]),
+          linkResidencia: formatarLinkDriveParaAbrir(row[map.linkResidencia]),
+          linkDeclaracaoCargo: formatarLinkDriveParaAbrir(row[map.linkDeclaracaoCargo]),
+          linkQuitacao: formatarLinkDriveParaAbrir(row[map.linkDeclaracaoCargo]),
+          linkFoto: formatarLinkDriveParaAbrir(row[map.linkFoto]),
           fotoThumbnail: formatarUrlImagemDrive(row[map.linkFoto]),
           status: rawStatus,
-          parecer: String(row[map.parecer] || ""),
+          parecer: String(row[map.parecer] || "").trim(),
           dataAtualizacao: formatDateToDisplay(row[map.dataAtualizacao], true)
         });
       }

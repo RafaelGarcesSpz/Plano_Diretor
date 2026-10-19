@@ -54,14 +54,23 @@ function mapearColunasInscricoesVotacao(headerRow) {
   const normalized = headerRow.map(h => normalizarTextoVotacao(h));
 
   normalized.forEach((h, idx) => {
-    if (h.includes("protocolo")) map.protocolo = idx;
-    else if (h.includes("nome de urna") || h.includes("nome urna") || h.includes("apelido")) map.nomeUrna = idx;
-    else if (h.includes("nome completo") || h === "nome") map.nomeCompleto = idx;
-    else if (h.includes("bairro") || h.includes("comunidade")) map.bairro = idx;
-    else if (h.includes("segmento")) map.segmento = idx;
-    else if (h.includes("minibiografia") || h.includes("apresentacao") || h.includes("proposta")) map.minibio = idx;
-    else if (h.includes("foto") || h.includes("divulgacao") || h.includes("imagem")) map.linkFoto = idx;
-    else if (h === "status" || h.includes("status")) map.status = idx;
+    if (h.includes("protocolo")) {
+      map.protocolo = idx;
+    } else if (h.includes("nome de urna") || h.includes("nome urna") || h.includes("apelido") || h.includes("nome social")) {
+      map.nomeUrna = idx;
+    } else if (h.includes("nome completo") || h.includes("nome civil") || h === "nome") {
+      map.nomeCompleto = idx;
+    } else if (h.includes("bairro") || h.includes("comunidade") || h.includes("distrito")) {
+      map.bairro = idx;
+    } else if (h.includes("segmento") || h.includes("setor") || (h.includes("entidade") && !h.includes("identidade"))) {
+      map.segmento = idx;
+    } else if (h.includes("biografia") || h.includes("proposta") || h.includes("minibiografia") || h.includes("apresentacao") || h.includes("minibio")) {
+      map.minibio = idx;
+    } else if (h.includes("foto") || h.includes("divulgacao") || h.includes("imagem") || h.includes("retrato")) {
+      map.linkFoto = idx;
+    } else if (h === "status" || h.includes("status") || h.includes("situacao") || h.includes("fase")) {
+      map.status = idx;
+    }
   });
 
   return map;

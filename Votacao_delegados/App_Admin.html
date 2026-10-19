@@ -182,31 +182,43 @@
               <span class="text-[11px] font-bold text-slate-500 mr-1">Documentação:</span>
               
               <template x-if="item.linkIdentidade">
-                <a :href="item.linkIdentidade" target="_blank" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#015797] text-xs font-semibold flex items-center space-x-1">
+                <a :href="item.linkIdentidade" target="_blank" rel="noopener noreferrer"
+                   title="Abrir Documento Oficial de Identidade (RG/CNH) no Google Drive"
+                   class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#015797] text-xs font-semibold flex items-center space-x-1 transition-colors">
                   <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
                   <span>1. RG/CNH</span>
                 </a>
               </template>
               
               <template x-if="item.linkResidencia">
-                <a :href="item.linkResidencia" target="_blank" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#015797] text-xs font-semibold flex items-center space-x-1">
+                <a :href="item.linkResidencia" target="_blank" rel="noopener noreferrer"
+                   title="Abrir Comprovante / Declaração de Residência no Google Drive"
+                   class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#015797] text-xs font-semibold flex items-center space-x-1 transition-colors">
                   <i data-lucide="home" class="w-3.5 h-3.5"></i>
-                  <span>2. Residência / Declaração</span>
+                  <span>2. Residência</span>
                 </a>
               </template>
 
               <template x-if="item.linkDeclaracaoCargo || item.linkQuitacao">
-                <a :href="item.linkDeclaracaoCargo || item.linkQuitacao" target="_blank" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#015797] text-xs font-semibold flex items-center space-x-1">
+                <a :href="item.linkDeclaracaoCargo || item.linkQuitacao" target="_blank" rel="noopener noreferrer"
+                   title="Abrir Declaração de Não Ocupação de Cargo no Google Drive"
+                   class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#015797] text-xs font-semibold flex items-center space-x-1 transition-colors">
                   <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
                   <span>3. Declaração Não Cargo</span>
                 </a>
               </template>
 
               <template x-if="item.linkFoto">
-                <a :href="item.linkFoto" target="_blank" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold flex items-center space-x-1">
+                <a :href="item.linkFoto" target="_blank" rel="noopener noreferrer"
+                   title="Abrir Foto de Divulgação no Google Drive"
+                   class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold flex items-center space-x-1 transition-colors">
                   <i data-lucide="image" class="w-3.5 h-3.5"></i>
                   <span>4. Foto Divulgação</span>
                 </a>
+              </template>
+
+              <template x-if="!item.linkIdentidade && !item.linkResidencia && !item.linkDeclaracaoCargo && !item.linkFoto">
+                <span class="text-xs text-slate-400 italic">Nenhum arquivo anexado</span>
               </template>
             </div>
 
@@ -483,37 +495,194 @@ function adminComponent() {
           })
           .adminObterConfiguracoes(this.authPin);
       } else {
-        // Mock local
+        // Mock local com dados reais espelhados da planilha oficial Votacao_delegado
         this.carregandoDados = false;
         this.stats = {
-          totalInscritos: 4,
-          pendentes: 1,
-          diligencias: 1,
-          deferidos: 2,
+          totalInscritos: 8,
+          pendentes: 8,
+          diligencias: 0,
+          deferidos: 0,
           indeferidos: 0,
           totalEleitores: 28,
           totalVotosUrna: 28,
-          apuracaoVotos: { "Maria do Bairro América (DEL-2026-101)": 18, "Carlos Agronegócio (DEL-2026-102)": 10 }
+          apuracaoVotos: { "Eduardo (DEL-2026-26140)": 10, "Vagno Silva (DEL-2026-64123)": 8 }
         };
         this.inscricoes = [
           {
-            protocolo: "DEL-2026-101",
-            timestamp: "10/02/2026 14:30",
-            nomeCompleto: "Maria das Graças Silva",
-            nomeUrna: "Maria do Bairro América",
-            cpf: "123.456.789-00",
-            dataNasc: "15/05/1985",
-            telefone: "(65) 99999-1111",
-            email: "maria@exemplo.com",
-            bairro: "Jardim América",
-            segmento: "Movimento Comunitário",
-            minibio: "Lutando por melhorias para nosso bairro.",
-            status: "Deferida",
-            linkIdentidade: "#",
-            linkResidencia: "#",
-            linkDeclaracaoCargo: "#",
-            linkFoto: "#",
-            parecer: "Documentação homologada com êxito."
+            protocolo: "DEL-2026-26140",
+            timestamp: "07/10/2026 11:41:43",
+            nomeCompleto: "Eduardo José de Barros Ribeiro",
+            nomeUrna: "Eduardo",
+            cpf: "053.066.751-74",
+            dataNasc: "07/03/1993",
+            telefone: "(65) 98169-7171",
+            email: "eduardojbribeiro@gmail.com",
+            bairro: "Sapezal/MT",
+            segmento: "Sociedade Civil",
+            minibio: "Meu nome é Eduardo, sou empreendedor e moro em Sapezal há mais de 23 anos. Foi aqui que construí minha vida e meu negócio, acompanhando de perto o crescimento da nossa cidade. Como cidadão e empreendedor, quero contribuir com minha experiência para uma Sapezal cada vez mais planejada, organizada e preparada para o futuro.",
+            status: "Pendente",
+            linkIdentidade: "https://drive.google.com/file/d/1e8T6NVxWTZed0Hm-aW35XgZC0xWJZjgu/view?usp=drivesdk",
+            linkResidencia: "https://drive.google.com/file/d/1NxL0gnAFHYnXbjN-gQWXowgHCZzgDntX/view?usp=drivesdk",
+            linkDeclaracaoCargo: "https://drive.google.com/file/d/1ivimcBy933eCH9J5RlvaFXUwaJlZ7A3d/view?usp=drivesdk",
+            linkQuitacao: "https://drive.google.com/file/d/1ivimcBy933eCH9J5RlvaFXUwaJlZ7A3d/view?usp=drivesdk",
+            linkFoto: "https://drive.google.com/file/d/1zd4OtlAYhhuzyq6AdV9xlaOMoGmUBgaM/view?usp=drivesdk",
+            fotoThumbnail: "https://lh3.googleusercontent.com/d/1zd4OtlAYhhuzyq6AdV9xlaOMoGmUBgaM",
+            parecer: "",
+            dataAtualizacao: "07/10/2026 11:41:43"
+          },
+          {
+            protocolo: "DEL-2026-86889",
+            timestamp: "07/10/2026 11:57:33",
+            nomeCompleto: "Odacir Oliveira da Silva",
+            nomeUrna: "Odacir Oliveira da Silva",
+            cpf: "535.154.801-10",
+            dataNasc: "27/08/1973",
+            telefone: "(65) 98147-6384",
+            email: "scolhido2009@hotmail.com",
+            bairro: "Sapezal/MT",
+            segmento: "Sociedade Civil",
+            minibio: "Sindicato dos Trabalhadores assalariados e assalariadas de sapezal",
+            status: "Pendente",
+            linkIdentidade: "https://drive.google.com/file/d/1Zt0hZFtzsiXEICoc0d4MzXxG7YIsEC0U/view?usp=drivesdk",
+            linkResidencia: "https://drive.google.com/file/d/1VpOvSlOG2JHyyIpmlLbhJCbHj8JYMHQw/view?usp=drivesdk",
+            linkDeclaracaoCargo: "https://drive.google.com/file/d/12ehWrW-qRf014VehAmoEpbaaPzNBU7Gp/view?usp=drivesdk",
+            linkQuitacao: "https://drive.google.com/file/d/12ehWrW-qRf014VehAmoEpbaaPzNBU7Gp/view?usp=drivesdk",
+            linkFoto: "https://drive.google.com/file/d/11vzrlG7G4LvseibguhCSzp-YEnn6pS66/view?usp=drivesdk",
+            fotoThumbnail: "https://lh3.googleusercontent.com/d/11vzrlG7G4LvseibguhCSzp-YEnn6pS66",
+            parecer: "",
+            dataAtualizacao: "07/10/2026 11:57:33"
+          },
+          {
+            protocolo: "DEL-2026-64123",
+            timestamp: "07/10/2026 13:34:17",
+            nomeCompleto: "Vagno da Silva",
+            nomeUrna: "Vagno Silva",
+            cpf: "004.642.311-75",
+            dataNasc: "09/05/1984",
+            telefone: "(65) 99355-9894",
+            email: "vagnodsilva@hotmail.com",
+            bairro: "Sapezal/MT",
+            segmento: "Sociedade Civil",
+            minibio: "Sou morador de Sapezal e tenho um profundo compromisso com o futuro da nossa cidade. Acompanho de perto o crescimento do município e desejo atuar como Delegado do Plano Diretor para contribuir ativamente no planejamento urbano sustentável.",
+            status: "Pendente",
+            linkIdentidade: "https://drive.google.com/file/d/1yeiwXzX6jYXqhBICNJq26-nC6PSDZ_sL/view?usp=drivesdk",
+            linkResidencia: "https://drive.google.com/file/d/1hd3z31wTTchSmd6RkOJovWfQ3JsSgd1f/view?usp=drivesdk",
+            linkDeclaracaoCargo: "https://drive.google.com/file/d/1Krw_OHMKt639DO1GbvzJEyTPVnhdGXQu/view?usp=drivesdk",
+            linkQuitacao: "https://drive.google.com/file/d/1Krw_OHMKt639DO1GbvzJEyTPVnhdGXQu/view?usp=drivesdk",
+            linkFoto: "https://drive.google.com/file/d/1-hklRoz9o0Lw7D82YUOpuMc3vofzBcrq/view?usp=drivesdk",
+            fotoThumbnail: "https://lh3.googleusercontent.com/d/1-hklRoz9o0Lw7D82YUOpuMc3vofzBcrq",
+            parecer: "",
+            dataAtualizacao: "07/10/2026 13:34:17"
+          },
+          {
+            protocolo: "DEL-2026-51602",
+            timestamp: "08/10/2026 19:54:01",
+            nomeCompleto: "Paulo Roberto Diego Michel carlos Batista Vobeto ben",
+            nomeUrna: "Paulo Ben",
+            cpf: "018.153.241-71",
+            dataNasc: "17/11/1989",
+            telefone: "(65) 99999-8880",
+            email: "paulovobetoben@gmail.com",
+            bairro: "Sapezal/MT",
+            segmento: "Sociedade Civil",
+            minibio: "Sou um profissional com experiência no setor financeiro, atuando próximo a empresários e empreendedores, contribuindo para o desenvolvimento econômico e o fortalecimento dos negócios.",
+            status: "Pendente",
+            linkIdentidade: "https://drive.google.com/file/d/1dFCraGSVyLLzfBbWO-MuuFiX2LLOAvB7/view?usp=drivesdk",
+            linkResidencia: "https://drive.google.com/file/d/16stCoO-05Wdo5FpYCl5TUPqopgazpanj/view?usp=drivesdk",
+            linkDeclaracaoCargo: "https://drive.google.com/file/d/1JZU22T5ih2zCGIq7RH3wDg5MHfJctaVp/view?usp=drivesdk",
+            linkQuitacao: "https://drive.google.com/file/d/1JZU22T5ih2zCGIq7RH3wDg5MHfJctaVp/view?usp=drivesdk",
+            linkFoto: "https://drive.google.com/file/d/1X9IEYbsrCD_mbhZ4FhrTNvnuXxBEdnon/view?usp=drivesdk",
+            fotoThumbnail: "https://lh3.googleusercontent.com/d/1X9IEYbsrCD_mbhZ4FhrTNvnuXxBEdnon",
+            parecer: "",
+            dataAtualizacao: "08/10/2026 19:54:01"
+          },
+          {
+            protocolo: "DEL-2026-52813",
+            timestamp: "15/10/2026 07:38:42",
+            nomeCompleto: "JOE EVANDRO MAIA NOGUEIRA",
+            nomeUrna: "JOSE EVANDRO",
+            cpf: "302.136.573-68",
+            dataNasc: "07/03/1964",
+            telefone: "(65) 99913-5025",
+            email: "hoseevandromaianogueira@gmail.com",
+            bairro: "Sapezal/MT",
+            segmento: "Sociedade Civil",
+            minibio: "Resido em sapezal a 34 anos e gostaria de ser candidato como uma oportunidade de aprendizado.",
+            status: "Pendente",
+            linkIdentidade: "https://drive.google.com/file/d/18PUlkvb9NmR--DgtUb6iC0E5wT5QJNnf/view?usp=drivesdk",
+            linkResidencia: "https://drive.google.com/file/d/1HIKrQD0_SnCCbaqgbcJ3ECdr0qlZ_1ll/view?usp=drivesdk",
+            linkDeclaracaoCargo: "https://drive.google.com/file/d/1AjUd_vWB8JvsWQKiI6_X09QUfjgIwlPp/view?usp=drivesdk",
+            linkQuitacao: "https://drive.google.com/file/d/1AjUd_vWB8JvsWQKiI6_X09QUfjgIwlPp/view?usp=drivesdk",
+            linkFoto: "https://drive.google.com/file/d/1BNDNliiWznx28k-_vVSHR6hzadJTbtlO/view?usp=drivesdk",
+            fotoThumbnail: "https://lh3.googleusercontent.com/d/1BNDNliiWznx28k-_vVSHR6hzadJTbtlO",
+            parecer: "",
+            dataAtualizacao: "15/10/2026 07:38:42"
+          },
+          {
+            protocolo: "DEL-2026-34206",
+            timestamp: "15/10/2026 15:08:51",
+            nomeCompleto: "Univar Piva Fadanelli",
+            nomeUrna: "Univar Piva",
+            cpf: "039.422.161-32",
+            dataNasc: "15/02/1997",
+            telefone: "(65) 99919-0631",
+            email: "univar@pfadv.com.br",
+            bairro: "Sapezal/MT",
+            segmento: "Sociedade Civil",
+            minibio: "Morador a 23 anos, advogado atuante na região, com participação empresarial e interesse no crescimento e desenvolvimento da cidade.",
+            status: "Pendente",
+            linkIdentidade: "https://drive.google.com/file/d/18u8lsBXK4ImcIXRSPKnAWHN5M6UTeOyx/view?usp=drivesdk",
+            linkResidencia: "https://drive.google.com/file/d/1wCEskQgOvbxdDFO2W-nxn9k0dQcIAbX1/view?usp=drivesdk",
+            linkDeclaracaoCargo: "https://drive.google.com/file/d/1GXc7wR2n4qwfcjwJn9_DR2UAgeGGDdVV/view?usp=drivesdk",
+            linkQuitacao: "https://drive.google.com/file/d/1GXc7wR2n4qwfcjwJn9_DR2UAgeGGDdVV/view?usp=drivesdk",
+            linkFoto: "https://drive.google.com/file/d/17M-et8ZxFiXVuvWfmvUVukReItNwjBOm/view?usp=drivesdk",
+            fotoThumbnail: "https://lh3.googleusercontent.com/d/17M-et8ZxFiXVuvWfmvUVukReItNwjBOm",
+            parecer: "",
+            dataAtualizacao: "15/10/2026 15:08:51"
+          },
+          {
+            protocolo: "DEL-2026-20372",
+            timestamp: "15/10/2026 16:26:09",
+            nomeCompleto: "Jonas Duarte Araujo",
+            nomeUrna: "Coronel Araujo",
+            cpf: "326.594.152-34",
+            dataNasc: "07/10/1972",
+            telefone: "(65) 99971-3676",
+            email: "jonasaraujo2@hotmail.com",
+            bairro: "Sapezal/MT",
+            segmento: "Sociedade Civil",
+            minibio: "Moro em Sapezal ha 12 anos e escolhi esta cidade para morar e criar meus filhos por ser uma cidade acolhedora, limpa, organizada, povo ordeiro e clima agradável.",
+            status: "Pendente",
+            linkIdentidade: "https://drive.google.com/file/d/1dnVW5c5COsjXErwtgje_X5yxlOKf9eAU/view?usp=drivesdk",
+            linkResidencia: "https://drive.google.com/file/d/12bB86_A6xApidhFe381qGgJ391GZ862g/view?usp=drivesdk",
+            linkDeclaracaoCargo: "https://drive.google.com/file/d/1GFCK7ApYNVSwZrxTx9Pyf-O5lUEcI13W/view?usp=drivesdk",
+            linkQuitacao: "https://drive.google.com/file/d/1GFCK7ApYNVSwZrxTx9Pyf-O5lUEcI13W/view?usp=drivesdk",
+            linkFoto: "https://drive.google.com/file/d/18C6rUFFVjp1u7HqbqzC9aVNs884ft6Jj/view?usp=drivesdk",
+            fotoThumbnail: "https://lh3.googleusercontent.com/d/18C6rUFFVjp1u7HqbqzC9aVNs884ft6Jj",
+            parecer: "",
+            dataAtualizacao: "15/10/2026 16:26:09"
+          },
+          {
+            protocolo: "DEL-2026-58375",
+            timestamp: "15/10/2026 17:38:22",
+            nomeCompleto: "Jocimar barbosa da silva",
+            nomeUrna: "Jocimar barbosa da silva",
+            cpf: "031.768.971-11",
+            dataNasc: "25/07/1986",
+            telefone: "(65) 99617-4367",
+            email: "projeto._2008@hotmail.com",
+            bairro: "Sapezal/MT",
+            segmento: "Sociedade Civil",
+            minibio: "eu Jocimar barbosa estou em sapezal desde 2013 trabalhando com projetos sou projetista.",
+            status: "Pendente",
+            linkIdentidade: "https://drive.google.com/file/d/1b4yBz5hOHtx3KwoLrruLUaYTPZeZ8R1J/view?usp=drivesdk",
+            linkResidencia: "https://drive.google.com/file/d/1IzCgV2fvnZAvXr6Jhj17n-fPLD7v-Z5A/view?usp=drivesdk",
+            linkDeclaracaoCargo: "https://drive.google.com/file/d/1Rulo5LV0lm2mRFjVia6eWpULT9x-PdMw/view?usp=drivesdk",
+            linkQuitacao: "https://drive.google.com/file/d/1Rulo5LV0lm2mRFjVia6eWpULT9x-PdMw/view?usp=drivesdk",
+            linkFoto: "https://drive.google.com/file/d/111--oGyu_xkPCs6WRGqjaYQ8_3MLSOUF/view?usp=drivesdk",
+            fotoThumbnail: "https://lh3.googleusercontent.com/d/111--oGyu_xkPCs6WRGqjaYQ8_3MLSOUF",
+            parecer: "",
+            dataAtualizacao: "15/10/2026 17:38:22"
           }
         ];
         this.filtrarInscricoes();

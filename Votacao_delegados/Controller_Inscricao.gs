@@ -132,13 +132,16 @@ function salvarInscricao(payload) {
     const sheetInscricoes = ss.getSheetByName(APP_CONFIG.SHEET_INSCRICOES);
     const dadosExistentes = sheetInscricoes.getDataRange().getValues();
 
-    // Coluna E (índice 4) armazena o CPF
+    const mapCols = (dadosExistentes.length > 0 && typeof mapearColunasInscricoes === 'function')
+      ? mapearColunasInscricoes(dadosExistentes[0])
+      : { cpf: 4, protocolo: 0 };
+
     for (let i = 1; i < dadosExistentes.length; i++) {
-      const cpfLinha = String(dadosExistentes[i][4]).replace(/[^\d]/g, '');
+      const cpfLinha = String(dadosExistentes[i][mapCols.cpf]).replace(/[^\d]/g, '');
       if (cpfLinha === cpfLimpo) {
         return {
           success: false,
-          message: "Já existe uma inscrição registrada para este CPF com o protocolo: " + dadosExistentes[i][0]
+          message: "Já existe uma inscrição registrada para este CPF com o protocolo: " + dadosExistentes[i][mapCols.protocolo]
         };
       }
     }
